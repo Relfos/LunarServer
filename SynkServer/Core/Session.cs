@@ -5,7 +5,6 @@ using System.Net;
 
 namespace SynkServer.Core
 {
-
     public class Session
     {
         private Dictionary<string, string> _data = new Dictionary<string, string>();

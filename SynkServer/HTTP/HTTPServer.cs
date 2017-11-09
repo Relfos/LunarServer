@@ -7,6 +7,7 @@ using System.Text;
 using SynkServer.Core;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace SynkServer.HTTP
 {
@@ -123,6 +124,9 @@ namespace SynkServer.HTTP
                         }
                     }
 
+                    string setCookie;
+                    request.session = GetSession(request, out setCookie);
+
                     var response = handler(request);
 
                     if (response == null)
@@ -140,6 +144,11 @@ namespace SynkServer.HTTP
                     else
                     {
                         response.headers["Cache-Control"] = "no-cache";
+                    }
+
+                    if (setCookie != null)
+                    {
+                        response.headers["Set-Cookie"] = setCookie;
                     }
 
                     using (var stream = new MemoryStream(1024))
@@ -276,5 +285,76 @@ namespace SynkServer.HTTP
                 listener = null;
             }
         }
+
+        #region SESSIONS
+        private const string SessionCookieName = "_synk_session_";
+        protected Dictionary<string, Session> _Sessions = new Dictionary<string, Session>(StringComparer.InvariantCultureIgnoreCase);
+        protected TimeSpan Expiration = TimeSpan.FromMinutes(30);
+
+        private Session GetSession(HTTPRequest request, out string setCookie)
+        {
+            setCookie = null;
+
+            // expire old sessions
+            var allKeys = _Sessions.Keys.ToArray();
+            foreach (var key in allKeys)
+            {
+                var sessionInfo = _Sessions[key];
+                if (DateTime.Now.Subtract(sessionInfo.lastActivity) > this.Expiration)
+                {
+                    _Sessions.Remove(key);
+                }
+            }
+
+            string cookieValue = null;
+
+            var requestCookies = request.headers["Cookie"];
+            if (requestCookies != null)
+            {
+                string[] cookies = requestCookies.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var cookie in cookies)
+                {
+                    string[] s = cookie.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+                    string name = s[0];
+                    string val = s[1];
+
+                    if (name.Equals(SessionCookieName))
+                    {
+                        cookieValue = val;
+                        break;
+                    }
+                }
+            }
+
+
+            if (cookieValue == null)
+            {
+                var session = new Session(request);
+                cookieValue = session.ID;
+                _Sessions[cookieValue] = session;
+
+                setCookie = SessionCookieName + "=" + cookieValue;
+                log.DebugFormat("Session: {0}", cookieValue);
+                return session;
+            }
+            if (!_Sessions.ContainsKey(cookieValue))
+            {
+                var session = new Session(request, cookieValue);
+                _Sessions[cookieValue] = session;
+
+                log.DebugFormat("Session: {0}", cookieValue);
+                return session;
+            }
+            else
+            {
+                log.DebugFormat("Session: {0}", cookieValue);
+                var session = _Sessions[cookieValue];
+                session.lastActivity = DateTime.Now;
+                return session;
+            }
+        }
+        #endregion
+
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SynkServer.Core;
+using System;
 using System.Collections.Generic;
 
 namespace SynkServer.HTTP
@@ -34,6 +35,8 @@ namespace SynkServer.HTTP
         public string version;
 
         public byte[] bytes;
+
+        public Session session;
 
         public Dictionary<string, string> headers = new Dictionary<string, string>();
         public Dictionary<string, string> args = new Dictionary<string, string>();
