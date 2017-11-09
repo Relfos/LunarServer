@@ -14,8 +14,10 @@ namespace SynkServer.HTTP
 {
     public sealed class HTTPServer: IDisposable
     {
-        private Logger log;
+        public Logger log { get; private set; }
         private TcpListener listener;
+
+        public bool running { get; private set; }
 
         public HTTPServer(Logger log, int port = 80)
         {
@@ -23,8 +25,9 @@ namespace SynkServer.HTTP
 
             var ipAddress = IPAddress.Parse("127.0.0.1");
 
-            log.Info("Starting TCP listener...");
+            RestoreSessionData();
 
+            log.Info("Starting TCP listener...");
             listener = new TcpListener(ipAddress, 80);
         }
 
@@ -34,16 +37,29 @@ namespace SynkServer.HTTP
 
             log.Info("Server is listening on " + listener.LocalEndpoint);
 
-            while (true)
+            running = true;
+            while (running)
             {
 
                 log.Info("Waiting for a connection...");
 
-                var client = listener.AcceptSocketAsync().Result;
+                try
+                {
+                    var client = listener.AcceptSocketAsync().Result;
 
-                var task = new Task(() => HandleClient(client, handler));
-                task.Start(); 
+                    var task = new Task(() => HandleClient(client, handler));
+                    task.Start();
+                }
+                catch (Exception e)
+                {
+                    log.Error(e.ToString());
+                }
             }
+        }
+
+        public void Stop()
+        {
+            running = false;
         }
 
         private void WriteString(BinaryWriter writer, string s)
@@ -266,7 +282,7 @@ namespace SynkServer.HTTP
                         continue;
 
                     // Decode the key and the value. Discard Special Characters
-                    var key = System.Net.WebUtility.UrlDecode(kvpsParts[0]);
+                    var key = WebUtility.UrlDecode(kvpsParts[0]);
 
                     var value = kvpsParts.Length >= 2 ? System.Net.WebUtility.UrlDecode(kvpsParts[1]) : null;
 
@@ -280,17 +296,21 @@ namespace SynkServer.HTTP
 
         public void Dispose()
         {
+            this.Stop();
+
             if (listener != null)
             {
                 listener.Stop();
                 listener = null;
             }
+
+            SaveSessionData();
         }
 
         #region SESSIONS
         private const string SessionCookieName = "_synk_session_";
-        protected ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>(StringComparer.InvariantCultureIgnoreCase);
-        protected TimeSpan Expiration = TimeSpan.FromMinutes(30);
+        private ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>(StringComparer.InvariantCultureIgnoreCase);
+        public TimeSpan CookieExpiration = TimeSpan.FromMinutes(30);
 
         private Session GetSession(HTTPRequest request, out string setCookie)
         {
@@ -301,7 +321,7 @@ namespace SynkServer.HTTP
             foreach (var key in allKeys)
             {
                 var sessionInfo = _sessions[key];
-                if (DateTime.Now.Subtract(sessionInfo.lastActivity) > this.Expiration)
+                if (DateTime.Now.Subtract(sessionInfo.lastActivity) > this.CookieExpiration)
                 {
                     Session temp;
                     _sessions.TryRemove(key, out temp);
@@ -336,7 +356,7 @@ namespace SynkServer.HTTP
                 _sessions[cookieValue] = session;
 
                 setCookie = SessionCookieName + "=" + cookieValue;
-                log.DebugFormat("Session: {0}", cookieValue);
+                log.Info($"Session: {cookieValue}");
                 return session;
             }
             if (!_sessions.ContainsKey(cookieValue))
@@ -344,16 +364,32 @@ namespace SynkServer.HTTP
                 var session = new Session(request, cookieValue);
                 _sessions[cookieValue] = session;
 
-                log.DebugFormat("Session: {0}", cookieValue);
+                log.Info($"Session: {cookieValue}");
                 return session;
             }
             else
             {
-                log.DebugFormat("Session: {0}", cookieValue);
+                log.Info($"Session: {cookieValue}");
                 var session = _sessions[cookieValue];
                 session.lastActivity = DateTime.Now;
                 return session;
             }
+        }
+
+        private void SaveSessionData()
+        {
+            foreach (var session in _sessions.Values)
+            {
+                foreach (var entry in session.data)
+                {
+
+                }
+            }
+        }
+
+        private void RestoreSessionData()
+        {
+            _sessions.Clear();
         }
         #endregion
 

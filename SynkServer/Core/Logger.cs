@@ -23,9 +23,9 @@ namespace SynkServer.Core
             }
         }
 
-        public void DebugFormat(string format, params object[] args)
+        public void Info(object message)
         {
-            Log(ConsoleColor.White, String.Format(format, args));
+            Log(ConsoleColor.White, message.ToString());
         }
 
         public void Error(object message)
@@ -33,35 +33,10 @@ namespace SynkServer.Core
             Log(ConsoleColor.Red, message.ToString());
         }
 
-        public void Error(object message, Exception exception)
+        public void Warning(object message)
         {
-            Log(ConsoleColor.Red, message.ToString());
+            Log(ConsoleColor.Yellow, message.ToString());
         }
-
-
-        public void ErrorFormat(string format, params object[] args)
-        {
-            Log(ConsoleColor.Red, string.Format(format, args));
-        }
-
-        public void Info(object message)
-        {
-            Log(ConsoleColor.Green, message.ToString());
-        }
-
-
-        public void InfoFormat(string format, params object[] args)
-        {
-            Log(ConsoleColor.Green, string.Format(format, args));
-        }
-
-
-        public void WarnFormat(string format, params object[] args)
-        {
-            Log(ConsoleColor.Yellow, string.Format(format, args));
-        }
-
-
-}
+    }
 
 }

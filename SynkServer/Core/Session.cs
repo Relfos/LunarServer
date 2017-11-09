@@ -9,6 +9,8 @@ namespace SynkServer.Core
     {
         private Dictionary<string, string> _data = new Dictionary<string, string>();
 
+        public IEnumerable<KeyValuePair<string, string>> data { get { return _data; } }
+
         public string ID;
         public DateTime lastActivity;
 
