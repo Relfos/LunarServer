@@ -8,6 +8,7 @@ using SynkServer.Core;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Collections.Concurrent;
 
 namespace SynkServer.HTTP
 {
@@ -288,7 +289,7 @@ namespace SynkServer.HTTP
 
         #region SESSIONS
         private const string SessionCookieName = "_synk_session_";
-        protected Dictionary<string, Session> _Sessions = new Dictionary<string, Session>(StringComparer.InvariantCultureIgnoreCase);
+        protected ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>(StringComparer.InvariantCultureIgnoreCase);
         protected TimeSpan Expiration = TimeSpan.FromMinutes(30);
 
         private Session GetSession(HTTPRequest request, out string setCookie)
@@ -296,13 +297,14 @@ namespace SynkServer.HTTP
             setCookie = null;
 
             // expire old sessions
-            var allKeys = _Sessions.Keys.ToArray();
+            var allKeys = _sessions.Keys.ToArray();
             foreach (var key in allKeys)
             {
-                var sessionInfo = _Sessions[key];
+                var sessionInfo = _sessions[key];
                 if (DateTime.Now.Subtract(sessionInfo.lastActivity) > this.Expiration)
                 {
-                    _Sessions.Remove(key);
+                    Session temp;
+                    _sessions.TryRemove(key, out temp);
                 }
             }
 
@@ -327,21 +329,20 @@ namespace SynkServer.HTTP
                 }
             }
 
-
             if (cookieValue == null)
             {
                 var session = new Session(request);
                 cookieValue = session.ID;
-                _Sessions[cookieValue] = session;
+                _sessions[cookieValue] = session;
 
                 setCookie = SessionCookieName + "=" + cookieValue;
                 log.DebugFormat("Session: {0}", cookieValue);
                 return session;
             }
-            if (!_Sessions.ContainsKey(cookieValue))
+            if (!_sessions.ContainsKey(cookieValue))
             {
                 var session = new Session(request, cookieValue);
-                _Sessions[cookieValue] = session;
+                _sessions[cookieValue] = session;
 
                 log.DebugFormat("Session: {0}", cookieValue);
                 return session;
@@ -349,7 +350,7 @@ namespace SynkServer.HTTP
             else
             {
                 log.DebugFormat("Session: {0}", cookieValue);
-                var session = _Sessions[cookieValue];
+                var session = _sessions[cookieValue];
                 session.lastActivity = DateTime.Now;
                 return session;
             }
