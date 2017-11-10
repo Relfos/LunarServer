@@ -11,7 +11,7 @@ namespace SynkServer.HTTP
     public enum HTTPCode
     {
         OK = 200,
-        Redirect = 303, //https://en.wikipedia.org/wiki/HTTP_302
+        Redirect = 302, //https://en.wikipedia.org/wiki/HTTP_302
         BadRequest = 400,
         Unauthorized = 401,
         Forbidden = 403,
@@ -26,7 +26,7 @@ namespace SynkServer.HTTP
         public Dictionary<string, string> headers = new Dictionary<string, string>();
         public byte[] bytes;
         public DateTime date;
-        public TimeSpan expiration;
+        public TimeSpan expiration = TimeSpan.FromSeconds(0);
 
         private bool compressed;
 

@@ -153,7 +153,7 @@ namespace SynkServer.HTTP
 
                     response.headers["Content-Length"] = response.bytes != null ? response.bytes.Length.ToString() : "0";
 
-                    if (response.code == HTTPCode.OK)
+                    if (response.code == HTTPCode.OK && response.expiration.TotalSeconds > 0)
                     {
                         response.headers["Date"] = response.date.ToString("r");
                         response.headers["Expires"] = (response.date + response.expiration).ToString("r");
@@ -241,7 +241,7 @@ namespace SynkServer.HTTP
 
                 if (parser.Success)
                 {
-                    request.files.Add(new FileUpload(parser.Filename, parser.ContentType, parser.FileContents));
+                    request.uploads.Add(new FileUpload(parser.Filename, parser.ContentType, parser.FileContents));
                 }
             }
             else
@@ -338,7 +338,7 @@ namespace SynkServer.HTTP
                 foreach (var cookie in cookies)
                 {
                     string[] s = cookie.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
-                    string name = s[0];
+                    string name = s[0].Trim();
                     string val = s[1];
 
                     if (name.Equals(SessionCookieName))
