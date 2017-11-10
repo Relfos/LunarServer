@@ -2,3 +2,5 @@
 packages/
 SynkServer/bin/
 SynkServer/obj/
+SynkMVC/bin/
+SynkMVC/obj/

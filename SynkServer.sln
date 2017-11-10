@@ -5,7 +5,9 @@ VisualStudioVersion = 15.0.27004.2008
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SynkDemo", "SynkDemo\SynkDemo.csproj", "{83667459-D4DD-4258-9376-FD24F39571BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SynkServer", "SynkServer\SynkServer.csproj", "{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SynkServer", "SynkServer\SynkServer.csproj", "{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SynkMVC", "SynkMVC\SynkMVC.csproj", "{53B50325-5466-4D8E-80CC-C497AF135E84}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53B50325-5466-4D8E-80CC-C497AF135E84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53B50325-5466-4D8E-80CC-C497AF135E84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53B50325-5466-4D8E-80CC-C497AF135E84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53B50325-5466-4D8E-80CC-C497AF135E84}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
