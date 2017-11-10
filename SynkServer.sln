@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SynkDemo", "SynkDemo\SynkDe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SynkServer", "SynkServer\SynkServer.csproj", "{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SynkMVC", "SynkMVC\SynkMVC.csproj", "{53B50325-5466-4D8E-80CC-C497AF135E84}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SynkMVC", "SynkMVC\SynkMVC.csproj", "{D2E0227C-F3F6-454C-BAF1-C677C8E83D6E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}.Release|Any CPU.Build.0 = Release|Any CPU
-		{53B50325-5466-4D8E-80CC-C497AF135E84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{53B50325-5466-4D8E-80CC-C497AF135E84}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{53B50325-5466-4D8E-80CC-C497AF135E84}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{53B50325-5466-4D8E-80CC-C497AF135E84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2E0227C-F3F6-454C-BAF1-C677C8E83D6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2E0227C-F3F6-454C-BAF1-C677C8E83D6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2E0227C-F3F6-454C-BAF1-C677C8E83D6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2E0227C-F3F6-454C-BAF1-C677C8E83D6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
