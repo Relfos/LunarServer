@@ -112,6 +112,16 @@ Vary: Accept-Encoding, Cookie, User-Agent
 
             result.headers["Content-Type"] = contentType;
 
+            result.headers["Content-Description"] = "File Transfer";
+
+            result.headers["Content-Disposition"] = "attachment; filename=\"" + fileName + "\"";
+            result.headers["Content-Transfer-Encoding"] = "binary";
+            result.headers["Connection"] =  "Keep-Alive";
+            result.headers["Expires"] = "0";
+            result.headers["Cache-Control"] = "must-revalidate, post-check=0, pre-check=0";
+            result.headers["Pragma"] = "public";
+
+
             var lastModified = System.IO.File.GetLastWriteTime(fileName);
             result.headers["Last-Modified"] = lastModified.ToString("r");
 
@@ -123,13 +133,14 @@ Vary: Accept-Encoding, Cookie, User-Agent
             return result;
         }
 
+
         public static HTTPResponse FromBytes(byte[] bytes, bool compress = false, string contentType = "application/octet-stream")
         {
             var result = new HTTPResponse();
             result.code = HTTPCode.OK;
             result.bytes = bytes;
 
-            result.headers["Content-Type"] = contentType; 
+            result.headers["Content-Type"] = contentType;
 
             return result;
         }

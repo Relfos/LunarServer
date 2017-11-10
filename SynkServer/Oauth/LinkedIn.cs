@@ -9,8 +9,13 @@ namespace SynkServer.Oauth
 {
     public class LinkedInAuth : OauthConnection
     {
-        public LinkedInAuth(Logger log, string client_id, string client_secret, string redirect_uri)  : base(log, client_id, client_secret, redirect_uri)
+        public LinkedInAuth(Logger log, string app_url, string client_id, string client_secret, string redirect_uri)  : base(log, app_url, client_id, client_secret, redirect_uri)
         {
+        }
+
+        public override OauthKind GetKind()
+        {
+            return OauthKind.LinkedIn;
         }
 
         public override string GetLoginURL()

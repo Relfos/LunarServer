@@ -15,6 +15,12 @@ namespace SynkServer.Oauth
         public DataNode data;
     }
 
+    public enum OauthKind
+    {
+        Facebook,
+        LinkedIn
+    }
+
     public abstract class OauthConnection
     {
         public static string OAUTH_ID = "KEeF3KEYWfZI53sSTAf22";
@@ -27,25 +33,23 @@ namespace SynkServer.Oauth
 
         public bool IsAuthenticated { get { return token != null; } }
 
+        public string localPath { get; private set; }//Should match Site URL        
+
         protected string client_id;
         protected string client_secret;
-        protected string redirect_uri; //Should match Site URL        
+        protected string app_url;
 
-//        protected string app_url = "http://localhost";
-
-        public OauthConnection(Logger log, string client_id, string client_secret, string redirect_uri, string token = null)
+        public OauthConnection(Logger log, string app_url, string client_id, string client_secret, string localPath, string token = null)
         {
             this.log = log;
+            this.app_url = app_url;
             this.client_id = client_id;
             this.client_secret = client_secret;
-            this.redirect_uri = redirect_uri;
+            this.localPath = localPath;
             this.token = token;
         }
 
-        protected string GetRedirectURL()
-        {
-            return redirect_uri.UrlEncode();
-        }
+        public abstract OauthKind GetKind();
 
         public abstract string GetLoginURL();
 
@@ -56,6 +60,11 @@ namespace SynkServer.Oauth
             this.token = null;
         }
 
+        public string GetRedirectURL()
+        {
+            var redirect_url = app_url + "/" + localPath;
+            return redirect_url.UrlEncode();
+        }
 
     }
 

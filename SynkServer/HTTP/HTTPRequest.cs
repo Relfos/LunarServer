@@ -42,5 +42,20 @@ namespace SynkServer.HTTP
         public Dictionary<string, string> args = new Dictionary<string, string>();
 
         public List<FileUpload> files = new List<FileUpload>();
+
+        public bool HasVariable(string name)
+        {
+            return args != null && args.ContainsKey(name);
+        }
+
+        public string GetVariable(string name)
+        {
+            if (HasVariable(name))
+            {
+                return args[name];
+            }
+
+            return null;
+        }
     }
 }

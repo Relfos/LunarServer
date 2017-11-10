@@ -18,7 +18,7 @@ namespace SynkServer.HTTP
         }
     }
 
-    public class API
+    public class API: SitePlugin
     {
         private DataFormat format;
         private string mimeType;
@@ -27,6 +27,12 @@ namespace SynkServer.HTTP
         {
             this.format = format;
             this.mimeType = "application/" + format.ToString().ToLower();
+        }
+
+        public override bool Install(Site site, string path)
+        {
+            return false;
+            //site.router
         }
 
         protected HTTPResponse HandleRequest(HTTPRequest request)

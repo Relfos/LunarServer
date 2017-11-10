@@ -127,6 +127,11 @@ namespace SynkServer.Core
         {
             foreach (var ipHeader in ipHttpHeaders)
             {
+                if (!request.headers.ContainsKey(ipHeader))
+                {
+                    continue;
+                }
+
                 var value = request.headers[ipHeader];
                 if (value == null)
                 {

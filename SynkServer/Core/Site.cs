@@ -7,15 +7,32 @@ using System.IO;
 
 namespace SynkServer.Core
 {
+    public abstract class SitePlugin
+    {
+        public Site site { get; protected set; }
+
+        public abstract bool Install(Site site, string path);
+
+        public string Combine(string rootPath, string localPath)
+        {
+            if (string.IsNullOrEmpty(rootPath) || rootPath.Equals("/"))
+            {
+                return localPath;
+            }
+
+            return rootPath + "/" + localPath;
+        }
+    }
+
     public class Site
     {
         public Router router { get; private set; }
-        public string path { get; private set; }
+        public string filePath { get; private set; }
 
         public Site(string path)
         {
             this.router = new Router();
-            this.path = path;
+            this.filePath = path;
         }
 
         public void Run(HTTPServer server)
@@ -41,6 +58,11 @@ namespace SynkServer.Core
         public void Delete(string path, Func<HTTPRequest, object> handler)
         {
             router.Register(HTTPRequest.Method.Delete, path, handler);
+        }
+
+        public bool Install(SitePlugin plugin, string path = "/")
+        {
+            return plugin.Install(this, path);
         }
 
         protected virtual HTTPResponse HandleRequest(HTTPRequest request)
@@ -82,7 +104,7 @@ namespace SynkServer.Core
                 return null;
             }
 
-            var fileName = path + request.url;
+            var fileName = filePath + request.url;
             if (File.Exists(fileName))
             {
                 return HTTPResponse.FromFile(fileName);
