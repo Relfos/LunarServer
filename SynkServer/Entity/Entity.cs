@@ -142,12 +142,48 @@ namespace SynkServer.Entity
             return collection;
         }
 
-        public static T Find<T>(string ID) where T : Entity
+        public static T FindById<T>(string ID) where T : Entity
         {
             var type = typeof(T);
 
             var collection = GetCollection(type);
             return (T)_collections[type].FindObject(ID);
+        }
+
+        public static T FindOne<T>(Predicate<T> pred) where T : Entity
+        {
+            var type = typeof(T);
+
+            var collection = GetCollection(type);
+
+            foreach (T item in collection.Objects)
+            {
+                if (pred(item))
+                {
+                    return item;
+                }
+            }
+
+            return default(T);
+        }
+
+        public static List<T> FindAll<T>(Predicate<T> pred) where T : Entity
+        {
+            var type = typeof(T);
+
+            var collection = GetCollection(type);
+
+            var result = new List<T>();
+
+            foreach (T item in collection.Objects)
+            {
+                if (pred(item))
+                {
+                    result.Add(item);
+                }
+            }
+
+            return result;
         }
 
         public void Delete()

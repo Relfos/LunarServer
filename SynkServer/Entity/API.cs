@@ -9,7 +9,6 @@ namespace SynkServer.Entity
 {
     public class APIRequestException : Exception
     {
-
         public APIRequestException(string message) : base(message)
         {
 
@@ -127,7 +126,7 @@ namespace SynkServer.Entity
 
         private static T Check<T>(string id) where T : Entity
         {
-            var entity = Entity.Find<T>(id);
+            var entity = Entity.FindById<T>(id);
 
             if (entity != null)
             {
@@ -154,7 +153,7 @@ namespace SynkServer.Entity
         private static object ShowEntity<T>(HTTPRequest requset) where T : Entity
        {
             var id = requset.args["id"];
-            var entity = Entity.Find<T>(id);
+            var entity = Entity.FindById<T>(id);
             var data = entity.Serialize();
             return data;
         }

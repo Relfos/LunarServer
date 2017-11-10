@@ -14,8 +14,8 @@ namespace SynkServer.Oauth
 
         private Logger log;
 
-        public Func<OauthConnection, object> OnLogin;
-        public Func<OauthConnection, object> OnError;
+        public Func<OauthKind, Profile, object> OnLogin;
+        public Func<OauthKind, object> OnError;
 
         private string app_url;
 
@@ -27,13 +27,13 @@ namespace SynkServer.Oauth
             this.OnError = OnErrorLog;
         }
 
-        private object OnErrorLog(OauthConnection auth)
+        private object OnErrorLog(OauthKind kind)
         {
-            log.Error("Auth failed for " + auth.GetKind());
+            log.Error("Auth failed for " + kind);
             return null;
         }
 
-        private object OnLoginException(OauthConnection auth)
+        private object OnLoginException(OauthKind kind, Profile profile)
         {
             throw new NotImplementedException();
         }
@@ -62,17 +62,19 @@ namespace SynkServer.Oauth
             {
                 site.Get(Combine(path, auth.localPath), request =>
                 {
+                    var kind = auth.GetKind();
+
                     if (request.HasVariable("code"))
                     {
                         var profile = auth.Login(request.args["code"]);
                         if (profile != null)
                         {
                             request.session.Set(Profile.sessionKey, profile);
-                            return OnLogin(auth);                            
+                            return OnLogin(kind, profile);                            
                         }
                     }
 
-                    return OnError(auth);
+                    return OnError(kind);
                 });
             }
 
