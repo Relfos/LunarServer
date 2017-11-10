@@ -7,9 +7,9 @@ namespace SynkServer.Core
 {
     public class Session
     {
-        private Dictionary<string, string> _data = new Dictionary<string, string>();
+        private Dictionary<string, object> _data = new Dictionary<string, object>();
 
-        public IEnumerable<KeyValuePair<string, string>> data { get { return _data; } }
+        public IEnumerable<KeyValuePair<string, object>> data { get { return _data; } }
 
         public string ID;
         public DateTime lastActivity;
@@ -28,17 +28,17 @@ namespace SynkServer.Core
             return _data.ContainsKey(name);
         }
 
-        public string Get(string name)
+        public object Get(string name)
         {
             if (_data.ContainsKey(name))
             {
-                return _data[name].ToString();
+                return _data[name];
             }
 
             return null;
         }
 
-        public void Set(string name, string value)
+        public void Set(string name, object value)
         {
             _data[name] = value;
         }

@@ -60,13 +60,14 @@ namespace SynkServer.Oauth
 
             foreach (var auth in _auths.Values)
             {
-                site.Get(Combine(path, auth.localPath), x =>
+                site.Get(Combine(path, auth.localPath), request =>
                 {
-                    if (x.HasVariable("code"))
+                    if (request.HasVariable("code"))
                     {
-                        var result = auth.Login(x.args["code"]);
-                        if (result)
+                        var profile = auth.Login(request.args["code"]);
+                        if (profile != null)
                         {
+                            request.session.Set(Profile.sessionKey, profile);
                             return OnLogin(auth);                            
                         }
                     }

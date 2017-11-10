@@ -48,30 +48,33 @@ namespace SynkServer.Oauth
             }
         }
 
-        public override bool Login(string code)
+        public override Profile Login(string code)
         {
-            this.token = Authorize(code);
+            var token = Authorize(code);
             if (string.IsNullOrEmpty(token))
             {
-                return false;
+                return null;
             }
 
-            var user = GetUser(null);
+            var user = GetUser(null, token);
             if (user != null)
             {
-                this.profile = new OauthProfile()
+                var profile = new Profile()
                 {
+                    token = token,
                     id = user.GetString("id"),
                     name = user.GetString("formattedName"),
                     email = user.GetString("emailAddress"),
                     pictureURL = user.GetString("pictureUrl"),
                     data = user
                 };
+                return profile;
             }
-            return user != null;
+
+            return null;
         }
 
-        public DataNode GetUser(string userid)
+        public DataNode GetUser(string userid, string token)
         {
             try
             {

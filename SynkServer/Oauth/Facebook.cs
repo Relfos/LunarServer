@@ -57,29 +57,33 @@ namespace SynkServer.Oauth
         }
 
 
-        public override bool Login(string code)
+        public override Profile Login(string code)
         {
-            this.token = Authorize(code);
+            var token = Authorize(code);
             if (string.IsNullOrEmpty(token))
             {
-                return false;
+                return null;
             }
 
-            var user = GetUser(null, new FacebookField[] { FacebookField.Id, FacebookField.Name, FacebookField.Gender, FacebookField.Picture, FacebookField.Email } );
+            var user = GetUser(null, token, new FacebookField[] { FacebookField.Id, FacebookField.Name, FacebookField.Gender, FacebookField.Picture, FacebookField.Email } );
             if (user != null) {
-                this.profile = new OauthProfile()
+                var profile = new Profile()
                 {
+                    token = token,
                     id = user.GetString("id"),
                     name = user.GetString("name"),
                     email = user.GetString("email"),
                     pictureURL = user.GetNode("picture").GetNode("data").GetString("url"),
                     data = user
                 };
+
+                return profile;
             }
-            return user != null;
+
+            return null;
         }
 
-        public DataNode GetUser(string userid, IEnumerable<FacebookField> fields)
+        public DataNode GetUser(string userid, string token, IEnumerable<FacebookField> fields)
         {
             try
             {
