@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -15,20 +13,6 @@ namespace SynkMVC
 {
     public static class Utility
     {
-        public static long ToTimestamp(this DateTime value)
-        {
-            long epoch = (value.Ticks - 621355968000000000) / 10000000;
-            return epoch;
-        }
-
-        public static DateTime ToDateTime(this long unixTimeStamp)
-        {
-            // Unix timestamp is seconds past epoch
-            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
-            return dtDateTime;
-        }
-
         public static string FixNewLines(this string s)
         {
             return s.Replace(System.Environment.NewLine, "<br>");
@@ -329,40 +313,5 @@ namespace SynkMVC
                 SizeSuffixes[mag]);
         }
 
-        #region IMAGE
-        public static Bitmap ResizeImage(Image image, int width, int height)
-        {
-            var destRect = new Rectangle(0, 0, width, height);
-            var destImage = new Bitmap(width, height);
-
-            destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
-
-            using (var graphics = Graphics.FromImage(destImage))
-            {
-                graphics.CompositingMode = CompositingMode.SourceCopy;
-                graphics.CompositingQuality = CompositingQuality.HighQuality;
-                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                graphics.SmoothingMode = SmoothingMode.HighQuality;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-
-                using (var wrapMode = new ImageAttributes())
-                {
-                    wrapMode.SetWrapMode(WrapMode.TileFlipXY);
-                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
-                }
-            }
-
-            return destImage;
-        }
-
-        public static byte[] imageToByteArray(this Image image)
-        {
-            using (var ms = new MemoryStream())
-            {
-                image.Save(ms, ImageFormat.Png);
-                return ms.ToArray();
-            }
-        }
-        #endregion
     }
 }

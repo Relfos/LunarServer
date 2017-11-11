@@ -683,14 +683,17 @@ namespace SynkMVC
                             var temp_path = Path.GetDirectoryName(thumbPath);
                             Directory.CreateDirectory(temp_path);
 
-                            var img = Image.FromStream(new MemoryStream(bytes));
+                            /*var img = Image.FromStream(new MemoryStream(bytes));
                             var thumb_img = Utility.ResizeImage(img, 64, 64);
-                            thumb_img.Save(thumbPath);
+                            thumb_img.Save(thumbPath);*/
                         }
                         catch (Exception e)
                         {
                             thumb_fileName = "";
                         }
+
+                        throw new NotImplementedException();
+
                         //thumb_bytes = thumb_img.imageToByteArray();
                         break;
                     }

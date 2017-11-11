@@ -81,9 +81,10 @@ namespace SynkServer.HTTP
 
             try
             {
-                var lines = client.ReadLines();
+                List<string> lines;
+                byte[] unread;
 
-                if (lines != null)
+                if (client.ReadLines(out lines, out unread))
                 {
                     var request = new HTTPRequest();
 
@@ -106,6 +107,8 @@ namespace SynkServer.HTTP
 
                         var path = s[1].Split('?');
                         request.url = path[0];
+
+                        log.Info(request.method.ToString() +" "+ s[1]);
 
                         if (path.Length > 1)
                         {
@@ -132,9 +135,9 @@ namespace SynkServer.HTTP
                             }
                         }
 
-                        if (request.method.Equals("POST"))
+                        if (request.method == HTTPRequest.Method.Post)
                         {
-                            if (!ParsePost(request, client))
+                            if (!ParsePost(request, client, unread))
                             {
                                 return;
                             }
@@ -200,7 +203,7 @@ namespace SynkServer.HTTP
 
         }
 
-        private bool ParsePost(HTTPRequest request, Socket client)
+        private bool ParsePost(HTTPRequest request, Socket client, byte[] unread)
         {
             if (!request.headers.ContainsKey("Content-Length"))
             {
@@ -214,8 +217,12 @@ namespace SynkServer.HTTP
             int.TryParse(lenStr, out bodySize);
             request.bytes = new byte[bodySize];
 
-            int ofs = 0;
-            int left = bodySize;
+            if (unread.Length > 0) {
+                Array.Copy(unread, request.bytes, unread.Length);
+            }
+
+            int ofs = unread.Length;
+            int left = bodySize - ofs;
 
             while (left>0)
             {
@@ -230,7 +237,7 @@ namespace SynkServer.HTTP
                 left -= n;
             }
 
-            var contentTypeHeader = request.headers["content-type"];
+            var contentTypeHeader = request.headers["Content-Type"];
 
             if (contentTypeHeader.ToLowerInvariant().StartsWith("multipart/form-data"))
             {
