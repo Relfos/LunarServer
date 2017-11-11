@@ -58,8 +58,14 @@ namespace SynkServer.Entity
         public Entity CreateObject()
         {
             var obj = AllocObject();
+
             obj.id = Guid.NewGuid().ToString();
-            _objects[obj.id] = obj;
+
+            lock (this)
+            {
+                _objects[obj.id] = obj;
+            }
+
             return obj;
         }
 
@@ -77,9 +83,12 @@ namespace SynkServer.Entity
 
         public void DeleteObject(string ID)
         {
-            if (_objects.ContainsKey(ID))
+            lock (this)
             {
-                _objects.Remove(ID);
+                if (_objects.ContainsKey(ID))
+                {
+                    _objects.Remove(ID);
+                }
             }
         }
 
@@ -90,6 +99,7 @@ namespace SynkServer.Entity
                 if (_shouldSave)
                 {
                     var result = DataNode.CreateObject("collection");
+
                     foreach (var obj in _objects.Values)
                     {
                         var node = obj.Serialize();
@@ -133,14 +143,17 @@ namespace SynkServer.Entity
         {
             EntityCollection collection;
 
-            if (_collections.ContainsKey(type))
+            lock (_collections)
             {
-                collection = _collections[type];
-            }
-            else
-            {
-                collection = new EntityCollection(type);
-                _collections[type] = collection;
+                if (_collections.ContainsKey(type))
+                {
+                    collection = _collections[type];
+                }
+                else
+                {
+                    collection = new EntityCollection(type);
+                    _collections[type] = collection;
+                }
             }
 
             return collection;
@@ -151,7 +164,7 @@ namespace SynkServer.Entity
             var type = typeof(T);
 
             var collection = GetCollection(type);
-            return (T)_collections[type].FindObject(ID);
+            return (T)collection.FindObject(ID);
         }
 
         public static T FindOne<T>(Predicate<T> pred) where T : Entity
@@ -218,7 +231,7 @@ namespace SynkServer.Entity
                     {
                         Thread.Sleep(500);
                         foreach (var collection in _collections.Values)
-                        {
+                        {                            
                             collection.Save();
                         }
                     } while (true);
@@ -293,7 +306,7 @@ namespace SynkServer.Entity
             }
         }
 
-        public static IEnumerable<T> List<T>() where T:Entity
+        public static IEnumerable<T> Every<T>() where T:Entity
         {
             var type = typeof(T);
             var result = new List<T>();
@@ -304,7 +317,7 @@ namespace SynkServer.Entity
             {
                 result.Add((T)obj);
             }
-            
+
             return result;
         }
 

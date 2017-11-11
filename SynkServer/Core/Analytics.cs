@@ -27,15 +27,20 @@ namespace SynkServer.Core
 
         public void RegisterEvent(Enum val, DateTime date)
         {
-            RegisterEvent(val.ToString(), date);
+            RegisterEvent(val.ToString().ToLowerInvariant(), date);
         }
 
         public void RegisterEvent(string key, DateTime date)
         {
             lock (this)
             {
-                var table = _events[key];
+                List<DateTime> table = null;
 
+                if (_events.ContainsKey(key))
+                {
+                    table = _events[key];
+                }
+                
                 if (table == null)
                 {
                     table = new List<DateTime>();

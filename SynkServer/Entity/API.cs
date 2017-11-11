@@ -141,7 +141,7 @@ namespace SynkServer.Entity
         {
             var result = DataNode.CreateObject(typeof(T).Name.ToLower() + "s");
 
-            foreach (var user in Entity.List<T>())
+            foreach (var user in Entity.Every<T>())
             {
                 var data = user.Serialize();
                 result.AddNode(data);
