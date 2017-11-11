@@ -73,7 +73,7 @@ namespace SynkServer.Oauth
                     id = user.GetString("id"),
                     name = user.GetString("name"),
                     email = user.GetString("email"),
-                    pictureURL = user.GetNode("picture").GetNode("data").GetString("url"),
+                    photo = user.GetNode("picture").GetNode("data").GetString("url"),
                     data = user
                 };
 

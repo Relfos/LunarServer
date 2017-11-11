@@ -13,7 +13,7 @@ namespace SynkServer.Oauth
         public string id;
         public string name;
         public string email;
-        public string pictureURL;
+        public string photo;
 
         public string token;
         public DataNode data;

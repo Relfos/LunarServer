@@ -11,6 +11,20 @@ namespace SynkServer.Core
 {
     public static class Utils
     {
+        public static long ToTimestamp(this DateTime value)
+        {
+            long epoch = (value.Ticks - 621355968000000000) / 10000000;
+            return epoch;
+        }
+
+        public static DateTime ToDateTime(this long unixTimeStamp)
+        {
+            // Unix timestamp is seconds past epoch
+            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            return dtDateTime;
+        }
+
         /// <summary>
         /// Compresses the specified buffer using the G-Zip compression algorithm.
         /// </summary>
@@ -32,7 +46,7 @@ namespace SynkServer.Core
             return outputBuffer;
         }
 
-        public static List<string> ReadLines(this Socket client)
+        public static bool ReadLines(this Socket client, out List<string> lines, out byte[] unread)
         {
             var buffer = new byte[2048];
 
@@ -41,7 +55,8 @@ namespace SynkServer.Core
 
             var sb = new StringBuilder();
 
-            var lines = new List<string>();
+            lines = new List<string>();
+            unread = null;
 
             do
             {
@@ -50,7 +65,7 @@ namespace SynkServer.Core
                 int n = client.Receive(buffer, ofs, left, SocketFlags.None);
                 if (n <= 0)
                 {
-                    return null;
+                    return false;
                 }
 
                 ofs += n;
@@ -69,7 +84,9 @@ namespace SynkServer.Core
 
                         if (str.Length == 0)
                         {
-                            return lines;
+                            unread = new byte[ofs - (i + 1)];
+                            Array.Copy(buffer, i + 1, unread, 0, unread.Length);
+                            return true;
                         }
 
                         lines.Add(str);
@@ -84,7 +101,7 @@ namespace SynkServer.Core
                 }
             } while (left >= 0);
 
-            return lines;
+            return true;
         }
 
         public static string UrlDecode(this string text)

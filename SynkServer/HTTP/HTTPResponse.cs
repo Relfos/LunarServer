@@ -33,7 +33,6 @@ namespace SynkServer.HTTP
         public HTTPResponse()
         {
             this.date = DateTime.UtcNow;
-            this.expiration = TimeSpan.FromHours(1);
 
             headers["Server"] = "LunarServer";
             headers["Connection"] = "close";

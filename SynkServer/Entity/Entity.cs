@@ -16,9 +16,10 @@ namespace SynkServer.Entity
         {
             this.objectType = objectType;
 
-            if (File.Exists(GetFileName()))
+            var fileName = GetFileName();
+            if (File.Exists(fileName))
             {
-                var root = XMLReader.ReadFromString(File.ReadAllText(GetFileName()));
+                var root = XMLReader.ReadFromString(File.ReadAllText(fileName));
                 var name = objectType.Name.ToLower();
 
                 root = root["collection"];
@@ -32,14 +33,14 @@ namespace SynkServer.Entity
 
                     var obj = AllocObject();
                     obj.Deserialize(child);
-                    _objects[obj.ID] = obj;
+                    _objects[obj.id] = obj;
                 }
             }
         }
 
         private string GetFileName()
         {
-            return objectType.Name + ".xml";
+            return "store/"+objectType.Name.ToLower() + ".xml";
         }
 
         private Dictionary<string, Entity> _objects = new Dictionary<string, Entity>();
@@ -57,8 +58,8 @@ namespace SynkServer.Entity
         public Entity CreateObject()
         {
             var obj = AllocObject();
-            obj.ID = Guid.NewGuid().ToString();
-            _objects[obj.ID] = obj;
+            obj.id = Guid.NewGuid().ToString();
+            _objects[obj.id] = obj;
             return obj;
         }
 
@@ -86,16 +87,19 @@ namespace SynkServer.Entity
         {
             lock (this)
             {
-                var result = DataNode.CreateObject("collection");
-                foreach (var obj in _objects.Values)
+                if (_shouldSave)
                 {
-                    var node = obj.Serialize();
-                    result.AddNode(node);
-                }
+                    var result = DataNode.CreateObject("collection");
+                    foreach (var obj in _objects.Values)
+                    {
+                        var node = obj.Serialize();
+                        result.AddNode(node);
+                    }
 
-                var contents = XMLWriter.WriteToString(result);
-                File.WriteAllText(GetFileName(), contents);
-                _shouldSave = false;
+                    var contents = XMLWriter.WriteToString(result);
+                    File.WriteAllText(GetFileName(), contents);
+                    _shouldSave = false;
+                }
             }
         }
 
@@ -112,7 +116,7 @@ namespace SynkServer.Entity
 
     public abstract class Entity
     {
-        public string ID;
+        public string id;
 
         private static Dictionary<Type, EntityCollection> _collections = new Dictionary<Type, EntityCollection>();
 
@@ -190,7 +194,7 @@ namespace SynkServer.Entity
         {
             var type = this.GetType();
             var collection = GetCollection(type);
-            collection.DeleteObject(this.ID);
+            collection.DeleteObject(this.id);
             RequestBackgroundThread();
         }
 
@@ -233,16 +237,15 @@ namespace SynkServer.Entity
         public DataNode Serialize()
         {
             Type type = this.GetType();
-            var result = DataNode.CreateObject(type.Name.ToLower());
+            var result = DataNode.CreateObject(type.Name.ToLowerInvariant());
 
             var fields = type.GetFields().Where(f => f.IsPublic);
             foreach (var field in fields)
             {
                 var val = field.GetValue(this);
-                if (val != null)
-                {
-                    result.AddField(field.Name, val.ToString());
-                }
+                if (val != null) {
+                    result.AddField(field.Name.ToLowerInvariant(), val);
+                }                
             }
 
             return result;
@@ -260,11 +263,33 @@ namespace SynkServer.Entity
                     continue;
                 }
 
-                var val = node.GetString(field.Name);
-
-                object obj = val;
-                
-                field.SetValue(this, obj);                
+                var fieldType = field.FieldType;
+                if (fieldType == typeof(DateTime))
+                {
+                    var val = node.GetDateTime(field.Name);
+                    field.SetValue(this, val);
+                }
+                else
+                if (fieldType.IsEnum)
+                {
+                    var temp = node.GetString(field.Name);
+                    var values = Enum.GetValues(fieldType).Cast<int>().ToArray();
+                    var names = Enum.GetNames(fieldType).Cast<string>().ToArray();
+                    for (int i=0; i<names.Length; i++)
+                    {
+                        if (names[i].Equals(temp, StringComparison.OrdinalIgnoreCase))
+                        {
+                            field.SetValue(this, values[i]);
+                            break;
+                        }
+                    }
+                    
+                }
+                else
+                {
+                    var val = node.GetString(field.Name);
+                    field.SetValue(this, val);
+                }                
             }
         }
 
@@ -282,5 +307,6 @@ namespace SynkServer.Entity
             
             return result;
         }
+
     }
 }

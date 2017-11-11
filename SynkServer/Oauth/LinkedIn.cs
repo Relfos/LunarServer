@@ -65,7 +65,7 @@ namespace SynkServer.Oauth
                     id = user.GetString("id"),
                     name = user.GetString("formattedName"),
                     email = user.GetString("emailAddress"),
-                    pictureURL = user.GetString("pictureUrl"),
+                    photo = user.GetString("pictureUrl"),
                     data = user
                 };
                 return profile;

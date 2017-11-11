@@ -29,10 +29,13 @@ namespace SynkServer.Core
         public Router router { get; private set; }
         public string filePath { get; private set; }
 
+        public Analytics analytics { get; private set; }
+
         public Site(string path)
         {
-            this.router = new Router();
             this.filePath = path;
+            this.router = new Router();
+            this.analytics = new Analytics(this);
         }
 
         public void Run(HTTPServer server)
