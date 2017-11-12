@@ -18,7 +18,6 @@ namespace SynkMVC
             return s.Replace(System.Environment.NewLine, "<br>");
         }
 
-
         public static string MD5(this string input)
         {
             byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
@@ -286,8 +285,8 @@ namespace SynkMVC
             return str.ToUpper();
         }
 
-        static readonly string[] SizeSuffixes =
-                           { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+        static readonly string[] SizeSuffixes =  { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+
         public static string SizeSuffix(Int64 value, int decimalPlaces = 1)
         {
             if (value < 0) { return "-" + SizeSuffix(-value); }

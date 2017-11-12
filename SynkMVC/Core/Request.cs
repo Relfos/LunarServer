@@ -238,7 +238,7 @@ namespace SynkMVC
 
                 long user_id;
 
-                long.TryParse(this.request.session.Get("user_id").ToString(), out user_id);
+                long.TryParse(this.request.session.Get<string>("user_id"), out user_id);
                 this.currentUser = this.database.FetchEntityByID<User>(user_id);
             }
             else
@@ -460,7 +460,7 @@ namespace SynkMVC
 
             if (request.session.Contains(name))
             {
-                return request.session.Get(name).ToString();
+                return request.session.Get<string>(name);
             }
 
             return defaultValue;
@@ -470,7 +470,7 @@ namespace SynkMVC
         {
             if (request.session.Contains(name))
             {
-                return request.session.Get(name).ToString();
+                return request.session.Get<string>(name);
             }
 
             return defaultValue;
