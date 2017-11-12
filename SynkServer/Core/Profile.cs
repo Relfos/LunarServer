@@ -25,7 +25,7 @@ namespace SynkServer.Oauth
         {
             if (request.session.Contains(Profile.sessionKey))
             {
-                return (Profile)request.session.Get(Profile.sessionKey);
+                return request.session.Get<Profile>(Profile.sessionKey);
             }
 
             return null;

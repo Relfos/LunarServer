@@ -295,8 +295,7 @@ namespace SynkServer.Entity
                             field.SetValue(this, values[i]);
                             break;
                         }
-                    }
-                    
+                    }                    
                 }
                 else
                 {

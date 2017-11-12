@@ -337,13 +337,15 @@ namespace SynkServer.HTTP
 
             string cookieValue = null;
 
-            var requestCookies = request.headers["Cookie"];
+            var requestCookies = request.headers.ContainsKey("Cookie") ? request.headers["Cookie"] : null;
             if (requestCookies != null)
             {
                 string[] cookies = requestCookies.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-                foreach (var cookie in cookies)
+                for (int i=cookies.Length-1; i>=0; i--)
                 {
+                    var cookie = cookies[i];
+
                     string[] s = cookie.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
                     string name = s[0].Trim();
                     string val = s[1];

@@ -28,14 +28,14 @@ namespace SynkServer.Core
             return _data.ContainsKey(name);
         }
 
-        public object Get(string name)
+        public T Get<T>(string name, T defaultValue = default(T))
         {
             if (_data.ContainsKey(name))
             {
-                return _data[name];
+                return (T)_data[name];
             }
 
-            return null;
+            return defaultValue;
         }
 
         public void Set(string name, object value)
