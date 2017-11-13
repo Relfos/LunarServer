@@ -33,12 +33,15 @@ namespace SynkServer.Core
 
         public Logger log { get; private set; }
 
+        private Cache cache;
+
         public Site(Logger log, string path)
         {
             this.log = log;
             this.filePath = path;
             this.router = new Router();
             this.analytics = new Analytics(this);
+            this.cache = new Cache(log, path);
         }
 
         public void Run(HTTPServer server)
@@ -106,7 +109,7 @@ namespace SynkServer.Core
                     var root = (DataNode)obj;
                     var json = JSONWriter.WriteToString(root);
                     var bytes = System.Text.Encoding.UTF8.GetBytes(json);
-                    return HTTPResponse.FromBytes(bytes, true, "application/json");
+                    return HTTPResponse.FromBytes(bytes, "application/json");
                 }
 
                 return null;
@@ -116,15 +119,7 @@ namespace SynkServer.Core
                 log.Debug("Route handler not found...");
             }
 
-            var fileName = filePath + request.url;
-            if (File.Exists(fileName))
-            {
-                log.Debug($"Returning static file...{fileName}");
-                return HTTPResponse.FromFile(fileName);
-            }
-
-            log.Warning("Nothing found...");
-            return null;
+            return cache.GetFile(request);
         }
     }
 }

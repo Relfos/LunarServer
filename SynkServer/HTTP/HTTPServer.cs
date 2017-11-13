@@ -187,6 +187,7 @@ namespace SynkServer.HTTP
                         response.headers["Expires"] = (response.date + response.expiration).ToString("r");
                     }
                     else
+                    if (!response.headers.ContainsKey("Cache-Control"))
                     {
                         response.headers["Cache-Control"] = "no-cache";
                     }

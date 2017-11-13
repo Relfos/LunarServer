@@ -12,6 +12,7 @@ namespace SynkServer.HTTP
     {
         OK = 200,
         Redirect = 302, //https://en.wikipedia.org/wiki/HTTP_302
+        NotModified = 304,
         BadRequest = 400,
         Unauthorized = 401,
         Forbidden = 403,
@@ -27,8 +28,6 @@ namespace SynkServer.HTTP
         public byte[] bytes;
         public DateTime date;
         public TimeSpan expiration = TimeSpan.FromSeconds(0);
-
-        private bool compressed;
 
         public HTTPResponse()
         {
@@ -55,12 +54,20 @@ Vary: Accept-Encoding, Cookie, User-Agent
              */
         }
 
-        public static object Redirect(string url)
+        public static HTTPResponse Redirect(string url)
         {
             var result = new HTTPResponse();
             result.code = HTTPCode.Redirect;
             result.bytes = new byte[0];
             result.headers["Location"] = url;
+            return result;
+        }
+
+        public static HTTPResponse NotModified()
+        {
+            var result = new HTTPResponse();
+            result.code = HTTPCode.NotModified;
+            result.bytes = new byte[0];
             return result;
         }
 
@@ -72,68 +79,8 @@ Vary: Accept-Encoding, Cookie, User-Agent
             result.headers["Content-Type"] = contentType;
             return result;
         }
-
-        public static HTTPResponse FromFile(string fileName)
-        {
-            var result = new HTTPResponse();
-            result.code = HTTPCode.OK;
-            result.bytes = File.ReadAllBytes(fileName);
-
-            var ext = Path.GetExtension(fileName);
-
-            string contentType;
-            bool shouldCompress = false;
-
-            switch (ext)
-            {
-                case ".png": contentType = "image/png"; break;
-                case ".jpg": contentType = "image/jpeg"; break;
-                case ".gif": contentType = "image/gif"; break;
-                case ".svg": contentType = "image/svg+xml"; shouldCompress = true; break;
-
-
-                case ".ogg": contentType = "audio/vorbis"; break;
-                case ".mp4": contentType = "audio/mpeg"; break;
-
-                case ".css": contentType = "text/css"; shouldCompress = true; break;
-                case ".html": contentType = "text/html"; shouldCompress = true; break;
-                case ".csv": contentType = "text/csv"; shouldCompress = true; break;
-                case ".txt": contentType = "text/plain"; shouldCompress = true; break;
-
-                case ".js": contentType = "application/javascript"; shouldCompress = true; break;
-                case ".json": contentType = "application/json"; shouldCompress = true; break;
-                case ".xml": contentType = "application/xml"; shouldCompress = true; break;
-                case ".zip": contentType = "application/zip"; break;
-                case ".pdf": contentType = "application/pdf"; break;
-
-                default: contentType = "application/octet-stream"; break;
-            }
-
-            result.headers["Content-Type"] = contentType;
-
-            result.headers["Content-Description"] = "File Transfer";
-
-            result.headers["Content-Disposition"] = "attachment; filename=\"" + fileName + "\"";
-            result.headers["Content-Transfer-Encoding"] = "binary";
-            result.headers["Connection"] =  "Keep-Alive";
-            result.headers["Expires"] = "0";
-            result.headers["Cache-Control"] = "must-revalidate, post-check=0, pre-check=0";
-            result.headers["Pragma"] = "public";
-
-
-            var lastModified = System.IO.File.GetLastWriteTime(fileName);
-            result.headers["Last-Modified"] = lastModified.ToString("r");
-
-            if (shouldCompress && result.bytes.Length > 1400 && result.bytes.Length < 1024 * 128)
-            {
-                result.Compress();
-            }
-
-            return result;
-        }
-
-
-        public static HTTPResponse FromBytes(byte[] bytes, bool compress = false, string contentType = "application/octet-stream")
+        
+        public static HTTPResponse FromBytes(byte[] bytes, string contentType = "application/octet-stream")
         {
             var result = new HTTPResponse();
             result.code = HTTPCode.OK;
@@ -142,19 +89,6 @@ Vary: Accept-Encoding, Cookie, User-Agent
             result.headers["Content-Type"] = contentType;
 
             return result;
-        }
-
-        public void Compress()
-        {
-            if (compressed)
-            {
-                return;
-            }
-
-            this.bytes = this.bytes.GZIPCompress();
-            this.headers["Content-Encoding"] = "gzip";
-
-            compressed = true;
         }
 
     }
