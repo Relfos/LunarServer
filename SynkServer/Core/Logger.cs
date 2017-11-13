@@ -4,6 +4,8 @@ namespace SynkServer.Core
 {
     public class Logger
     {
+        public static int level = 1;
+
         public static bool useColors = true;
 
         protected void Log(ConsoleColor c, string s)
@@ -23,20 +25,30 @@ namespace SynkServer.Core
             }
         }
 
-        public void Info(object message)
+        public void Debug(object message)
         {
-            Log(ConsoleColor.White, message.ToString());
+            if (level > 0) return;
+            Log(ConsoleColor.Cyan, message.ToString());
         }
 
-        public void Error(object message)
+        public void Info(object message)
         {
-            Log(ConsoleColor.Red, message.ToString());
+            if (level > 1) return;
+            Log(ConsoleColor.White, message.ToString());
         }
 
         public void Warning(object message)
         {
+            if (level > 2) return;
             Log(ConsoleColor.Yellow, message.ToString());
         }
+
+        public void Error(object message)
+        {
+            if (level > 3) return;
+            Log(ConsoleColor.Red, message.ToString());
+        }
+
     }
 
 }

@@ -17,8 +17,8 @@ namespace SynkServer.Core
             client.Credentials = new System.Net.NetworkCredential(sender, password);
             client.Host = "smtp.gmail.com";
 
-
             MailMessage mm = new MailMessage();
+            mm.From = new MailAddress(sender);
             mm.Sender = new MailAddress(sender);
 
             int count = 0;
@@ -32,6 +32,9 @@ namespace SynkServer.Core
                 }
             }
             mm.BodyEncoding = UTF8Encoding.UTF8;
+            mm.Body = body;
+            mm.Subject = subject;
+            mm.SubjectEncoding = UTF8Encoding.UTF8;
             mm.IsBodyHtml = true;
             mm.DeliveryNotificationOptions = DeliveryNotificationOptions.OnFailure;
 

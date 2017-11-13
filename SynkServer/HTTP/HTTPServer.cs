@@ -19,16 +19,16 @@ namespace SynkServer.HTTP
 
         public bool running { get; private set; }
 
+        public Action<HTTPRequest> OnNewVisitor;
+
         public HTTPServer(Logger log, int port = 80)
         {
             this.log = log;
 
-            var ipAddress = IPAddress.Parse("127.0.0.1");
-
             RestoreSessionData();
 
-            log.Info("Starting TCP listener...");
-            listener = new TcpListener(ipAddress, 80);
+            log.Debug("Starting TCP listener...");
+            listener = new TcpListener(IPAddress.Any, 80);
         }
 
         public void Run(Func<HTTPRequest, HTTPResponse> handler)
@@ -41,11 +41,13 @@ namespace SynkServer.HTTP
             while (running)
             {
 
-                log.Info("Waiting for a connection...");
+                log.Debug("Waiting for a connection...");
 
                 try
                 {
                     var client = listener.AcceptSocketAsync().Result;
+
+                    log.Debug("Got a connection...");
 
                     var task = new Task(() => HandleClient(client, handler));
                     task.Start();
@@ -77,7 +79,7 @@ namespace SynkServer.HTTP
 
         private void HandleClient(Socket client, Func<HTTPRequest, HTTPResponse> handler)
         {
-            log.Info("Connection accepted.");
+            log.Debug("Connection accepted.");
 
             try
             {
@@ -87,6 +89,11 @@ namespace SynkServer.HTTP
                 if (client.ReadLines(out lines, out unread))
                 {
                     var request = new HTTPRequest();
+
+                    foreach (var line in lines)
+                    {
+                        log.Debug(line);
+                    }
 
                     var s = lines[0].Split(' ');
 
@@ -139,19 +146,37 @@ namespace SynkServer.HTTP
                         {
                             if (!ParsePost(request, client, unread))
                             {
+                                log.Error("Failed parsing post data");
                                 return;
                             }
                         }
+                    }
+                    else
+                    {
+                        log.Error("Failed parsing request method");
+                        return;
                     }
 
                     string setCookie;
                     request.session = GetSession(request, out setCookie);
 
+                    if (setCookie!=null && OnNewVisitor!=null)
+                    {
+                        log.Debug("Handling visitors...");
+                        OnNewVisitor(request);                        
+                    }
+
+                    log.Debug("Handling request...");
                     var response = handler(request);
 
                     if (response == null)
                     {
+                        log.Debug($"Got no response...");
                         response = HTTPResponse.FromString("Not found...", HTTPCode.NotFound);
+                    }
+                    else
+                    {
+                        log.Debug($"Got response with {response.bytes.Length} bytes...");
                     }
 
                     response.headers["Content-Length"] = response.bytes != null ? response.bytes.Length.ToString() : "0";
@@ -189,9 +214,15 @@ namespace SynkServer.HTTP
                         }
 
                         var bytes = stream.ToArray();
+                        log.Debug($"Sending {bytes.Length} bytes...");
+
                         client.Send(bytes);
                     }
                     
+                }
+                else
+                {
+                    log.Error("Failed parsing request data");
                 }
 
 
@@ -365,20 +396,22 @@ namespace SynkServer.HTTP
                 _sessions[cookieValue] = session;
 
                 setCookie = SessionCookieName + "=" + cookieValue;
-                log.Info($"Session: {cookieValue}");
+                log.Debug($"Session: {cookieValue}");
                 return session;
             }
+
             if (!_sessions.ContainsKey(cookieValue))
             {
                 var session = new Session(request, cookieValue);
                 _sessions[cookieValue] = session;
 
-                log.Info($"Session: {cookieValue}");
+                setCookie = SessionCookieName + "=" + cookieValue;
+                log.Debug($"Session: {cookieValue}");
                 return session;
             }
             else
             {
-                log.Info($"Session: {cookieValue}");
+                log.Debug($"Session: {cookieValue}");
                 var session = _sessions[cookieValue];
                 session.lastActivity = DateTime.Now;
                 return session;

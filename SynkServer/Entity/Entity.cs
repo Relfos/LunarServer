@@ -283,6 +283,18 @@ namespace SynkServer.Entity
                     field.SetValue(this, val);
                 }
                 else
+                if (fieldType == typeof(bool))
+                {
+                    var val = node.GetBool(field.Name);
+                    field.SetValue(this, val);
+                }
+                else
+                if (fieldType == typeof(int))
+                {
+                    var val = node.GetInt32(field.Name);
+                    field.SetValue(this, val);
+                }
+                else
                 if (fieldType.IsEnum)
                 {
                     var temp = node.GetString(field.Name);

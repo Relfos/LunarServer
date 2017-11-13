@@ -31,8 +31,11 @@ namespace SynkServer.Core
 
         public Analytics analytics { get; private set; }
 
-        public Site(string path)
+        public Logger log { get; private set; }
+
+        public Site(Logger log, string path)
         {
+            this.log = log;
             this.filePath = path;
             this.router = new Router();
             this.analytics = new Analytics(this);
@@ -70,10 +73,12 @@ namespace SynkServer.Core
 
         protected virtual HTTPResponse HandleRequest(HTTPRequest request)
         {
+            log.Debug($"Router find {request.method}=>{request.url}");
             var route = router.Find(request.method, request.url, request.args);
 
             if (route != null)
             {
+                log.Debug("Calling route handler...");
                 var obj = route.handler(request);
                 
                 if (obj == null)
@@ -106,13 +111,19 @@ namespace SynkServer.Core
 
                 return null;
             }
+            else
+            {
+                log.Debug("Route handler not found...");
+            }
 
             var fileName = filePath + request.url;
             if (File.Exists(fileName))
             {
+                log.Debug($"Returning static file...{fileName}");
                 return HTTPResponse.FromFile(fileName);
             }
 
+            log.Warning("Nothing found...");
             return null;
         }
     }

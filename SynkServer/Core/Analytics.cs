@@ -6,11 +6,70 @@ using System.Threading;
 
 namespace SynkServer.Core
 {
+    public enum AnalyticsFrequency
+    {
+        Daily,
+        Monthly,
+        Yearly
+    }
+
+    public class AnalyticsEntry
+    {
+        public List<long> values = new List<long>();
+
+        public Dictionary<long, int> dayAggregate = new Dictionary<long, int>();
+        public Dictionary<long, int> monthAggregate = new Dictionary<long, int>();
+        public Dictionary<long, int> yearAggregate = new Dictionary<long, int>();
+
+        public static DateTime FixedDay(DateTime val)
+        {
+            return new DateTime(val.Year, val.Month, val.Day);
+        }
+
+        public static DateTime FixedMonth(DateTime val)
+        {
+            return new DateTime(val.Year, val.Month, 1);
+        }
+
+        public static DateTime FixedYear(DateTime val)
+        {
+            return new DateTime(val.Year, 1, 1);
+        }
+
+        public void Add(long timestamp)
+        {
+            var val = timestamp.ToDateTime();
+
+            values.Add(timestamp);
+
+            var dayDate = FixedDay(val);
+            Increase(dayAggregate, dayDate);
+
+            var monthDate = FixedMonth(val);
+            Increase(monthAggregate, monthDate);
+
+            var yearDate = FixedYear(val);
+            Increase(yearAggregate, yearDate);
+        }
+
+        private void Increase(Dictionary<long, int> dic, DateTime val)
+        {
+            var timestamp = val.ToTimestamp();
+
+            if (dic.ContainsKey(timestamp))  {
+                dic[timestamp]++;
+            }
+            else {
+                dic[timestamp] = 1;
+            }
+        }
+    }
+
     public class Analytics
     {
         public const string FileName = "analytics.bin";
 
-        private Dictionary<string, List<DateTime>> _events = new Dictionary<string, List<DateTime>>();
+        private Dictionary<string, AnalyticsEntry> _events = new Dictionary<string, AnalyticsEntry>();
 
         private Site site;
 
@@ -23,6 +82,8 @@ namespace SynkServer.Core
             this.site = site;
 
             LoadAnalyticsData();
+
+            RequestBackgroundThread();
         }
 
         public void RegisterEvent(Enum val, DateTime date)
@@ -30,11 +91,21 @@ namespace SynkServer.Core
             RegisterEvent(val.ToString().ToLowerInvariant(), date);
         }
 
+        public void RegisterEvent(Enum val, long timestamp)
+        {
+            RegisterEvent(val.ToString().ToLowerInvariant(), timestamp);
+        }
+
         public void RegisterEvent(string key, DateTime date)
+        {
+            RegisterEvent(key, date.ToTimestamp());
+        }
+
+        public void RegisterEvent(string key, long timestamp)
         {
             lock (this)
             {
-                List<DateTime> table = null;
+                AnalyticsEntry table = null;
 
                 if (_events.ContainsKey(key))
                 {
@@ -43,39 +114,36 @@ namespace SynkServer.Core
                 
                 if (table == null)
                 {
-                    table = new List<DateTime>();
+                    table = new AnalyticsEntry();
                     _events[key] = table;
                 }
 
-                table.Add(date);
+                table.Add(timestamp);
 
                 changed = true;
-
-                RequestBackgroundThread();
             }
 
         }
 
         private void RequestBackgroundThread()
         {
-            if (saveThread == null)
+            this.site.log.Info("Running analytics thread");
+
+            saveThread = new Thread(() =>
             {
-                saveThread = new Thread(() =>
+                Thread.CurrentThread.IsBackground = true;
+
+                do
                 {
-                    Thread.CurrentThread.IsBackground = true;
-
-                    do
+                    Thread.Sleep(10000);
+                    if (changed)
                     {
-                        Thread.Sleep(10000);
-                        if (changed)
-                        {
-                            SaveAnalyticsData();
-                        }
-                    } while (true);
-                });
+                        SaveAnalyticsData();
+                    }
+                } while (true);
+            });
 
-                saveThread.Start();
-            }
+            saveThread.Start();
         }
 
         private void LoadAnalyticsData()
@@ -94,10 +162,8 @@ namespace SynkServer.Core
 
                             while (eventCount>0)
                             {
-                                var timestamp = reader.ReadInt64();
-                                var date = timestamp.ToDateTime();
-
-                                RegisterEvent(key, date);
+                                long timestamp = reader.ReadInt64();
+                                RegisterEvent(key, timestamp);
                                 eventCount--;
                             }
                         }
@@ -123,12 +189,11 @@ namespace SynkServer.Core
 
                             var table = entry.Value;
 
-                            long eventCount = table.Count;
+                            long eventCount = table.values.Count;
                             writer.Write(eventCount);
 
-                            foreach (var item in table)
+                            foreach (long timestamp in table.values)
                             {
-                                var timestamp = item.ToTimestamp();
                                 writer.Write(timestamp);
                             }
                         }
@@ -139,5 +204,78 @@ namespace SynkServer.Core
             }
 
         }
+
+        public int GetTotalAmmount(Enum val)
+        {
+            return GetTotalAmmount(val.ToString().ToLowerInvariant());
+        }
+
+        public int GetTotalAmmount(string key)
+        {
+            if (_events.ContainsKey(key))
+            {
+                return _events[key].values.Count;
+            }
+
+            return 0;
+        }
+
+        public int GetAmmount(Enum val, AnalyticsFrequency frequency, DateTime date)
+        {
+            return GetAmmount(val.ToString().ToLowerInvariant(), frequency, date);
+        }
+
+        public int GetAmmount(string key, AnalyticsFrequency frequency, DateTime date)
+        {
+            if (_events.ContainsKey(key))
+            {
+                var evt = _events[key];
+
+                switch (frequency)
+                {
+                    case AnalyticsFrequency.Daily:
+                        {
+                            date = AnalyticsEntry.FixedDay(date);
+                            var timestamp = date.ToTimestamp();
+
+                            if (evt.dayAggregate.ContainsKey(timestamp))
+                            {
+                                return evt.dayAggregate[timestamp];
+                            }
+
+                            return 0;
+                        }
+
+                    case AnalyticsFrequency.Monthly:
+                        {
+                            date = AnalyticsEntry.FixedMonth(date);
+                            var timestamp = date.ToTimestamp();
+
+                            if (evt.monthAggregate.ContainsKey(timestamp))
+                            {
+                                return evt.monthAggregate[timestamp];
+                            }
+
+                            return 0;
+                        }
+
+                    case AnalyticsFrequency.Yearly:
+                        {
+                            date = AnalyticsEntry.FixedYear(date);
+                            var timestamp = date.ToTimestamp();
+
+                            if (evt.yearAggregate.ContainsKey(timestamp))
+                            {
+                                return evt.yearAggregate[timestamp];
+                            }
+
+                            return 0;
+                        }
+                }
+            }
+
+            return 0;
+        }
+
     }
 }
