@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 
 namespace SynkServer.HTTP
 {
+
     public sealed class HTTPServer: IDisposable
     {
         public Logger log { get; private set; }
@@ -21,21 +22,47 @@ namespace SynkServer.HTTP
 
         public Action<HTTPRequest> OnNewVisitor;
 
-        public HTTPServer(Logger log, int port = 80)
+        public ServerSettings settings { get; private set; }
+
+        private List<Site> _sites = new List<Site>();
+        public IEnumerable<Site> sites { get { return _sites; } }
+
+        public HTTPServer(Logger log, ServerSettings settings)
         {
             this.log = log;
 
+            this.settings = settings;
+
             RestoreSessionData();
 
-            log.Debug("Starting TCP listener...");
+            var fullPath = Directory.GetCurrentDirectory() + "/" + settings.path;
+            fullPath = fullPath.Replace("\\", "/");
+            log.Info($"~LUNAR SERVER~ [{settings.environment} mode]");
+            log.Info($"Port: {settings.port}");
+            log.Info($"Root path: {fullPath}");
+
             listener = new TcpListener(IPAddress.Any, 80);
         }
 
-        public void Run(Func<HTTPRequest, HTTPResponse> handler)
+        public void AddSite(Site site)
+        {
+            lock (_sites)
+            {
+                this._sites.Add(site);
+            }            
+        }
+
+        public void Run()
         {
             listener.Start();
 
-            log.Info("Server is listening on " + listener.LocalEndpoint);
+            foreach (var site in sites)
+            {
+                log.Info("Initializating site: " + site.host);
+                site.Initialize();
+            }
+
+           // log.Info("Server is listening on " + listener.LocalEndpoint);
 
             running = true;
             while (running)
@@ -46,10 +73,10 @@ namespace SynkServer.HTTP
                 try
                 {
                     var client = listener.AcceptSocketAsync().Result;
-
+                    
                     log.Debug("Got a connection...");
 
-                    var task = new Task(() => HandleClient(client, handler));
+                    var task = new Task(() => HandleClient(client));
                     task.Start();
                 }
                 catch (Exception e)
@@ -77,7 +104,7 @@ namespace SynkServer.HTTP
             writer.Write((byte)10);
         }
 
-        private void HandleClient(Socket client, Func<HTTPRequest, HTTPResponse> handler)
+        private void HandleClient(Socket client)
         {
             log.Debug("Connection accepted.");
 
@@ -167,8 +194,19 @@ namespace SynkServer.HTTP
                     }
 
                     log.Debug("Handling request...");
-                    var response = handler(request);
 
+                    var site = LookUpSite(request);
+
+                    HTTPResponse response;
+                    if (site == null)
+                    {
+                        response = HTTPResponse.FromString("", HTTPCode.BadRequest);
+                    }
+                    else
+                    {
+                        response = site.HandleRequest(request);
+                    }
+                        
                     if (response == null)
                     {
                         log.Debug($"Got no response...");
@@ -233,6 +271,34 @@ namespace SynkServer.HTTP
                 client.Dispose();
             }
 
+        }
+
+        private Site LookUpSite(HTTPRequest request)
+        {
+            if (!request.headers.ContainsKey("Host"))
+            {
+                return null;
+            }
+
+            var targetHost = request.headers["Host"];
+
+            if (settings.environment == ServerEnvironment.Dev)
+            {
+                return _sites.Count> 0 ? _sites[0] : null;
+            }
+
+            lock (_sites)
+            {
+                foreach (var site in _sites)
+                {
+                    if (site.host.Equals(targetHost))
+                    {
+                        return site;
+                    }
+                }
+            }
+
+            return null;
         }
 
         private bool ParsePost(HTTPRequest request, Socket client, byte[] unread)

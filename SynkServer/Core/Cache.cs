@@ -58,10 +58,20 @@ namespace SynkServer.Core
 
             CacheEntry entry;
 
-            if (_files.ContainsKey(request.url))
+            lock (_files)
             {
-                entry = _files[request.url];                
+                if (_files.ContainsKey(request.url))
+                {
+                    entry = _files[request.url];
+                }
+                else
+                {
+                    entry = null;
+                }
+            }
 
+            if (entry != null)
+            {               
                 var lastMod = File.GetLastWriteTime(path);
 
                 if (lastMod != entry.lastModified)
@@ -84,7 +94,10 @@ namespace SynkServer.Core
 
                 entry.Reload();
 
-                _files[request.url] = entry;
+                lock (_files)
+                {
+                    _files[request.url] = entry;
+                }
             }
 
             if (request.headers.ContainsKey("If-None-Match"))

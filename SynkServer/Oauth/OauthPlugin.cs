@@ -12,17 +12,13 @@ namespace SynkServer.Oauth
         private Dictionary<OauthKind, OauthConnection> _auths = new Dictionary<OauthKind, OauthConnection>();
         public IEnumerable<OauthConnection> auths { get { return _auths.Values; } }
 
-        private Logger log;
+        private Logger log { get { return this.site.log; } }
 
         public Func<OauthKind, HTTPRequest, object> OnLogin;
         public Func<OauthKind, HTTPRequest, object> OnError;
 
-        private string app_url;
-
-        public OauthPlugin(Logger log, string app_url)
-        {
-            this.log = log;
-            this.app_url = app_url;
+        public OauthPlugin(Site site, string rootPath = null) : base(site, rootPath)
+        { 
             this.OnLogin = OnLoginException;
             this.OnError = OnErrorLog;
         }
@@ -46,6 +42,8 @@ namespace SynkServer.Oauth
 
         public OauthConnection Create(OauthKind kind, Logger log, string client_id, string client_secret, string redirect_uri, string token = null)
         {
+            var app_url = this.site.server.settings.environment == ServerEnvironment.Prod ? this.site.host : "http://localhost";
+
             switch (kind)
             {
                 case OauthKind.Facebook: return new FacebookAuth(log, app_url, client_id, client_secret, redirect_uri);
@@ -54,13 +52,11 @@ namespace SynkServer.Oauth
             }
         }
 
-        public override bool Install(Site site, string path)
+        public override bool Install()
         {
-            this.site = site;
-
             foreach (var auth in _auths.Values)
             {
-                site.Get(Combine(path, auth.localPath), request =>
+                site.Get(Combine(auth.localPath), request =>
                 {
                     var kind = auth.GetKind();
 

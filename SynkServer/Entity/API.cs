@@ -19,19 +19,15 @@ namespace SynkServer.Entity
     {
         private DataFormat format;
         private string mimeType;
-
-        private string rootPath;
-
-        public EntityAPI(DataFormat format = DataFormat.JSON)
+        
+        public EntityAPI(Site site, string rootPath = null, DataFormat format = DataFormat.JSON)  : base(site, rootPath)
         {
             this.format = format;
             this.mimeType = "application/" + format.ToString().ToLower();
         }
 
-        public override bool Install(Site site, string path)
+        public override bool Install()
         {
-            this.site = site;
-            this.rootPath = path;
             return true;
         }
 
@@ -95,7 +91,7 @@ namespace SynkServer.Entity
         public void GenerateAPI<T>() where T : Entity
         {
             var name = typeof(T).Name.ToLower() + "s";
-            var baseURL = Combine(rootPath, $"api/{name}");
+            var baseURL = Combine($"api/{name}");
             site.Get(baseURL, (request) => ListEntities<T>());
             site.Get(baseURL + "/new", (request) => NewEntity<T>(request));
             site.Get(baseURL + "/{id}/show", (request) => ShowEntity<T>(request));

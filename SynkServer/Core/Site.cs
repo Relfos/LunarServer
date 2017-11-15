@@ -9,11 +9,25 @@ namespace SynkServer.Core
 {
     public abstract class SitePlugin
     {
-        public Site site { get; protected set; }
+        public Site site { get; private set; }
+        public string rootPath { get; private set; }
 
-        public abstract bool Install(Site site, string path);
+        public SitePlugin(Site site, string rootPath = null)
+        {
+            if (rootPath == null)
+            {
+                rootPath = "/";
+            }
 
-        public string Combine(string rootPath, string localPath)
+            this.site = site;
+            this.rootPath = rootPath;
+            this.Install();
+        }
+
+
+        public abstract bool Install();
+
+        public string Combine(string localPath)
         {
             if (string.IsNullOrEmpty(rootPath) || rootPath.Equals("/"))
             {
@@ -26,27 +40,40 @@ namespace SynkServer.Core
 
     public class Site
     {
+        public string host { get; private set; }
         public Router router { get; private set; }
         public string filePath { get; private set; }
 
         public Analytics analytics { get; private set; }
 
-        public Logger log { get; private set; }
+        public Logger log { get { return server.log; } }
 
-        private Cache cache;
+        public Cache cache { get; private set; }
 
-        public Site(Logger log, string path)
+        public HTTPServer server { get; private set; }
+
+        private List<SitePlugin> _plugins = new List<SitePlugin>();
+        public IEnumerable<SitePlugin> plugins { get { return _plugins; } }
+
+        public Site(HTTPServer server, string host, string filePath)
         {
-            this.log = log;
-            this.filePath = path;
+            this.server = server;
+
+            this.host = host;
+            this.filePath = filePath;
             this.router = new Router();
             this.analytics = new Analytics(this);
-            this.cache = new Cache(log, path);
+            this.cache = new Cache(log, filePath);
+
+            server.AddSite(this);
         }
 
-        public void Run(HTTPServer server)
+        public virtual void Initialize()
         {
-            server.Run(HandleRequest);
+            foreach (var plugin in plugins)
+            {
+                plugin.Install();
+            }
         }
 
         public void Get(string path, Func<HTTPRequest, object> handler)
@@ -69,12 +96,12 @@ namespace SynkServer.Core
             router.Register(HTTPRequest.Method.Delete, path, handler);
         }
 
-        public bool Install(SitePlugin plugin, string path = "/")
+        public void AddPlugin(SitePlugin plugin)
         {
-            return plugin.Install(this, path);
+            this._plugins.Add(plugin);
         }
 
-        protected virtual HTTPResponse HandleRequest(HTTPRequest request)
+        public virtual HTTPResponse HandleRequest(HTTPRequest request)
         {
             log.Debug($"Router find {request.method}=>{request.url}");
             var route = router.Find(request.method, request.url, request.args);

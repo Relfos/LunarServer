@@ -198,45 +198,6 @@ namespace SynkMVC
                 }
 
             }
-
-        }
-
-        public static string Base64Encode(this byte[] bytes)
-        {
-            return System.Convert.ToBase64String(bytes);
-        }
-
-        public static byte[] Base64Decode(this string base64EncodedData)
-        {
-            return System.Convert.FromBase64String(base64EncodedData);
-        }
-
-        public static string Base64UrlSanitize(this string s)
-        {
-            s = s.Replace("=", "%3D");
-            s = s.Replace("+", "%2B");
-            s = s.Replace("/", "%2F");
-            return s;
-        }
-
-        public static string GetMD5(string fileName)
-        {
-            using (var md5 = System.Security.Cryptography.MD5.Create())
-            {
-                using (var stream = File.OpenRead(fileName))
-                {
-                    var hash = md5.ComputeHash(stream);
-
-                    // step 2, convert byte array to hex string
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < hash.Length; i++)
-                    {
-                        sb.Append(hash[i].ToString("X2"));
-                    }
-
-                    return sb.ToString();
-                }
-            }
         }
 
         public static string GetUniqID()
@@ -250,16 +211,6 @@ namespace SynkMVC
             return a.ToString("x8") + b.ToString("x5");
         }
 
-        public static string FirstLetterToUpper(this string str)
-        {
-            if (str == null)
-                return null;
-
-            if (str.Length > 1)
-                return char.ToUpper(str[0]) + str.Substring(1);
-
-            return str.ToUpper();
-        }
 
         static readonly string[] SizeSuffixes =  { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
 

@@ -59,6 +59,25 @@ namespace SynkServer.Core
             return sb.ToString();
         }
 
+        public static string Base64Encode(this byte[] bytes)
+        {
+            return System.Convert.ToBase64String(bytes);
+        }
+
+        public static byte[] Base64Decode(this string base64EncodedData)
+        {
+            return System.Convert.FromBase64String(base64EncodedData);
+        }
+
+        public static string Base64UrlSanitize(this string s)
+        {
+            s = s.Replace("=", "%3D");
+            s = s.Replace("+", "%2B");
+            s = s.Replace("/", "%2F");
+            return s;
+        }
+
+
         /// <summary>
         /// Compresses the specified buffer using the G-Zip compression algorithm.
         /// </summary>
@@ -188,6 +207,17 @@ namespace SynkServer.Core
             return url;
         }
 
+        public static string FirstLetterToUpper(this string str)
+        {
+            if (str == null)
+                return null;
+
+            if (str.Length > 1)
+                return char.ToUpper(str[0]) + str.Substring(1);
+
+            return str.ToUpper();
+        }
+
         private const string UA = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)";
 
         public static string HTTPGet(string url, Dictionary<string, string> headers = null)
@@ -242,6 +272,16 @@ namespace SynkServer.Core
                 wc.Headers.Add("Content-Type", "application/json");
 
                 wc.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
+
+                if (headers != null)
+                {
+                    foreach (var entry in headers)
+                    {
+                        wc.Headers.Add(entry.Key, entry.Value);
+                    }
+                }
+
+
                 string contents = "";
                 try
                 {
@@ -258,6 +298,7 @@ namespace SynkServer.Core
                 return contents;
             }
         }
+
 
     }
 }
