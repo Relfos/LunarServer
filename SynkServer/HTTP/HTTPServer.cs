@@ -16,7 +16,7 @@ namespace SynkServer.HTTP
     public sealed class HTTPServer: IDisposable
     {
         public Logger log { get; private set; }
-        private TcpListener listener;
+        private Socket listener;
 
         public bool running { get; private set; }
 
@@ -41,7 +41,14 @@ namespace SynkServer.HTTP
             log.Info($"Port: {settings.port}");
             log.Info($"Root path: {fullPath}");
 
-            listener = new TcpListener(IPAddress.Any, 80);
+            
+
+            // Create a TCP/IP socket
+            listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            listener.Blocking = true;
+            listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
+            
+            
         }
 
         public void AddSite(Site site)
@@ -54,7 +61,20 @@ namespace SynkServer.HTTP
 
         public void Run()
         {
-            listener.Start();
+            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, settings.port);
+
+            try
+            {
+                listener.Bind(localEndPoint);
+                listener.Listen(100);
+
+            }
+            catch (Exception e)
+            {
+                log.Error(e.Message);
+                log.Error(e.StackTrace);
+                return;
+            }
 
             foreach (var site in sites)
             {
@@ -72,7 +92,7 @@ namespace SynkServer.HTTP
 
                 try
                 {
-                    var client = listener.AcceptSocketAsync().Result;
+                    var client = listener.Accept();
                     
                     log.Debug("Got a connection...");
 
@@ -405,7 +425,7 @@ namespace SynkServer.HTTP
 
             if (listener != null)
             {
-                listener.Stop();
+                listener.Close();
                 listener = null;
             }
 
