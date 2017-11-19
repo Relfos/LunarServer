@@ -21,7 +21,8 @@ namespace SynkServer.Core
 
             this.site = site;
             this.rootPath = rootPath;
-            this.Install();
+
+            site.AddPlugin(this);
         }
 
 
