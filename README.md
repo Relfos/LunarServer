@@ -14,6 +14,19 @@ So I decided to write something that would allow me to code websites in C# with 
 
 Since this is a .NET standard package, to use with .NET framework projects please set the target to .NET Framework 4.5 or higher, otherwise Nuget will give you installation errors.
 
+## Supported platforms
+
+- .NET Core
+- .NET Framework 3.5 and above
+- Mono & Xamarin
+- UWP
+
+## Supported features
+
+- HTTP methods (GET/POST/PUT/DELETE)
+- Cookies / Sessions
+- File caching / ETAG / GZip compression
+- Forms / File uploads
 
 # Usage
 
@@ -55,6 +68,22 @@ Finally add code to start the server.
 ```
 
 You can now open "http://localhost" in your browser and see "Hello World! appear.
+
+Here's how to support POST requests (from HTML forms, etc)
+```c#
+	site.Post("/myform", (request) =>
+	{		
+		var username = request.args["username"];
+		var password = request.args["password"];
+		
+		if (password == "hello") {
+			return HTTPResponse.FromString("Login ok!");
+		}
+		else {
+			return HTTPResponse.FromString("Invalid login details!");
+		}		
+	});	
+```
 
 Here's how to do dynamic routes (aka pretty URLs)
 ```c#
