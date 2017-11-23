@@ -26,6 +26,11 @@ namespace SynkServer.Oauth
 
         public OauthConnection(Logger log, string app_url, string client_id, string client_secret, string localPath)
         {
+            if (!app_url.StartsWith("http://"))
+            {
+                app_url = "http://" + app_url;
+            }
+
             this.log = log;
             this.app_url = app_url;
             this.client_id = client_id;
