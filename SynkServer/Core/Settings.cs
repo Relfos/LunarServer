@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SynkServer.Core
 {
@@ -14,6 +12,7 @@ namespace SynkServer.Core
     {
         public int port;
         public string path;
+        public string host;
         public ServerEnvironment environment;
 
         public static ServerSettings Parse(string[] args)
@@ -22,6 +21,7 @@ namespace SynkServer.Core
             {
                 port = 80,
                 path = "www",
+                host = "localhost",
                 environment = ServerEnvironment.Dev
             };
 
@@ -38,6 +38,7 @@ namespace SynkServer.Core
 
                 switch (key)
                 {
+                    case "host": result.host = val; break;
                     case "port": int.TryParse(val, out result.port); break;
                     case "path": result.path = val; break;
                     case "env": Enum.TryParse(val.FirstLetterToUpper(), out result.environment); break;

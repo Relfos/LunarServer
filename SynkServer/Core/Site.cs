@@ -41,7 +41,7 @@ namespace SynkServer.Core
 
     public class Site
     {
-        public string host { get; private set; }
+        public string host { get { return server.settings.host; } }
         public Router router { get; private set; }
         public string filePath { get; private set; }
 
@@ -56,11 +56,10 @@ namespace SynkServer.Core
         private List<SitePlugin> _plugins = new List<SitePlugin>();
         public IEnumerable<SitePlugin> plugins { get { return _plugins; } }
 
-        public Site(HTTPServer server, string host, string filePath)
+        public Site(HTTPServer server, string filePath)
         {
             this.server = server;
 
-            this.host = host;
             this.filePath = filePath;
             this.router = new Router();
             this.analytics = new Analytics(this);
