@@ -33,7 +33,7 @@ namespace SynkServer.Entity
 
         protected HTTPResponse HandleRequest(HTTPRequest request)
         {
-            var url = Utils.FixUrl(request.path);
+            var url = StringUtils.FixUrl(request.path);
 
             if (url.Equals("/favicon.ico"))
             {

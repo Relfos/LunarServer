@@ -302,7 +302,7 @@ namespace SynkServer.HTTP
 
             var targetHost = request.headers["Host"];
 
-            if (settings.environment == ServerEnvironment.Dev)
+            if (settings.environment == ServerEnvironment.Dev || _sites.Count == 1)
             {
                 return _sites.Count> 0 ? _sites[0] : null;
             }

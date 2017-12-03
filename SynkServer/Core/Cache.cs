@@ -13,6 +13,7 @@ namespace SynkServer.Core
         public string hash;
         public byte[] bytes;
         public bool isCompressed;
+        public bool isDownload;
         public string contentType;
 
         public void Reload()
@@ -20,7 +21,7 @@ namespace SynkServer.Core
             this.bytes = File.ReadAllBytes(path);
 
             bool shouldCompress;
-            this.contentType = MimeUtils.GetContentType(path, out shouldCompress);
+            this.contentType = MimeUtils.GetContentType(path, out shouldCompress, out isDownload);
 
             if (shouldCompress && (this.bytes.Length < 1400 || this.bytes.Length < 1024 * 128))
             {
@@ -28,7 +29,7 @@ namespace SynkServer.Core
             }
 
             this.isCompressed = shouldCompress;
-            this.hash = Utils.MD5(this.bytes);
+            this.hash = StringUtils.MD5(this.bytes);
 
             if (shouldCompress)
             {
@@ -122,7 +123,11 @@ namespace SynkServer.Core
 
             var fileName = Path.GetFileName(request.url);
 
-            result.headers["Content-Disposition"] = "attachment; filename=\"" + fileName + "\"";
+            if (entry.isDownload)
+            {
+                result.headers["Content-Disposition"] = "attachment; filename=\"" + fileName + "\"";
+            }
+
             result.headers["Content-Transfer-Encoding"] = "binary";
             result.headers["Connection"] = "Keep-Alive";
             //result.headers["Expires"] = "0";

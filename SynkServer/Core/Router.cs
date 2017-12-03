@@ -29,7 +29,7 @@ namespace SynkServer.Core
 
         public void Register(HTTPRequest.Method method, string path, Func<HTTPRequest, object> handler)
         {
-            path = Utils.FixUrl(path);
+            path = StringUtils.FixUrl(path);
 
             Dictionary<int, string> names;
 

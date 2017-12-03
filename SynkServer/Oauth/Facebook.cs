@@ -1,6 +1,7 @@
 ﻿using LunarParser;
 using LunarParser.JSON;
 using SynkServer.Core;
+using SynkServer.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -44,7 +45,7 @@ namespace SynkServer.Oauth
 
             try
             {
-                var json = Utils.HTTPGet(url);
+                var json = HTTPUtils.Get(url);
                 var root = JSONReader.ReadFromString(json);
 
                 return root.GetString("access_token");
@@ -99,7 +100,7 @@ namespace SynkServer.Oauth
 
                 if (userid == null) { userid = "me"; }
                 var url = $"https://graph.facebook.com/{userid}?access_token={token}&fields={fieldStr}";
-                var json = Utils.HTTPGet(url);
+                var json = HTTPUtils.Get(url);
                 var root = JSONReader.ReadFromString(json);
 
                 return root;

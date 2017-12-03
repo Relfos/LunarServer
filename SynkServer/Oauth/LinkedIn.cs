@@ -1,6 +1,7 @@
 ﻿using LunarParser;
 using LunarParser.JSON;
 using SynkServer.Core;
+using SynkServer.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -36,7 +37,7 @@ namespace SynkServer.Oauth
 
             try
             {
-                var json = Utils.HTTPPost(url, args);
+                var json = HTTPUtils.Post(url, args);
                 var root = JSONReader.ReadFromString(json);
 
                 return root.GetString("access_token");
@@ -83,7 +84,7 @@ namespace SynkServer.Oauth
                 var headers = new Dictionary<string, string>();
                 headers["Authorization"] = "Bearer " + token;
 
-                var json = Utils.HTTPGet(url, headers);
+                var json = HTTPUtils.Get(url, headers);
                 var root = JSONReader.ReadFromString(json);
 
                 return root;
