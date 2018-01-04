@@ -40,15 +40,11 @@ namespace SynkServer.HTTP
             log.Info($"~LUNAR SERVER~ [{settings.environment} mode]");
             log.Info($"Port: {settings.port}");
             log.Info($"Root path: {fullPath}");
-
             
-
             // Create a TCP/IP socket
             listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             listener.Blocking = true;
-            listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
-            
-            
+            listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);                       
         }
 
         public void AddSite(Site site)
@@ -160,7 +156,8 @@ namespace SynkServer.HTTP
                         request.version = s[2];
 
                         var path = s[1].Split('?');
-                        request.url = path[0];
+                        request.path = path[0];
+                        request.url = s[1];
 
                         log.Info(request.method.ToString() +" "+ s[1]);
 

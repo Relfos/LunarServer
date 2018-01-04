@@ -22,6 +22,7 @@ namespace SynkServer.Oauth
         public override string GetLoginURL()
         {
             return $"https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id={client_id}&redirect_uri={GetRedirectURL()}&state={OAUTH_ID}&scope=r_basicprofile%20r_emailaddress";
+            //r_fullprofile
         }
 
         private string Authorize(string code)
@@ -67,6 +68,7 @@ namespace SynkServer.Oauth
                     name = user.GetString("formattedName"),
                     email = user.GetString("emailAddress"),
                     photo = user.GetString("pictureUrl"),
+                    birthday = user.GetString("date-of-birth"),
                     data = user
                 };
                 return profile;

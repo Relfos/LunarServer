@@ -33,6 +33,7 @@ namespace SynkServer.HTTP
         {
             this.date = DateTime.UtcNow;
 
+            headers["Date"] = date.ToString("r");
             headers["Server"] = "LunarServer";
             headers["Connection"] = "close";
             //headers["Content-Type"] = "text/html";
@@ -63,20 +64,43 @@ Vary: Accept-Encoding, Cookie, User-Agent
             return result;
         }
 
-        public static HTTPResponse NotModified()
+        //https://stackoverflow.com/questions/1587667/should-http-304-not-modified-responses-contain-cache-control-headers
+        public static HTTPResponse NotModified(string etag = null, int maxAge = 0)
         {
             var result = new HTTPResponse();
             result.code = HTTPCode.NotModified;
             result.bytes = new byte[0];
+
+            if (maxAge>0)
+            {
+                result.headers["Cache-Control"] = "max-age=" + maxAge + ", public";
+            }
+
+            if (etag != null)
+            {
+                result.headers["ETag"] = etag;
+            }
             return result;
         }
 
-        public static HTTPResponse FromString(string content, HTTPCode code = HTTPCode.OK, string contentType= "text/html")
+        public static HTTPResponse FromString(string content, HTTPCode code = HTTPCode.OK, bool compress = false, string contentType= "text/html")
         {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+            if (compress)
+            {
+                bytes = bytes.GZIPCompress();
+            }
+
             var result = new HTTPResponse();
             result.code = code;
-            result.bytes = System.Text.Encoding.UTF8.GetBytes(content);
+            result.bytes = bytes;
             result.headers["Content-Type"] = contentType;
+
+            if (compress)
+            {
+                result.headers["Content-Encoding"] = "gzip";
+            }
+
             return result;
         }
         

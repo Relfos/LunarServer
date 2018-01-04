@@ -56,7 +56,8 @@ namespace SynkServer.Oauth
         {
             foreach (var auth in _auths.Values)
             {
-                site.Get(Combine(auth.localPath), request =>
+                var path = Combine(auth.localPath);
+                site.Get(path, request =>
                 {
                     var kind = auth.GetKind();
 

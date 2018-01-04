@@ -34,8 +34,8 @@ namespace SynkServer.Oauth
         public override string GetLoginURL()
         {
             var url = authorization_base_url + "?response_type=code&redirect_uri="+GetRedirectURL()+"&client_id=" + client_id;
-            //url += "&auth_type=rerequest";
-            url += "&scope=email,public_profile"; //user_birthday,
+            url += "&auth_type=rerequest";
+            url += "&scope=email,public_profile"; //,user_birthday";
             return url;
         }
 
@@ -75,8 +75,11 @@ namespace SynkServer.Oauth
                     name = user.GetString("name"),
                     email = user.GetString("email"),
                     photo = user.GetNode("picture").GetNode("data").GetString("url"),
+                    birthday = "",//user.GetString("birthday"),
                     data = user
                 };
+
+                var likes = GetLikes(profile.id, token);
 
                 return profile;
             }
@@ -112,6 +115,23 @@ namespace SynkServer.Oauth
             }
         }
 
+
+        public DataNode GetLikes(string userid, string token)
+        {
+            try
+            {
+                var url = $"https://graph.facebook.com/{userid}/likes?access_token={token}";
+                var json = HTTPUtils.Get(url);
+                var root = JSONReader.ReadFromString(json);
+
+                return root;
+            }
+            catch (Exception e)
+            {
+                log.Error(e.ToString());
+                return null;
+            }
+        }
 
     }
 }

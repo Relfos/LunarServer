@@ -191,7 +191,7 @@ namespace SynkServer.Core
 
             return text;
         }
-
+        
         public static string FixUrl(string url)
         {
             if (url.StartsWith("/"))

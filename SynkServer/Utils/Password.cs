@@ -16,6 +16,19 @@ namespace SynkServer.Utils
             return Crypt.crypt(key, salt);
         }
 
+        public static bool CheckPassword(this string password, string user_hash)
+        {
+            var password_md5 = password.MD5();
+
+            if (string.IsNullOrEmpty(user_hash))
+            {
+                return false;
+            }
+
+            var temp_hash = Crypt.crypt(password_md5.ToLower(), user_hash);
+            return temp_hash.Equals(user_hash);
+        }
+
         public static string Shuffle(this string str)
         {
             char[] array = str.ToCharArray();

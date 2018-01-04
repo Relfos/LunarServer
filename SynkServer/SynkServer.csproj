@@ -16,7 +16,6 @@
 
   <ItemGroup>
     <PackageReference Include="LunarParser" Version="1.0.17" />
-    <PackageReference Include="mustache-sharp" Version="0.2.10" />
   </ItemGroup>
 
 </Project>

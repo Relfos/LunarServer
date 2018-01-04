@@ -1,5 +1,6 @@
 ﻿using LunarParser;
 using LunarParser.XML;
+using SynkServer.Templates;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,11 +9,11 @@ using System.Threading;
 
 namespace SynkServer.Entity
 {
-    public class EntityCollection
+    public class EntityCollection: TemplateDependency
     {
         public Type objectType { get; private set;}
 
-        public EntityCollection(Type objectType)
+        public EntityCollection(Type objectType) : base(objectType.Name.ToLower())
         {
             this.objectType = objectType;
 
@@ -109,6 +110,7 @@ namespace SynkServer.Entity
                     var contents = XMLWriter.WriteToString(result);
                     File.WriteAllText(GetFileName(), contents);
                     _shouldSave = false;
+                    currentVersion++;
                 }
             }
         }

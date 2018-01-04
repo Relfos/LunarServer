@@ -14,6 +14,7 @@ namespace SynkServer.Oauth
         public string name;
         public string email;
         public string photo;
+        public string birthday;
 
         public string token;
         public DataNode data;

@@ -32,7 +32,7 @@ namespace SynkServer.Core
         {
             if (string.IsNullOrEmpty(rootPath) || rootPath.Equals("/"))
             {
-                return localPath;
+                return "/"+localPath;
             }
 
             return rootPath + "/" + localPath;
@@ -45,11 +45,9 @@ namespace SynkServer.Core
         public Router router { get; private set; }
         public string filePath { get; private set; }
 
-        public Analytics analytics { get; private set; }
-
         public Logger log { get { return server.log; } }
 
-        public Cache cache { get; private set; }
+        public FileCache cache { get; private set; }
 
         public HTTPServer server { get; private set; }
 
@@ -62,8 +60,7 @@ namespace SynkServer.Core
 
             this.filePath = filePath;
             this.router = new Router();
-            this.analytics = new Analytics(this);
-            this.cache = new Cache(log, filePath);
+            this.cache = new FileCache(log, filePath);
 
             server.AddSite(this);
         }
@@ -104,7 +101,7 @@ namespace SynkServer.Core
         public virtual HTTPResponse HandleRequest(HTTPRequest request)
         {
             log.Debug($"Router find {request.method}=>{request.url}");
-            var route = router.Find(request.method, request.url, request.args);
+            var route = router.Find(request.method, request.path, request.args);
 
             if (route != null)
             {
@@ -123,7 +120,7 @@ namespace SynkServer.Core
 
                 if (obj is string)
                 {
-                    return HTTPResponse.FromString((string)obj);
+                    return HTTPResponse.FromString((string)obj, HTTPCode.OK, true);
                 }
 
                 if (obj is byte[])
