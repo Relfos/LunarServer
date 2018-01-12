@@ -111,6 +111,46 @@ namespace SynkServer.Templates
         }
     }
 
+    public class UpperNode : TemplateNode
+    {
+        public string key;
+
+        public UpperNode(string key)
+        {
+            this.key = key;
+        }
+
+        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        {
+            var obj = TemplateEngine.EvaluateObject(context, pointer, key);
+            if (obj != null)
+            {
+                var temp = obj.ToString().ToUpper();
+                output.Append(temp);
+            }
+        }
+    }
+
+    public class LowerNode : TemplateNode
+    {
+        public string key;
+
+        public LowerNode(string key)
+        {
+            this.key = key;
+        }
+
+        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        {
+            var obj = TemplateEngine.EvaluateObject(context, pointer, key);
+            if (obj != null)
+            {
+                var temp = obj.ToString().ToLower();
+                output.Append(temp);
+            }
+        }
+    }
+
     public class EncodeNode : TemplateNode
     {
         public string key;
@@ -191,17 +231,28 @@ namespace SynkServer.Templates
                 return;
             }
 
+            var dic = (Dictionary<string, object>)context;
+
             var list = obj as IEnumerable;
 
             if (list != null)
             {
+                int index = 0;
+                int last = list.Count() - 1;
                 foreach (var item in list)
                 {
+                    dic["@index"] = index;
+                    dic["@first"] = index == 0;
+                    dic["@last"] = index == last;
                     inner.Execute(queue, context, item, output);
+                    index++;
                 }
             }
             else
             {
+                dic["@index"] = 0;
+                dic["@first"] = true;
+                dic["@last"] = true;
                 inner.Execute(queue, context, obj, output);
             }
         }

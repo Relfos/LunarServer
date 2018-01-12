@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace SynkServer.Core
 {
@@ -17,10 +18,12 @@ namespace SynkServer.Core
 
         public static ServerSettings Parse(string[] args)
         {
+            var exePath = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+
             var result = new ServerSettings()
             {
                 port = 80,
-                path = "www",
+                path = exePath,
                 host = "localhost",
                 environment = ServerEnvironment.Dev
             };
@@ -40,9 +43,19 @@ namespace SynkServer.Core
                 {
                     case "host": result.host = val; break;
                     case "port": int.TryParse(val, out result.port); break;
-                    case "path": result.path = val; break;
+                    case "path":
+                        {
+                            result.path = val;
+                            break;
+                        }
                     case "env": Enum.TryParse(val.FirstLetterToUpper(), out result.environment); break;
                 }
+            }
+
+            result.path = result.path.Replace("\\", "/");
+            if (!result.path.EndsWith("/"))
+            {
+                result.path += "/";
             }
 
             return result;

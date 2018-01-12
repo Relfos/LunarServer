@@ -29,6 +29,8 @@ namespace SynkServer.HTTP
             Delete
         }
 
+        public HTTPServer server;
+
         public Method method;
         public string url;
         public string path;

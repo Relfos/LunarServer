@@ -45,11 +45,10 @@ Instantiate the necessary classes:
 	// either parse the settings from the program args or initialize them manually
 	var settings = ServerSettings.Parse(args);
 
-	var host = "mycoolwebsite.com";
 	var server = new HTTPServer(log, settings);
 	
-	// instantiate a new site, the third argument is the file path where the public site contents will be found
-	var site = new Site(server, host, "public");
+	// instantiate a new site, the second argument is the file path where the public site contents will be found
+	var site = new Site(server, "public");
 ```
 
 Add some routes to the site.

@@ -1,4 +1,5 @@
 ﻿using SynkServer.Core;
+using SynkServer.HTTP;
 using SynkServer.Minifiers;
 using System;
 using System.Collections;
@@ -43,20 +44,29 @@ namespace SynkServer.Templates
 
         private string filePath;
 
-        public TemplateEngine(string filePath)
+        public Func<string, TemplateNode> On404;
+
+        public TemplateEngine(HTTPServer server, string filePath)
         {
-            if (!filePath.EndsWith("/"))
+            this.filePath = server.settings.path + filePath;
+
+            if (!this.filePath.EndsWith("/"))
             {
-                filePath += "/";
+                this.filePath += "/";
             }
 
-            this.filePath = filePath;
+            this.On404 = (name) =>
+            {
+                return new TextNode("404 not found");
+            };
 
             RegisterTag("body", x => new BodyNode());
             RegisterTag("encode", x => new EncodeNode(x));
             RegisterTag("include", x => new IncludeNode(x));
             RegisterTag("date", arg => new DateNode(arg));
             RegisterTag("span", arg => new SpanNode(arg));
+            RegisterTag("upper", arg => new UpperNode(arg));
+            RegisterTag("lower", arg => new LowerNode(arg));
         }
 
         public TemplateNode FindTemplate(string name)
@@ -68,8 +78,8 @@ namespace SynkServer.Templates
                 var fileName = filePath + name + ".html";
                 if (!File.Exists(fileName))
                 {
-                    //localPath = Path.Combine("views", "404.html");
-                    throw new Exception("Error loading view '" + name + "', the file was not found!");
+                    return this.On404(name);
+                    //throw new Exception("Error loading view '" + name + "', the file was not found!");
                 }
 
                 lastMod = File.GetLastWriteTime(fileName);
@@ -100,10 +110,18 @@ namespace SynkServer.Templates
 
         public static object EvaluateObject(object context, object obj, string key)
         {
+            bool negate = false;
+
+            if (key.StartsWith("!"))
+            {
+                key = key.Substring(1);
+                negate = true;
+            }
+
             switch (key)
             {
-                case "true": return true;
-                case "false": return false;
+                case "true": return !negate;
+                case "false": return negate;
                 case "this": return obj;
             }
 
@@ -124,17 +142,25 @@ namespace SynkServer.Templates
                 var leftSide = EvaluateObject(context, obj, temp[0]);
                 var rightSide = EvaluateObject(context, obj, temp[1]);
 
+                bool val;
+
                 if (leftSide == null && rightSide == null)
                 {
-                    return true;
+                    val = true;
                 }
-
+                else
                 if ((leftSide == null && rightSide != null) || (leftSide != null && rightSide == null))
                 {
-                    return false;
+                    val = false;
                 }
+                else
+                {
+                    val = leftSide.ToString().Equals(rightSide.ToString());
+                }
+                
+                if (negate) val = !val;
 
-                return leftSide.ToString().Equals(rightSide.ToString());
+                return val;
             }
 
             if (key.Contains("."))
@@ -157,13 +183,27 @@ namespace SynkServer.Templates
             var field = type.GetField(key);
             if (field != null)
             {
-                return field.GetValue(obj);
+                var result = field.GetValue(obj);
+
+                if (negate && result is bool)
+                {
+                    return !((bool)result);
+                }
+
+                return result;
             }
 
             var prop = type.GetProperty(key);
             if (prop != null)
             {
-                return prop.GetValue(obj);
+                var result = prop.GetValue(obj);
+
+                if (negate && result is bool)
+                {
+                    return !((bool)result);
+                }
+
+                return result;
             }
 
             IDictionary dict = obj as IDictionary;
@@ -645,7 +685,10 @@ namespace SynkServer.Templates
         {
             var obj = ParseTemplate(code);
 
-            return CompileNode(obj);
+            var result = CompileNode(obj);
+
+            //Print(result);
+            return result;
         }
 
         private Dictionary<string, Func<string, TemplateNode>> _customTags = new Dictionary<string, Func<string, TemplateNode>>();

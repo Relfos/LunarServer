@@ -58,9 +58,14 @@ namespace SynkServer.Core
         {
             this.server = server;
 
-            this.filePath = filePath;
+            this.filePath = server.settings.path + filePath;
+            if (!this.filePath.EndsWith("/"))
+            {
+                this.filePath += "/";
+            }
+
             this.router = new Router();
-            this.cache = new FileCache(log, filePath);
+            this.cache = new FileCache(log, this.filePath);
 
             server.AddSite(this);
         }

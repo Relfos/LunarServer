@@ -218,5 +218,110 @@ namespace SynkServer.Core
             return str.ToUpper();
         }
 
+        public static string Summary(this string text, int wordCount)
+        {
+            var s = text.Split(' ');
+            var sb = new StringBuilder();
+
+            int max = Math.Min(wordCount, s.Length);
+            for (int i = 0; i < max; i++)
+            {
+                if (i > 0) { sb.Append(' '); }
+                sb.Append(s[i]);
+            }
+
+            sb.Append("...");
+            return sb.ToString();
+        }
+
+        /*public static string Summary(this string text, int wordCount)
+        {
+            bool inTag = false;
+            int cntr = 0;
+            int cntrWords = 0;
+            Char lastc = ' ';
+
+            // loop through html, counting only viewable content
+            foreach (Char c in text)
+            {
+                if (cntrWords == wordCount) break;
+                cntr++;
+                if (c == '<')
+                {
+                    inTag = true;
+                    continue;
+                }
+
+                if (c == '>')
+                {
+                    inTag = false;
+                    continue;
+                }
+                if (!inTag)
+                {
+                    // do not count double spaces, and a space not in a tag counts as a word
+                    if (c == 32 && lastc != 32)
+                        cntrWords++;
+                }
+            }
+
+            string substr = text.Substring(0, cntr) + " ...";
+
+            //search for nonclosed tags        
+            MatchCollection openedTags = new Regex("<[^/](.|\n)*?>").Matches(substr);
+            MatchCollection closedTags = new Regex("<[/](.|\n)*?>").Matches(substr);
+
+            // create stack          
+            Stack<string> opentagsStack = new Stack<string>();
+            Stack<string> closedtagsStack = new Stack<string>();
+
+            foreach (Match tag in openedTags)
+            {
+                string openedtag = tag.Value.Substring(1, tag.Value.Length - 2);
+                // strip any attributes, sure we can use regex for this!
+                if (openedtag.IndexOf(" ") >= 0)
+                {
+                    openedtag = openedtag.Substring(0, openedtag.IndexOf(" "));
+                }
+
+                // ignore brs as self-closed
+                if (openedtag.Trim() != "br")
+                {
+                    opentagsStack.Push(openedtag);
+                }
+            }
+
+            foreach (Match tag in closedTags)
+            {
+                string closedtag = tag.Value.Substring(2, tag.Value.Length - 3);
+                closedtagsStack.Push(closedtag);
+            }
+
+            if (closedtagsStack.Count < opentagsStack.Count)
+            {
+                while (opentagsStack.Count > 0)
+                {
+                    string tagstr = opentagsStack.Pop();
+
+                    if (closedtagsStack.Count == 0 || tagstr != closedtagsStack.Peek())
+                    {
+                        substr += "</" + tagstr + ">";
+                    }
+                    else
+                    {
+                        closedtagsStack.Pop();
+                    }
+                }
+            }
+
+            return substr;
+        }*/
+
+        // warning - this might not work in all cases, a better solution is necessary later
+        public static string StripHTML(this string input)
+        {
+            return Regex.Replace(input, "<.*?>", String.Empty);
+        }
+
     }
 }

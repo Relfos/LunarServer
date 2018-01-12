@@ -35,7 +35,7 @@ namespace SynkServer.HTTP
 
             RestoreSessionData();
 
-            var fullPath = Directory.GetCurrentDirectory() + "/" + settings.path;
+            var fullPath = settings.path;
             fullPath = fullPath.Replace("\\", "/");
             log.Info($"~LUNAR SERVER~ [{settings.environment} mode]");
             log.Info($"Port: {settings.port}");
@@ -132,6 +132,7 @@ namespace SynkServer.HTTP
                 if (client.ReadLines(out lines, out unread))
                 {
                     var request = new HTTPRequest();
+                    request.server = this;
 
                     foreach (var line in lines)
                     {
