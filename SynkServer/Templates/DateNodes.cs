@@ -43,22 +43,58 @@ namespace SynkServer.Templates
             this.key = key;
         }
 
-        public static string FormatTimeSpan(TimeSpan span)
+        private static string FetchTranslation(string key, object context)
+        {
+            try
+            {
+                var translation = (Dictionary<string, string>)(((Dictionary<string, object>)context)["translation"]);
+                if (translation != null)
+                {
+                    var obj = TemplateEngine.EvaluateObject(context, translation, "time_" + key);
+                    if (obj != null)
+                    {
+                        return (string)obj;
+                    }
+                }
+
+                return key;
+            }
+            catch
+            {
+                return key;
+            }
+        }
+
+        public static string FormatTimeSpan(TimeSpan span, object context)
         {
             string result;
 
+            if (span.TotalMinutes<=5)
+            {
+                result = FetchTranslation("now", context);
+            }
+            else
             if (span.TotalHours < 1)
             {
-                result = span.Minutes + " minutes";
+                int minutes = (int)span.TotalMinutes;
+                result = minutes + " " + FetchTranslation("minutes", context);
             }
             else
             if (span.TotalDays < 1)
             {
-                result = span.Hours + " hours";
+                int hours = (int)span.TotalHours;
+                result = hours + " " + FetchTranslation("hours", context);
+            }
+            else
+            if (span.TotalDays < 365)
+            {
+                int days = (int)span.TotalDays;
+                result = span.Days + " " + FetchTranslation("days", context);
             }
             else
             {
-                result = span.Days + " days";
+                var years = (int)(span.Days / 365);
+                result = years + " " + FetchTranslation("years", context);
             }
 
             return result;
@@ -76,7 +112,7 @@ namespace SynkServer.Templates
                 DateTime time = (DateTime)temp;
 
                 var diff = cur_time - time;
-                var result = FormatTimeSpan(diff);
+                var result = FormatTimeSpan(diff, context);
                 output.Append(result);
             }
         }

@@ -20,6 +20,8 @@ namespace SynkServer.HTTP
 
         public bool running { get; private set; }
 
+        public DateTime startTime { get; private set; }
+
         public Action<HTTPRequest> OnNewVisitor;
 
         public ServerSettings settings { get; private set; }
@@ -30,6 +32,19 @@ namespace SynkServer.HTTP
         public HTTPServer(Logger log, ServerSettings settings)
         {
             this.log = log;
+            this.startTime = DateTime.Now;
+
+            if (log.level == LogLevel.Default)
+            {
+                if (settings.environment == ServerEnvironment.Prod)
+                {
+                    log.level = LogLevel.Info;
+                }
+                else
+                {
+                    log.level = LogLevel.Debug;
+                }
+            }
 
             this.settings = settings;
 
