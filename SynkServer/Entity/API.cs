@@ -157,7 +157,7 @@ namespace SynkServer.Entity
         private static object NewEntity<T>(HTTPRequest request) where T : Entity
         {
             var entity = Entity.Create<T>();
-            var node = request.args.ToDataSource(typeof(T).Name.ToLower());
+            var node = request.args.ToDataNode(typeof(T).Name.ToLower());
             Check(request.args, Entity.GetFields<T>());
             entity.Deserialize(node);
             entity.Save();
@@ -167,7 +167,7 @@ namespace SynkServer.Entity
 
         private static object EditEntity<T>(HTTPRequest request) where T : Entity
         {
-            var node = request.args.ToDataSource(typeof(T).Name.ToLower());
+            var node = request.args.ToDataNode(typeof(T).Name.ToLower());
             var id = Check(request.args, "id");
             var entity = Check<T>(id);
             entity.Deserialize(node);
@@ -178,7 +178,7 @@ namespace SynkServer.Entity
 
         private static object DeleteEntity<T>(HTTPRequest request) where T : Entity
         {
-            var node = request.args.ToDataSource(typeof(T).Name.ToLower());
+            var node = request.args.ToDataNode(typeof(T).Name.ToLower());
             var id = Check(request.args, "id");
             var entity = Check<T>(id);
             entity.Delete();

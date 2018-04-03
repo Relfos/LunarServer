@@ -1,11 +1,11 @@
-﻿using SynkServer.Core;
+﻿using LunarParser;
+using SynkServer.Core;
 using SynkServer.HTTP;
 using SynkServer.Minifiers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Security;
 using System.Text;
 
 namespace SynkServer.Templates
@@ -42,7 +42,7 @@ namespace SynkServer.Templates
 
         private Dictionary<string, CacheEntry> _cache = new Dictionary<string, CacheEntry>();
 
-        private string filePath;
+        public string filePath { get; private set; }
 
         public Func<string, TemplateNode> On404;
 
@@ -78,8 +78,12 @@ namespace SynkServer.Templates
                 var fileName = filePath + name + ".html";
                 if (!File.Exists(fileName))
                 {
+                    if (_cache.ContainsKey(name))
+                    {
+                        return _cache[name].node;
+                    }
+
                     return this.On404(name);
-                    //throw new Exception("Error loading view '" + name + "', the file was not found!");
                 }
 
                 lastMod = File.GetLastWriteTime(fileName);
@@ -206,6 +210,30 @@ namespace SynkServer.Templates
                 return result;
             }
 
+            DataNode node = obj as DataNode;
+            if (node != null)
+            {
+                if (node.HasNode(key))
+                {
+                    var val = node.GetNode(key);
+                    if (val != null)
+                    {
+                        if (val.ChildCount > 0)
+                        {
+                            return val;
+                        }
+                        else
+                        {
+                            return val.Value;
+                        }
+                    }
+
+                    return null;
+                }
+
+                return null;
+            }
+
             IDictionary dict = obj as IDictionary;
             if (dict != null)
             {
@@ -217,7 +245,7 @@ namespace SynkServer.Templates
 
                 type = obj.GetType();
                 Type valueType = type.GetGenericArguments()[1];
-                return valueType.GetDefault();               
+                return valueType.GetDefault();
             }
 
             ICollection collection;
@@ -241,6 +269,16 @@ namespace SynkServer.Templates
             }
 
             return null;
+        }
+
+        public void RegisterTemplate(string name, string content)
+        {
+            lock (_cache)
+            {
+                var node = CompileTemplate(content);
+
+                _cache[name] = new CacheEntry() { node = node, lastModified = DateTime.Now };
+            }
         }
 
         public string Render(Site site, object context, IEnumerable<string> templateList)

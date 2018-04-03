@@ -97,6 +97,12 @@ namespace SynkServer.Templates
         public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
         {
             var obj = TemplateEngine.EvaluateObject(context, pointer, key);
+
+            if (obj == null && context != pointer)
+            {
+                obj = TemplateEngine.EvaluateObject(context, context, key);
+            }
+
             if (obj != null)
             {
                 var temp = obj.ToString();

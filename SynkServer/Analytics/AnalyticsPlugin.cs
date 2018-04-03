@@ -15,8 +15,6 @@ namespace SynkServer.Analytics
 
     public class AnalyticsPlugin
     {
-        public string FileName { get; private set; }
-
         private Dictionary<string, AnalyticsCollection> _collections = new Dictionary<string, AnalyticsCollection>();
 
         private Site site;
@@ -25,112 +23,123 @@ namespace SynkServer.Analytics
 
         private static Thread saveThread = null;
 
+        public string FileName
+        {
+            get;
+            private set;
+        }
+
         public AnalyticsPlugin(Site site, string fileName)
         {
             this.site = site;
             this.FileName = fileName;
-
-            LoadAnalyticsData();
-
-            RequestBackgroundThread();
+            this.LoadAnalyticsData();
+            this.RequestBackgroundThread();
         }
 
         public void RegisterEvent(Enum val, long timestamp)
         {
-            RegisterEvent(val.ToString().ToLowerInvariant(), timestamp);
+            this.RegisterEvent(val.ToString().ToLowerInvariant(), timestamp);
         }
 
         public void RegisterEvent<T>(Enum val, long timestamp, object obj)
         {
-            RegisterEvent<T>(val.ToString().ToLowerInvariant(), timestamp, obj);
+            this.RegisterEvent<T>(val.ToString().ToLowerInvariant(), timestamp, obj);
         }
 
         public void RegisterEvent(string key, long timestamp)
         {
-            RegisterEvent(key, timestamp, null, typeof(object));
+            this.RegisterEvent(key, timestamp, null, typeof(object));
         }
 
         public void RegisterEvent<T>(string key, long timestamp, object obj)
         {
-            var type = typeof(T);
-            RegisterEvent(key, timestamp, obj, type);
+            Type typeFromHandle = typeof(T);
+            this.RegisterEvent(key, timestamp, obj, typeFromHandle);
         }
 
         private void RegisterEvent(string key, long timestamp, object obj, Type type)
         {
-            var dataType = FromType(type);
-            var table = FindTable(key, dataType);
-
-            lock (table)
+            AnalyticsDataType dataType = this.FromType(type);
+            AnalyticsCollection analyticsCollection = this.FindTable(key, dataType, true);
+            lock (analyticsCollection)
             {
-                table.Add(timestamp,  obj);
-
-                changed = true;
+                analyticsCollection.Add(timestamp, obj);
+                this.changed = true;
             }
-
         }
 
-        private AnalyticsCollection FindTable(string key, AnalyticsDataType dataType)
+        private AnalyticsCollection FindTable(string key, AnalyticsDataType dataType, bool canCreate)
         {
-            lock (_collections)
+            lock (this._collections)
             {
-                AnalyticsCollection table = null;
-
-                if (_collections.ContainsKey(key))
+                AnalyticsCollection analyticsCollection = null;
+                if (this._collections.ContainsKey(key))
                 {
-                    table = _collections[key];
+                    analyticsCollection = this._collections[key];
                 }
-
-                if (table == null)
+                if (analyticsCollection == null & canCreate)
                 {
-                    table = new AnalyticsCollection(key, dataType);
-                    _collections[key] = table;
+                    analyticsCollection = new AnalyticsCollection(key, dataType);
+                    this._collections[key] = analyticsCollection;
                 }
-
-                return table;
+                return analyticsCollection;
             }
         }
 
         private void RequestBackgroundThread()
         {
             this.site.log.Info("Running analytics thread");
-
-            saveThread = new Thread(() =>
+            AnalyticsPlugin.saveThread = new Thread((ThreadStart)delegate
             {
                 Thread.CurrentThread.IsBackground = true;
-
-                do
+                while (true)
                 {
                     Thread.Sleep(10000);
-                    if (changed)
+                    if (this.changed)
                     {
-                        SaveAnalyticsData();
+                        this.SaveAnalyticsData();
                     }
-                } while (true);
+                    bool flag = true;
+                }
             });
-
-            saveThread.Start();
+            AnalyticsPlugin.saveThread.Start();
         }
 
         private Type FromDataType(AnalyticsDataType dataType)
         {
             switch (dataType)
             {
-                case AnalyticsDataType.None: return typeof(object);
-                case AnalyticsDataType.String: return typeof(string);
-                case AnalyticsDataType.SByte: return typeof(sbyte);
-                case AnalyticsDataType.Short: return typeof(short);
-                case AnalyticsDataType.Int: return typeof(int);
-                case AnalyticsDataType.Long: return typeof(long);
-                case AnalyticsDataType.Byte: return typeof(byte);
-                case AnalyticsDataType.UShort: return typeof(ushort);
-                case AnalyticsDataType.UInt: return typeof(uint);
-                case AnalyticsDataType.ULong: return typeof(ulong);
-                case AnalyticsDataType.Float: return typeof(float);
-                case AnalyticsDataType.Double: return typeof(double);
-                case AnalyticsDataType.Decimal: return typeof(decimal);
-                case AnalyticsDataType.Bool: return typeof(bool);
-                default: return null;
+                case AnalyticsDataType.None:
+                    return typeof(object);
+                case AnalyticsDataType.String:
+                    return typeof(string);
+                case AnalyticsDataType.SByte:
+                    return typeof(sbyte);
+                case AnalyticsDataType.Short:
+                    return typeof(short);
+                case AnalyticsDataType.Int:
+                    return typeof(int);
+                case AnalyticsDataType.Long:
+                    return typeof(long);
+                case AnalyticsDataType.Byte:
+                    return typeof(byte);
+                case AnalyticsDataType.UShort:
+                    return typeof(ushort);
+                case AnalyticsDataType.UInt:
+                    return typeof(uint);
+                case AnalyticsDataType.ULong:
+                    return typeof(ulong);
+                case AnalyticsDataType.Float:
+                    return typeof(float);
+                case AnalyticsDataType.Double:
+                    return typeof(double);
+                case AnalyticsDataType.Decimal:
+                    return typeof(decimal);
+                case AnalyticsDataType.Bool:
+                    return typeof(bool);
+                default:
+                    return null;
             }
         }
 
@@ -140,99 +149,83 @@ namespace SynkServer.Analytics
             {
                 return AnalyticsDataType.String;
             }
-
             if (type == typeof(sbyte))
             {
                 return AnalyticsDataType.SByte;
             }
-            
             if (type == typeof(short))
             {
                 return AnalyticsDataType.Short;
             }
-            
             if (type == typeof(int))
             {
                 return AnalyticsDataType.Int;
             }
-            
             if (type == typeof(long))
             {
                 return AnalyticsDataType.Long;
             }
-            
             if (type == typeof(byte))
             {
                 return AnalyticsDataType.Byte;
             }
-            
             if (type == typeof(ushort))
             {
                 return AnalyticsDataType.UShort;
             }
-            
             if (type == typeof(uint))
             {
                 return AnalyticsDataType.UInt;
             }
-            
             if (type == typeof(ulong))
             {
                 return AnalyticsDataType.ULong;
             }
-
             if (type == typeof(float))
             {
                 return AnalyticsDataType.Float;
             }
-            
             if (type == typeof(double))
             {
                 return AnalyticsDataType.Double;
             }
-            
             if (type == typeof(decimal))
             {
                 return AnalyticsDataType.Decimal;
             }
-            
             if (type == typeof(bool))
             {
                 return AnalyticsDataType.Bool;
             }
-
             if (type == typeof(object))
             {
                 return AnalyticsDataType.None;
             }
-
             return AnalyticsDataType.Invalid;
         }
 
         private void LoadAnalyticsData()
         {
-            if (File.Exists(FileName))
+            if (File.Exists(this.FileName))
             {
-                using (var stream = new FileStream(FileName, FileMode.Open))
+                using (FileStream input = new FileStream(this.FileName, FileMode.Open))
                 {
-                    using (var reader = new BinaryReader(stream))
+                    using (BinaryReader binaryReader = new BinaryReader(input))
                     {
                         try
                         {
-                            var keyCount = reader.ReadInt32();
-                            for (int i = 0; i < keyCount; i++)
+                            int num = binaryReader.ReadInt32();
+                            for (int i = 0; i < num; i++)
                             {
-                                var key = reader.ReadString();
-                                var dataType = (AnalyticsDataType)reader.ReadByte();
-
-                                var type = FromDataType(dataType);
-                                var table = FindTable(key, dataType);
-                                table.Load(reader);
+                                string key = binaryReader.ReadString();
+                                AnalyticsDataType dataType = (AnalyticsDataType)binaryReader.ReadByte();
+                                Type type = this.FromDataType(dataType);
+                                AnalyticsCollection analyticsCollection = this.FindTable(key, dataType, true);
+                                analyticsCollection.Load(binaryReader);
                             }
                         }
                         catch
                         {
-                            return;
                         }
                     }
                 }
@@ -243,100 +236,106 @@ namespace SynkServer.Analytics
         {
             lock (this)
             {
-                using (var stream = new FileStream(FileName, FileMode.Create))
+                using (FileStream output = new FileStream(this.FileName, FileMode.Create))
                 {
-                    using (var writer = new BinaryWriter(stream))
+                    using (BinaryWriter binaryWriter = new BinaryWriter(output))
                     {
-                        int keyCount = _collections.Count;
-                        writer.Write(keyCount);
-
-                        foreach (var colEntry in _collections)
+                        int count = this._collections.Count;
+                        binaryWriter.Write(count);
+                        foreach (KeyValuePair<string, AnalyticsCollection> collection in this._collections)
                         {
-                            writer.Write(colEntry.Key);
-                            var table = colEntry.Value;
-                            writer.Write((byte)table.dataType);
-
-                            table.Save(writer);
+                            binaryWriter.Write(collection.Key);
+                            AnalyticsCollection value = collection.Value;
+                            binaryWriter.Write((byte)value.dataType);
+                            value.Save(binaryWriter);
                         }
                     }
                 }
-
-                changed = false;
+                this.changed = false;
             }
-
         }
 
         public int GetTotalAmmount(Enum val)
         {
-            return GetTotalAmmount(val.ToString().ToLowerInvariant());
+            return this.GetTotalAmmount(val.ToString().ToLowerInvariant());
         }
 
         public int GetTotalAmmount(string key)
         {
-            if (_collections.ContainsKey(key))
+            if (this._collections.ContainsKey(key))
             {
-                return _collections[key].values.Count;
+                return this._collections[key].values.Count;
             }
-
             return 0;
         }
 
-        public int GetAmmount(Enum val, AnalyticsFrequency frequency, DateTime date)
+        public void IterateEntries<T>(Enum key, Action<DateTime, T> visitor)
         {
-            return GetAmmount(val.ToString().ToLowerInvariant(), frequency, date);
+            this.IterateEntries(key.ToString().ToLowerInvariant(), visitor);
+        }
+
+        public void IterateEntries<T>(string key, Action<DateTime, T> visitor)
+        {
+            Type typeFromHandle = typeof(T);
+            AnalyticsDataType dataType = this.FromType(typeFromHandle);
+            AnalyticsCollection analyticsCollection = this.FindTable(key, dataType, false);
+            if (analyticsCollection != null)
+            {
+                lock (analyticsCollection)
+                {
+                    foreach (KeyValuePair<long, object> value in analyticsCollection.values)
+                    {
+                        visitor(value.Key.ToDateTime(), (T)value.Value);
+                    }
+                }
+            }
+        }
+
+        public int GetAmmount(Enum key, AnalyticsFrequency frequency, DateTime date)
+        {
+            return this.GetAmmount(key.ToString().ToLowerInvariant(), frequency, date);
         }
 
         public int GetAmmount(string key, AnalyticsFrequency frequency, DateTime date)
         {
-            if (_collections.ContainsKey(key))
+            if (this._collections.ContainsKey(key))
             {
-                var evt = _collections[key];
-
+                AnalyticsCollection analyticsCollection = this._collections[key];
                 switch (frequency)
                 {
                     case AnalyticsFrequency.Daily:
                         {
                             date = date.FixedDay();
-                            var timestamp = date.ToTimestamp();
-
-                            if (evt.dayAggregate.ContainsKey(timestamp))
+                            long key3 = date.ToTimestamp();
+                            if (analyticsCollection.dayAggregate.ContainsKey(key3))
                             {
-                                return evt.dayAggregate[timestamp];
+                                return analyticsCollection.dayAggregate[key3];
                             }
-
                             return 0;
                         }
-
                     case AnalyticsFrequency.Monthly:
                         {
                             date = date.FixedMonth();
-                            var timestamp = date.ToTimestamp();
-
-                            if (evt.monthAggregate.ContainsKey(timestamp))
+                            long key4 = date.ToTimestamp();
+                            if (analyticsCollection.monthAggregate.ContainsKey(key4))
                             {
-                                return evt.monthAggregate[timestamp];
+                                return analyticsCollection.monthAggregate[key4];
                             }
-
                             return 0;
                         }
-
                     case AnalyticsFrequency.Yearly:
                         {
                             date = date.FixedYear();
-                            var timestamp = date.ToTimestamp();
-
-                            if (evt.yearAggregate.ContainsKey(timestamp))
+                            long key2 = date.ToTimestamp();
+                            if (analyticsCollection.yearAggregate.ContainsKey(key2))
                             {
-                                return evt.yearAggregate[timestamp];
+                                return analyticsCollection.yearAggregate[key2];
                             }
-
                             return 0;
                         }
                 }
             }
-
             return 0;
         }
-
     }
 }
