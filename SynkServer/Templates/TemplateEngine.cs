@@ -63,10 +63,11 @@ namespace SynkServer.Templates
             RegisterTag("body", x => new BodyNode());
             RegisterTag("encode", x => new EncodeNode(x));
             RegisterTag("include", x => new IncludeNode(x));
-            RegisterTag("date", arg => new DateNode(arg));
-            RegisterTag("span", arg => new SpanNode(arg));
-            RegisterTag("upper", arg => new UpperNode(arg));
-            RegisterTag("lower", arg => new LowerNode(arg));
+            RegisterTag("date", x => new DateNode(x));
+            RegisterTag("span", x => new SpanNode(x));
+            RegisterTag("upper", x => new UpperNode(x));
+            RegisterTag("lower", x => new LowerNode(x));
+            RegisterTag("set", x => new SetNode(x));
         }
 
         public TemplateNode FindTemplate(string name)

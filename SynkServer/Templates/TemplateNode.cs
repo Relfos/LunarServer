@@ -157,6 +157,25 @@ namespace SynkServer.Templates
         }
     }
 
+    public class SetNode : TemplateNode
+    {
+        public string key;
+
+        public SetNode(string key)
+        {
+            this.key = key;
+        }
+
+        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        {
+            var dic = context as Dictionary<string, object>();
+            if (dic != null)
+            {
+                dic[key] = true;
+            }
+        }
+    }
+
     public class EncodeNode : TemplateNode
     {
         public string key;

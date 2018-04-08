@@ -368,7 +368,7 @@ namespace SynkServer.HTTP
                 left -= n;
             }
 
-            var contentTypeHeader = request.headers["Content-Type"];
+            var contentTypeHeader = request.headers.ContainsKey("Content-Type") ? request.headers["Content-Type"]: "application/x-www-form-urlencoded; charset=UTF-8";
 
             if (contentTypeHeader.ToLowerInvariant().StartsWith("multipart/form-data"))
             {

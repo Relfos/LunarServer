@@ -88,6 +88,11 @@ namespace SynkServer.Core
         {
             foreach (var ua in uaHttpHeaders)
             {
+                if (!request.headers.ContainsKey(ua))
+                {
+                    continue;
+                }
+
                 var value = request.headers[ua];
                 if (value == null)
                 {
