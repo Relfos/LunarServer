@@ -168,7 +168,7 @@ namespace SynkServer.Templates
 
         public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
         {
-            var dic = context as Dictionary<string, object>();
+            var dic = context as Dictionary<string, object>;
             if (dic != null)
             {
                 dic[key] = true;

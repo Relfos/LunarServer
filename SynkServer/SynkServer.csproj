@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LunarParser" Version="1.0.31" />
+    <PackageReference Include="LunarParser" Version="1.0.32" />
   </ItemGroup>
 
 </Project>
