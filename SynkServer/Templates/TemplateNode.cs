@@ -13,18 +13,24 @@ namespace SynkServer.Templates
     {
         public TemplateEngine engine { get; internal set; }
 
-        public abstract void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output);
+        public TemplateNode(TemplateDocument document)
+        {
+            document.AddNode(this);
+        }
+
+        public abstract void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output);
     }
 
     public class GroupNode : TemplateNode
     {
         public List<TemplateNode> nodes = new List<TemplateNode>();
 
-        public GroupNode()
+        public GroupNode(TemplateDocument document) : base(document)
         {
+
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             foreach (var node in nodes)
             {
@@ -37,12 +43,12 @@ namespace SynkServer.Templates
     {
         public string content;
 
-        public TextNode(string content)
+        public TextNode(TemplateDocument document, string content) : base(document)
         {
             this.content = content;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             output.Append(content);
         }
@@ -50,11 +56,13 @@ namespace SynkServer.Templates
 
     public class BodyNode : TemplateNode
     {
-        public BodyNode()
+
+        public BodyNode(TemplateDocument document) : base(document)
         {
+
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             var next = queue.Dequeue();
             next.Execute(queue, context, pointer, output);
@@ -65,12 +73,12 @@ namespace SynkServer.Templates
     {
         private string name;
 
-        public IncludeNode(string name)
+        public IncludeNode(TemplateDocument document, string name) : base(document)
         {
             this.name = name;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             var node = engine.FindTemplate(this.name);
 
@@ -88,13 +96,13 @@ namespace SynkServer.Templates
         public string key;
         public bool escape;
 
-        public EvalNode(string key, bool escape)
+        public EvalNode(TemplateDocument document, string key, bool escape) : base(document)
         {
             this.key = key;
             this.escape = escape;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             var obj = TemplateEngine.EvaluateObject(context, pointer, key);
 
@@ -121,12 +129,12 @@ namespace SynkServer.Templates
     {
         public string key;
 
-        public UpperNode(string key)
+        public UpperNode(TemplateDocument document, string key) : base(document)
         {
             this.key = key;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             var obj = TemplateEngine.EvaluateObject(context, pointer, key);
             if (obj != null)
@@ -141,12 +149,12 @@ namespace SynkServer.Templates
     {
         public string key;
 
-        public LowerNode(string key)
+        public LowerNode(TemplateDocument document, string key) : base(document)
         {
             this.key = key;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             var obj = TemplateEngine.EvaluateObject(context, pointer, key);
             if (obj != null)
@@ -161,12 +169,12 @@ namespace SynkServer.Templates
     {
         public string key;
 
-        public SetNode(string key)
+        public SetNode(TemplateDocument document, string key) : base(document)
         {
             this.key = key;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             var dic = context as Dictionary<string, object>;
             if (dic != null)
@@ -180,12 +188,12 @@ namespace SynkServer.Templates
     {
         public string key;
 
-        public EncodeNode(string key)
+        public EncodeNode(TemplateDocument document, string key) : base(document)
         {
             this.key = key;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             var obj = TemplateEngine.EvaluateObject(context, pointer, key);
             if (obj != null)
@@ -203,15 +211,18 @@ namespace SynkServer.Templates
         public TemplateNode trueNode;
         public TemplateNode falseNode;
 
-        public IfNode(string condition, TemplateNode trueNode, TemplateNode falseNode)
+        public IfNode(TemplateDocument document, string condition) : base(document)
         {
             this.condition = condition;
-            this.trueNode = trueNode;
-            this.falseNode = falseNode;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
+            if (this.trueNode == null)
+            {
+                throw new Exception("Missing true branch in If node");
+            }
+
             var result = TemplateEngine.EvaluateObject(context, pointer, condition);
 
             var isFalse = result == null || result.Equals(false) || ((result is string) && ((string)result).Length == 0);
@@ -241,14 +252,18 @@ namespace SynkServer.Templates
 
         public TemplateNode inner;
 
-        public EachNode(string collection, TemplateNode inner)
+        public EachNode(TemplateDocument document, string collection) : base(document)
         {
             this.collection = collection;
-            this.inner = inner;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
+            if (inner == null)
+            {
+                throw new Exception("Missing inner branch in Each node");
+            }
+
             var obj = TemplateEngine.EvaluateObject(context, pointer, collection);
 
             if (obj == null)
@@ -288,14 +303,18 @@ namespace SynkServer.Templates
         public string dependencies;
         public TemplateNode body;
 
-        public CacheNode(string dependencies, TemplateNode body)
+        public CacheNode(TemplateDocument document, string dependencies) : base(document)
         {
             this.dependencies = dependencies;
-            this.body = body;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
+            if (body == null)
+            {
+                throw new Exception("Missing body branch in template node");
+            }
+
             var dependency = TemplateDependency.FindDependency(dependencies);
             //if (dependency != null)
             {

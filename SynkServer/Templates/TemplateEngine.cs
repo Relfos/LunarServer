@@ -32,11 +32,34 @@ namespace SynkServer.Templates
         }
     }
 
+    public class TemplateDocument
+    {
+        public TemplateNode Root { get; private set; }
+
+        private List<TemplateNode> _nodes = new List<TemplateNode>();
+        public IEnumerable<TemplateNode> Nodes => _nodes;
+
+        public void AddNode(TemplateNode node)
+        {
+            if (Root == null)
+            {
+                this.Root = node;
+            }
+
+            _nodes.Add(node);
+        }
+
+        public void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        {
+            this.Root.Execute(queue, context, pointer, output);
+        }
+    }
+
     public class TemplateEngine
     {
         private struct CacheEntry
         {
-            public TemplateNode node;
+            public TemplateDocument document;
             public DateTime lastModified;            
         }
 
@@ -44,11 +67,15 @@ namespace SynkServer.Templates
 
         public string filePath { get; private set; }
 
-        public Func<string, TemplateNode> On404;
+        public Func<string, TemplateDocument> On404;
 
-        public TemplateEngine(HTTPServer server, string filePath)
+        public Site Site { get; private set; }
+        public HTTPServer Server => Site.server;
+
+        public TemplateEngine(Site site, string filePath)
         {
-            this.filePath = server.settings.path + filePath;
+            this.Site = site;
+            this.filePath = site.server.settings.path + filePath;
 
             if (!this.filePath.EndsWith("/"))
             {
@@ -57,20 +84,26 @@ namespace SynkServer.Templates
 
             this.On404 = (name) =>
             {
-                return new TextNode("404 not found");
+                var doc = new TemplateDocument();
+                doc.AddNode(new TextNode(null, "404 \""+name+"\" not found"));
+                return doc;
             };
 
-            RegisterTag("body", x => new BodyNode());
-            RegisterTag("encode", x => new EncodeNode(x));
-            RegisterTag("include", x => new IncludeNode(x));
-            RegisterTag("date", x => new DateNode(x));
-            RegisterTag("span", x => new SpanNode(x));
-            RegisterTag("upper", x => new UpperNode(x));
-            RegisterTag("lower", x => new LowerNode(x));
-            RegisterTag("set", x => new SetNode(x));
+            RegisterTag("body", (doc, key) => new BodyNode(doc));
+            RegisterTag("encode", (doc, key) => new EncodeNode(doc, key));
+            RegisterTag("include", (doc, key) => new IncludeNode(doc, key));
+            RegisterTag("upper", (doc, key) => new UpperNode(doc, key));
+            RegisterTag("lower", (doc, key) => new LowerNode(doc, key));
+            RegisterTag("set", (doc, key) => new SetNode(doc, key));
+
+            RegisterTag("date", (doc, key) => new DateNode(doc, key));
+            RegisterTag("span", (doc, key) => new SpanNode(doc, key));
+
+            RegisterTag("javascript", (doc, key) => new AssetNode(doc, key, "js"));
+            RegisterTag("css", (doc, key) => new AssetNode(doc, key, "css"));
         }
 
-        public TemplateNode FindTemplate(string name)
+        public TemplateDocument FindTemplate(string name)
         {
             lock (_cache)
             {
@@ -81,7 +114,7 @@ namespace SynkServer.Templates
                 {
                     if (_cache.ContainsKey(name))
                     {
-                        return _cache[name].node;
+                        return _cache[name].document;
                     }
 
                     return this.On404(name);
@@ -95,7 +128,7 @@ namespace SynkServer.Templates
 
                     if (lastMod == entry.lastModified)
                     {
-                        return entry.node;
+                        return entry.document;
                     }
                 }
 
@@ -105,11 +138,11 @@ namespace SynkServer.Templates
 
                 content = HTMLMinifier.Compress(content);
 
-                var node = CompileTemplate(content); 
+                var doc = CompileTemplate(content); 
 
-                _cache[name] = new CacheEntry() { node = node, lastModified = lastMod};
+                _cache[name] = new CacheEntry() { document = doc, lastModified = lastMod};
 
-                return node;
+                return doc;
             }
         }
 
@@ -276,15 +309,14 @@ namespace SynkServer.Templates
         {
             lock (_cache)
             {
-                var node = CompileTemplate(content);
-
-                _cache[name] = new CacheEntry() { node = node, lastModified = DateTime.Now };
+                var doc = CompileTemplate(content);
+                _cache[name] = new CacheEntry() { document = doc, lastModified = DateTime.Now };
             }
         }
 
         public string Render(Site site, object context, IEnumerable<string> templateList)
         {
-            var queue = new Queue<TemplateNode>();
+            var queue = new Queue<TemplateDocument>();
 
             foreach (var templateName in templateList)
             {
@@ -643,7 +675,7 @@ namespace SynkServer.Templates
             }
         }
 
-        private TemplateNode CompileNode(ParseNode node)
+        private TemplateNode CompileNode(ParseNode node, TemplateDocument document)
         {
             switch (node.tag)
             {
@@ -652,13 +684,13 @@ namespace SynkServer.Templates
                     {
                         if (node.nodes.Count == 1)
                         {
-                            return CompileNode(node.nodes[0]);
+                            return CompileNode(node.nodes[0], document);
                         }
 
-                        var result = new GroupNode();
+                        var result = new GroupNode(document);
                         foreach (var child in node.nodes)
                         {
-                            var temp = CompileNode(child);
+                            var temp = CompileNode(child, document);
                             result.nodes.Add(temp);
                         }
 
@@ -667,14 +699,14 @@ namespace SynkServer.Templates
 
                 case "if":
                     {
-                        var trueNode = CompileNode(node.nodes[0]);
-                        var falseNode = node.nodes.Count > 1 ? CompileNode(node.nodes[1]) : null;
-                        var result = new IfNode(node.content, trueNode, falseNode);
+                        var result = new IfNode(document, node.content);
+                        result.trueNode = CompileNode(node.nodes[0], document);
+                        result.falseNode = node.nodes.Count > 1 ? CompileNode(node.nodes[1], document) : null;
                         return result;
                     }
 
                 case "text":
-                    return new TextNode(node.content);
+                    return new TextNode(document, node.content);
 
                 case "eval":
                     {
@@ -684,25 +716,26 @@ namespace SynkServer.Templates
                         {
                             key = key.Substring(1);
                         }
-                        return new EvalNode(key, escape);
+                        return new EvalNode(document, key, escape);
                     }
 
                 case "each":
                     {
-                        var inner = CompileNode(node.nodes[0]);
-                        return new EachNode(node.content, inner);
+                        var result = new EachNode(document, node.content);
+                        result.inner = CompileNode(node.nodes[0], document);
+                        return result;
                     }
 
                 case "cache":
                     {
-                        var inner = new GroupNode();
+                        var inner = new GroupNode(document);
                         foreach (var child in node.nodes)
                         {
-                            var temp = CompileNode(child);
+                            var temp = CompileNode(child, document);
                             inner.nodes.Add(temp);
                         }
                         
-                        return new CacheNode(node.content, inner);
+                        return new CacheNode(document, node.content);
                     }
 
                 default:
@@ -710,7 +743,7 @@ namespace SynkServer.Templates
                         if (_customTags.ContainsKey(node.tag))
                         {
                             var generator = _customTags[node.tag];
-                            var result = generator(node.content);
+                            var result = generator(document, node.content);
                             result.engine = this;
                             return result;
                         }
@@ -720,19 +753,20 @@ namespace SynkServer.Templates
             }
         }
 
-        public TemplateNode CompileTemplate(string code)
+        public TemplateDocument CompileTemplate(string code)
         {
             var obj = ParseTemplate(code);
 
-            var result = CompileNode(obj);
+            var doc = new TemplateDocument();
+            var result = CompileNode(obj, doc);
 
             //Print(result);
-            return result;
+            return doc;
         }
 
-        private Dictionary<string, Func<string, TemplateNode>> _customTags = new Dictionary<string, Func<string, TemplateNode>>();
+        private Dictionary<string, Func<TemplateDocument, string, TemplateNode>> _customTags = new Dictionary<string, Func<TemplateDocument, string, TemplateNode>>();
 
-        public void RegisterTag(string name, Func<string, TemplateNode> generator) 
+        public void RegisterTag(string name, Func<TemplateDocument, string, TemplateNode> generator) 
         {
             _customTags[name] = generator;
         }

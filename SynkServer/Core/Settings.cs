@@ -45,7 +45,7 @@ namespace SynkServer.Core
                     case "port": int.TryParse(val, out result.port); break;
                     case "path":
                         {
-                            result.path = val;
+                            result.path = Path.GetFullPath(val);
                             break;
                         }
                     case "env": Enum.TryParse(val.FirstLetterToUpper(), out result.environment); break;

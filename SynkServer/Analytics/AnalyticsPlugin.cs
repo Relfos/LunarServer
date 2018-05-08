@@ -100,7 +100,6 @@ namespace SynkServer.Analytics
                     {
                         this.SaveAnalyticsData();
                     }
-                    bool flag = true;
                 }
             });
             AnalyticsPlugin.saveThread.Start();

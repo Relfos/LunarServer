@@ -47,7 +47,8 @@ namespace SynkServer.Core
 
         public Logger log { get { return server.log; } }
 
-        public FileCache cache { get; private set; }
+        private AssetCache _cache;
+        public FileCache Cache => _cache;
 
         public HTTPServer server { get; private set; }
 
@@ -65,7 +66,7 @@ namespace SynkServer.Core
             }
 
             this.router = new Router();
-            this.cache = new FileCache(log, this.filePath);
+            this._cache = new AssetCache(this, this.filePath);
 
             server.AddSite(this);
         }
@@ -148,7 +149,9 @@ namespace SynkServer.Core
                 log.Debug("Route handler not found...");
             }
 
-            return cache.GetFile(request);
+            _cache.Update();
+
+            return _cache.GetFile(request);
         }
     }
 }

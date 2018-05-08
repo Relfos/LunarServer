@@ -74,22 +74,21 @@ namespace SynkServer.Core
     {
         private const int defaultMaxAge = 2592000;
 
+        protected Dictionary<string, CacheEntry> _files = new Dictionary<string, CacheEntry>();
 
-        private Dictionary<string, CacheEntry> _files = new Dictionary<string, CacheEntry>();
-
-        private string rootPath;
+        public string filePath { get; private set; }
 
         public Logger log { get; private set; }
 
         public FileCache(Logger log, string filePath)
         {
             this.log = log;
-            this.rootPath = filePath;
+            this.filePath = filePath;           
         }
 
         public HTTPResponse GetFile(HTTPRequest request)
         {
-            var path = rootPath + request.path;
+            var path = filePath + request.path;
             log.Debug($"Returning static file...{path}");
 
             CacheEntry entry;
@@ -107,13 +106,16 @@ namespace SynkServer.Core
             }
 
             if (entry != null)
-            {               
-                var lastMod = File.GetLastWriteTime(path);
-
-                if (lastMod != entry.lastModified)
+            {      
+                if (entry.path != null)
                 {
-                    entry.Reload();
-                    entry.lastModified = lastMod;
+                    var lastMod = File.GetLastWriteTime(path);
+
+                    if (lastMod != entry.lastModified)
+                    {
+                        entry.Reload();
+                        entry.lastModified = lastMod;
+                    }
                 }
             }
             else
@@ -177,4 +179,6 @@ namespace SynkServer.Core
             return result;
         }
     }
+
+
 }

@@ -15,13 +15,13 @@ namespace SynkServer.Templates
         private string key;
         private string format;
 
-        public DateNode(string key, string format = "dd yyyy | hh:mm tt")
+        public DateNode(TemplateDocument document, string key, string format = "dd yyyy | hh:mm tt") : base(document)
         {
             this.key = key;
             this.format = " " + format;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             var temp = TemplateEngine.EvaluateObject(context, pointer, key);
 
@@ -38,7 +38,7 @@ namespace SynkServer.Templates
     {
         private string key;
 
-        public SpanNode(string key)
+        public SpanNode(TemplateDocument document, string key) : base(document)
         {
             this.key = key;
         }
@@ -100,7 +100,7 @@ namespace SynkServer.Templates
             return result;
         }
 
-        public override void Execute(Queue<TemplateNode> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
         {
             var obj = TemplateEngine.EvaluateObject(context, context, "current_time");
 
