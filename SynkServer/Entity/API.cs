@@ -19,10 +19,13 @@ namespace SynkServer.Entity
     {
         private DataFormat format;
         private string mimeType;
+
+        public EntityStore Store { get; private set; }
         
-        public EntityAPI(Site site, string rootPath = null, DataFormat format = DataFormat.JSON)  : base(site, rootPath)
+        public EntityAPI(Site site, EntityStore store, string rootPath = null, DataFormat format = DataFormat.JSON)  : base(site, rootPath)
         {
             this.format = format;
+            this.Store = store;
             this.mimeType = "application/" + format.ToString().ToLower();
         }
 
@@ -120,9 +123,9 @@ namespace SynkServer.Entity
             throw new APIRequestException($"argument '{name}' is required");
         }
 
-        private static T Check<T>(string id) where T : Entity
+        private T Check<T>(string id) where T : Entity
         {
-            var entity = Entity.FindById<T>(id);
+            var entity = Store.FindById<T>(id);
 
             if (entity != null)
             {
@@ -133,11 +136,11 @@ namespace SynkServer.Entity
         }
 
         #region UTILS
-        private static object ListEntities<T>() where T : Entity
+        private object ListEntities<T>() where T : Entity
         {
             var result = DataNode.CreateObject(typeof(T).Name.ToLower() + "s");
 
-            foreach (var user in Entity.Every<T>())
+            foreach (var user in Store.Every<T>())
             {
                 var data = user.Serialize();
                 result.AddNode(data);
@@ -146,17 +149,17 @@ namespace SynkServer.Entity
             return result;
         }
 
-        private static object ShowEntity<T>(HTTPRequest requset) where T : Entity
+        private object ShowEntity<T>(HTTPRequest requset) where T : Entity
        {
             var id = requset.args["id"];
-            var entity = Entity.FindById<T>(id);
+            var entity = Store.FindById<T>(id);
             var data = entity.Serialize();
             return data;
         }
 
-        private static object NewEntity<T>(HTTPRequest request) where T : Entity
+        private object NewEntity<T>(HTTPRequest request) where T : Entity
         {
-            var entity = Entity.Create<T>();
+            var entity = Store.Create<T>();
             var node = request.args.ToDataNode(typeof(T).Name.ToLower());
             Check(request.args, Entity.GetFields<T>());
             entity.Deserialize(node);
@@ -165,7 +168,7 @@ namespace SynkServer.Entity
             return data;
         }
 
-        private static object EditEntity<T>(HTTPRequest request) where T : Entity
+        private  object EditEntity<T>(HTTPRequest request) where T : Entity
         {
             var node = request.args.ToDataNode(typeof(T).Name.ToLower());
             var id = Check(request.args, "id");
@@ -176,7 +179,7 @@ namespace SynkServer.Entity
             return data;
         }
 
-        private static object DeleteEntity<T>(HTTPRequest request) where T : Entity
+        private object DeleteEntity<T>(HTTPRequest request) where T : Entity
         {
             var node = request.args.ToDataNode(typeof(T).Name.ToLower());
             var id = Check(request.args, "id");
