@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Mail;
 
-namespace SynkMVC.Utils
+namespace LunarLabs.WebMVC.Utils
 {
     public class MailSender
     {

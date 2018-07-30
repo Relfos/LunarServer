@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 using System.Text;
 
-namespace SynkMVC
+namespace LunarLabs.WebMVC
 {
     public class MySQLDatabase: Database
     {

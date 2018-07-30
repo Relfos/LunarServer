@@ -5,7 +5,7 @@ using System.Text;
 using System.Security.Cryptography;
 using System.IO;
 
-namespace SynkMVC
+namespace LunarLabs.WebMVC
 {
     public class Crypt
     {

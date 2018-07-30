@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace SynkMVC.Model
+namespace LunarLabs.WebMVC.Model
 {
     public class Enum : Entity
     {

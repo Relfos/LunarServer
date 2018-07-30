@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using SynkMVC.Utils;
-using SynkMVC.Model;
+using LunarLabs.WebMVC.Utils;
+using LunarLabs.WebMVC.Model;
 using LunarParser;
 using LunarParser.JSON;
-using SynkServer.Core;
+using LunarLabs.WebServer.Core;
 
-namespace SynkMVC.Modules
+namespace LunarLabs.WebMVC.Modules
 {
     /*
      * Actions: default, edit, save, remove, clear, detail

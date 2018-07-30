@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SynkMVC.Utils
+namespace LunarLabs.WebMVC.Utils
 {
     public static class ImageUtils
     {

@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SynkMVC
+namespace LunarLabs.WebMVC
 {
     public enum SortMode
     {

@@ -1,6 +1,6 @@
 .vs/
 packages/
-SynkServer/bin/
-SynkServer/obj/
+LunarServer/bin/
+LunarServer/obj/
 SynkMVC/bin/
 SynkMVC/obj/

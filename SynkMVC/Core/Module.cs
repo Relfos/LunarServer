@@ -1,6 +1,6 @@
-﻿using SynkMVC.Model;
-using SynkServer;
-using SynkServer.Core;
+﻿using LunarLabs.WebMVC.Model;
+using LunarLabs.WebServer;
+using LunarLabs.WebServer.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SynkMVC
+namespace LunarLabs.WebMVC
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
     public class ModuleAttribute : Attribute

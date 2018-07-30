@@ -1,4 +1,4 @@
-﻿namespace SynkMVC
+﻿namespace LunarLabs.WebMVC
 {
     public struct ArrayPointer<T>
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace SynkMVC.Model
+namespace LunarLabs.WebMVC.Model
 {
     public class Config: Entity
     {

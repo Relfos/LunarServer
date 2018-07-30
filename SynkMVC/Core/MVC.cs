@@ -1,14 +1,14 @@
-﻿using SynkMVC.Model;
-using SynkServer;
-using SynkServer.Core;
-using SynkServer.HTTP;
+﻿using LunarLabs.WebMVC.Model;
+using LunarLabs.WebServer;
+using LunarLabs.WebServer.Core;
+using LunarLabs.WebServer.HTTP;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace SynkMVC
+namespace LunarLabs.WebMVC
 {
     public enum PermissonMode
     {

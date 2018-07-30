@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SynkMVC
+namespace LunarLabs.WebMVC
 {
     public class Menu
     {

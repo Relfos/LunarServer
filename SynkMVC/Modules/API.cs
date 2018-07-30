@@ -1,13 +1,13 @@
 ﻿using LunarParser;
 using LunarParser.JSON;
-using SynkMVC;
-using SynkMVC.Model;
-using SynkMVC.Utils;
+using LunarLabs.WebMVC;
+using LunarLabs.WebMVC.Model;
+using LunarLabs.WebMVC.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SynkMVC.Modules
+namespace LunarLabs.WebMVC.Modules
 {
     public class API : Module
     {

@@ -2,7 +2,7 @@
 using LunarParser;
 using LunarParser.JSON;
 
-namespace SynkMVC.Modules
+namespace LunarLabs.WebMVC.Modules
 {
     public class Search : Module
     {

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net461</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AssemblyVersion>0.1.8.0</AssemblyVersion>
+    <FileVersion>0.1.8.0</FileVersion>
+    <Version>0.1.8</Version>
+    <Description>HTTP server with minimal dependencies</Description>
+    <Copyright>Sergio Flores</Copyright>
+    <PackageProjectUrl>https://github.com/Relfos/LunarServer</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/Relfos/LunarServer/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/Relfos/LunarServer</RepositoryUrl>
+    <PackageTags>http server cookies oauth</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LunarParser" Version="1.1.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,11 +1,11 @@
-﻿using SynkMVC.Model;
-using SynkMVC.Utils;
+﻿using LunarLabs.WebMVC.Model;
+using LunarLabs.WebMVC.Utils;
 using System.Text;
 using System;
 using LunarParser;
 using LunarParser.JSON;
 
-namespace SynkMVC.Modules
+namespace LunarLabs.WebMVC.Modules
 {
     public class Files : CRUDModule
     {

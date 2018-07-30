@@ -1,6 +1,6 @@
 ﻿using Mustache;
-using SynkServer.Core;
-using SynkMVC.Utils;
+using LunarLabs.WebServer.Core;
+using LunarLabs.WebMVC.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,11 +8,11 @@ using System.Drawing;
 using System.Text;
 using System.Security;
 using System.Reflection;
-using SynkMVC.Model;
-using SynkServer.HTTP;
+using LunarLabs.WebMVC.Model;
+using LunarLabs.WebServer.HTTP;
 using LunarParser;
 
-namespace SynkMVC
+namespace LunarLabs.WebMVC
 {
     public class SynkRequestException : Exception
     {

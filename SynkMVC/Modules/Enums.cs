@@ -1,8 +1,8 @@
-﻿using SynkMVC.Model;
-using SynkMVC.Utils;
+﻿using LunarLabs.WebMVC.Model;
+using LunarLabs.WebMVC.Utils;
 using System.Text;
 
-namespace SynkMVC.Modules
+namespace LunarLabs.WebMVC.Modules
 {
     public class Enums : CRUDModule
     {

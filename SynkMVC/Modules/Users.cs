@@ -1,9 +1,9 @@
-﻿using SynkMVC;
-using SynkMVC.Model;
+﻿using LunarLabs.WebMVC;
+using LunarLabs.WebMVC.Model;
 using System;
 using System.Collections.Generic;
 
-namespace SynkMVC.Modules
+namespace LunarLabs.WebMVC.Modules
 {
     public class Users : CRUDModule
     {
