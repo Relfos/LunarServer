@@ -103,7 +103,7 @@ Vary: Accept-Encoding, Cookie, User-Agent
 
             return result;
         }
-        
+
         public static HTTPResponse FromBytes(byte[] bytes, string contentType = "application/octet-stream")
         {
             var result = new HTTPResponse();
