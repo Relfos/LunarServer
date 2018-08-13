@@ -85,7 +85,7 @@ namespace LunarLabs.WebServer.Templates
             this.On404 = (name) =>
             {
                 var doc = new TemplateDocument();
-                doc.AddNode(new TextNode(null, "404 \""+name+"\" not found"));
+                doc.AddNode(new TextNode(doc, "error 404: \""+name+"\" view not found"));
                 return doc;
             };
 
