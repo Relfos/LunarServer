@@ -33,14 +33,15 @@ Since this is a .NET standard package, to use with .NET framework projects pleas
 Import the package:
 
 ```c#
-using LunarServer.Core;
+using LunarLabs.WebServer.Core;
+using LunarLabs.WebServer.HTTP;
 ```
 
 Instantiate the necessary classes:
 
 ```c#
 	// initialize a logger
-	var log = new LunarServer.Core.Logger();
+	var log = new Logger();
 
 	// either parse the settings from the program args or initialize them manually
 	var settings = ServerSettings.Parse(args);
