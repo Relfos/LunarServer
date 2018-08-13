@@ -1,7 +1,7 @@
-# Synk Server
+# Lunar Server
 HTTP server with minimal dependencies 
 
-# Why Synk Server?
+# Why Lunar Server?
 Most of web development written in C# is done with ASP.NET, which is too high-level for my tastes.
 Also, many of the Web/HTTP classes from .NET / ASP.NET don't play well with Mono / Linux.
 
@@ -10,7 +10,7 @@ So I decided to write something that would allow me to code websites in C# with 
 
 ## Installation
 
-    PM> Install-Package SynkServer
+    PM> Install-Package LunarServer
 
 Since this is a .NET standard package, to use with .NET framework projects please set the target to .NET Framework 4.5 or higher, otherwise Nuget will give you installation errors.
 
@@ -33,14 +33,14 @@ Since this is a .NET standard package, to use with .NET framework projects pleas
 Import the package:
 
 ```c#
-using SynkServer.Core;
+using LunarServer.Core;
 ```
 
 Instantiate the necessary classes:
 
 ```c#
 	// initialize a logger
-	var log = new SynkServer.Core.Logger();
+	var log = new LunarServer.Core.Logger();
 
 	// either parse the settings from the program args or initialize them manually
 	var settings = ServerSettings.Parse(args);

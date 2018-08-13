@@ -3,15 +3,20 @@
   <PropertyGroup>
     <TargetFrameworks>net461</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>0.1.8.0</AssemblyVersion>
-    <FileVersion>0.1.8.0</FileVersion>
-    <Version>0.1.8</Version>
+    <AssemblyVersion>0.1.9.0</AssemblyVersion>
+    <FileVersion>0.1.9.0</FileVersion>
+    <Version>0.1.9</Version>
     <Description>HTTP server with minimal dependencies</Description>
     <Copyright>Sergio Flores</Copyright>
     <PackageProjectUrl>https://github.com/Relfos/LunarServer</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/Relfos/LunarServer/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/Relfos/LunarServer</RepositoryUrl>
     <PackageTags>http server cookies oauth</PackageTags>
+    <Authors>Sergio Flores</Authors>
+    <Company>Lunar Labs</Company>
+    <Product>LunarLabs.Server</Product>
+    <AssemblyName>LunarLabs.Server</AssemblyName>
+    <RootNamespace>LunarLabs.Server</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
