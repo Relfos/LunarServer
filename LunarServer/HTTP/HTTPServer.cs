@@ -286,7 +286,7 @@ namespace LunarLabs.WebServer.HTTP
                         }
 
                         var bytes = stream.ToArray();
-                        log.Debug($"Sending {bytes.Length} bytes...");
+                        //log.Debug($"Sending {bytes.Length} bytes...");
 
                         client.Send(bytes);
                     }
