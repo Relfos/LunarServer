@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>0.1.9.2</AssemblyVersion>
-    <FileVersion>0.1.9.2</FileVersion>
-    <Version>0.1.9.2</Version>
+    <AssemblyVersion>0.1.9.3</AssemblyVersion>
+    <FileVersion>0.1.9.3</FileVersion>
+    <Version>0.1.9.3</Version>
     <Description>HTTP server with minimal dependencies</Description>
     <Copyright>Sergio Flores</Copyright>
     <PackageProjectUrl>https://github.com/Relfos/LunarServer</PackageProjectUrl>
