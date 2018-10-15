@@ -240,7 +240,7 @@ namespace LunarLabs.WebServer.HTTP
                         response = site.HandleRequest(request);
                     }
                         
-                    if (response == null || response.bytes == null || response.bytes.Length == 0)
+                    if (response == null || response.bytes == null)
                     {
                         log.Debug($"Got no response...");
                         response = HTTPResponse.FromString("Not found...", HTTPCode.NotFound);

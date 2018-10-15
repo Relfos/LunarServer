@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace LunarLabs.WebServer.Core
 {
@@ -18,35 +17,13 @@ namespace LunarLabs.WebServer.Core
         Error
     }
 
-    public class Logger
+    public abstract class Logger
     {
         public LogLevel level = LogLevel.Default;
 
         public bool useColors = true;
 
-        private List<LogEntry> _entries = new List<LogEntry>();
-        public IEnumerable<LogEntry> entries => _entries;
-
-        protected void Log(ConsoleColor c, string s)
-        {
-            //var isMono = Launcher.IsRunningOnMono();
-
-            var temp = Console.ForegroundColor;
-            if (useColors)
-            {
-                Console.ForegroundColor = c;
-            }
-                
-            Console.WriteLine(s);
-
-            if (useColors)
-            {
-                Console.ForegroundColor = temp;
-            }
-
-            _entries.Add(new LogEntry() { timestamp = DateTime.Now, text = s });
-            if (_entries.Count > 100) _entries.RemoveAt(0);
-        }
+        protected abstract void Log(ConsoleColor c, string s);
 
         public void Debug(object message)
         {
@@ -71,7 +48,27 @@ namespace LunarLabs.WebServer.Core
             if (level > LogLevel.Error) return;
             Log(ConsoleColor.Red, message.ToString());
         }
+    }
 
+    public class ConsoleLogger : Logger
+    {
+        protected override void Log(ConsoleColor c, string s)
+        {
+            //var isMono = Launcher.IsRunningOnMono();
+
+            var temp = Console.ForegroundColor;
+            if (useColors)
+            {
+                Console.ForegroundColor = c;
+            }
+
+            Console.WriteLine(s);
+
+            if (useColors)
+            {
+                Console.ForegroundColor = temp;
+            }
+       }
     }
 
 }
