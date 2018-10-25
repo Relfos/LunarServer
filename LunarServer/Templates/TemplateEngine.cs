@@ -98,6 +98,8 @@ namespace LunarLabs.WebServer.Templates
 
             RegisterTag("date", (doc, key) => new DateNode(doc, key));
             RegisterTag("span", (doc, key) => new SpanNode(doc, key));
+            RegisterTag("format-amount", (doc, key) => new NumericFormatNode(doc, key, NumericFormatNode.AmountFormatters));
+            RegisterTag("format-size", (doc, key) => new NumericFormatNode(doc, key, NumericFormatNode.SizeFormatters));
 
             RegisterTag("javascript", (doc, key) => new AssetNode(doc, key, "js"));
             RegisterTag("css", (doc, key) => new AssetNode(doc, key, "css"));
