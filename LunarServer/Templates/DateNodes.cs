@@ -21,15 +21,15 @@ namespace LunarLabs.WebServer.Templates
             this.format = " " + format;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
-            var temp = TemplateEngine.EvaluateObject(context, pointer, key);
+            var temp = context.EvaluateObject(key);
 
             if (temp != null)
             {
                 DateTime value = (DateTime)temp;
                 var result = monthNames[value.Month] + value.ToString(format, CultureInfo.InvariantCulture);
-                output.Append(result);
+                context.output.Append(result);
             }
         }
     }
@@ -100,20 +100,20 @@ namespace LunarLabs.WebServer.Templates
             return result;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
             var obj = TemplateEngine.EvaluateObject(context, context, "current_time");
 
             DateTime cur_time = (obj != null) ? (DateTime)obj : DateTime.Now;
 
-            var temp = TemplateEngine.EvaluateObject(context, pointer, key);
+            var temp = context.EvaluateObject(key);
             if (temp != null)
             {
                 DateTime time = (DateTime)temp;
 
                 var diff = cur_time - time;
                 var result = FormatTimeSpan(diff, context);
-                output.Append(result);
+                context.output.Append(result);
             }
         }
     }

@@ -66,7 +66,7 @@ namespace LunarLabs.WebServer.Templates
             }
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
             string fileName;
 
@@ -77,7 +77,7 @@ namespace LunarLabs.WebServer.Templates
                     return;
                 }
 
-                fileName = "synkpack." + extension;
+                fileName = "lunarpack." + extension;
             }
             else
             {
@@ -108,7 +108,7 @@ namespace LunarLabs.WebServer.Templates
                 default: throw new Exception("Unsupport asset extension: " + extension);
             }
 
-            output.Append(html);
+            context.output.Append(html);
         }
     }
 

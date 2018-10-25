@@ -29,9 +29,9 @@ namespace LunarLabs.WebServer.Templates
             this.dictionary = dictionary;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
-            var temp = TemplateEngine.EvaluateObject(context, pointer, key);
+            var temp = context.EvaluateObject(key);
 
             if (temp != null)
             {
@@ -50,12 +50,12 @@ namespace LunarLabs.WebServer.Templates
                 {
                     num /= dictionary[key];
                     num = num.TruncateEx(2);
-                    output.Append(num.ToString());
-                    output.Append(key);
+                    context.output.Append(num.ToString());
+                    context.output.Append(key);
                 }
                 else
                 {
-                    output.Append(num.ToString());
+                    context.output.Append(num.ToString());
                 }
             }
         }

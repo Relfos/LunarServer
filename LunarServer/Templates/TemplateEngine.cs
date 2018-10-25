@@ -49,9 +49,9 @@ namespace LunarLabs.WebServer.Templates
             _nodes.Add(node);
         }
 
-        public void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public void Execute(RenderingContext context)
         {
-            this.Root.Execute(queue, context, pointer, output);
+            this.Root.Execute(context);
         }
     }
 
@@ -90,11 +90,12 @@ namespace LunarLabs.WebServer.Templates
             };
 
             RegisterTag("body", (doc, key) => new BodyNode(doc));
-            RegisterTag("encode", (doc, key) => new EncodeNode(doc, key));
             RegisterTag("include", (doc, key) => new IncludeNode(doc, key));
             RegisterTag("upper", (doc, key) => new UpperNode(doc, key));
             RegisterTag("lower", (doc, key) => new LowerNode(doc, key));
             RegisterTag("set", (doc, key) => new SetNode(doc, key));
+
+            RegisterTag("url-encode", (doc, key) => new UrlEncodeNode(doc, key));
 
             RegisterTag("date", (doc, key) => new DateNode(doc, key));
             RegisterTag("span", (doc, key) => new SpanNode(doc, key));
@@ -316,7 +317,7 @@ namespace LunarLabs.WebServer.Templates
             }
         }
 
-        public string Render(Site site, object context, IEnumerable<string> templateList)
+        public string Render(object data, params string[] templateList)
         {
             var queue = new Queue<TemplateDocument>();
 
@@ -326,11 +327,16 @@ namespace LunarLabs.WebServer.Templates
                 queue.Enqueue(template);
             }
 
-            var output = new StringBuilder();
             var next = queue.Dequeue();
-            next.Execute(queue, context, context, output);
 
-            var html = output.ToString();
+            var context = new RenderingContext();
+            context.DataContext = data;
+            context.pointer = data;
+            context.queue = queue;
+            context.output = new StringBuilder();
+            next.Execute(context);
+
+            var html = context.output.ToString();
             return html;
         }
 

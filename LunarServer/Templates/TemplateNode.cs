@@ -9,6 +9,57 @@ using LunarLabs.WebServer.Utils;
 
 namespace LunarLabs.WebServer.Templates
 {
+    public class RenderingContext
+    {
+        public Queue<TemplateDocument> queue;
+        public object DataContext;
+        public object pointer;
+        public StringBuilder output;
+        
+        private Dictionary<string, object> variables;
+
+        internal void Set(string key, object val)
+        {
+            if (variables == null)
+            {
+                variables = new Dictionary<string, object>();
+            }
+
+            variables[key] = val;
+        }
+
+        internal object Get(string key)
+        {
+            if (variables == null)
+            {
+                return null;
+            }
+
+            if (variables.ContainsKey(key))
+            {
+                return variables[key];
+            }
+
+            return null;
+        }
+
+        public object EvaluateObject(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return null;
+            }
+
+            if (key.StartsWith("@"))
+            {
+                key = key.Substring(1);
+                return Get(key);
+            }
+
+            return TemplateEngine.EvaluateObject(DataContext, pointer, key);
+        }
+    }
+
     public abstract class TemplateNode
     {
         public TemplateEngine engine { get; internal set; }
@@ -18,7 +69,7 @@ namespace LunarLabs.WebServer.Templates
             document.AddNode(this);
         }
 
-        public abstract void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output);
+        public abstract void Execute(RenderingContext context);
     }
 
     public class GroupNode : TemplateNode
@@ -30,11 +81,11 @@ namespace LunarLabs.WebServer.Templates
 
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
             foreach (var node in nodes)
             {
-                node.Execute(queue, context, pointer, output);
+                node.Execute(context);
             }
         }
     }
@@ -48,9 +99,9 @@ namespace LunarLabs.WebServer.Templates
             this.content = content;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
-            output.Append(content);
+            context.output.Append(content);
         }
     }
 
@@ -62,10 +113,10 @@ namespace LunarLabs.WebServer.Templates
 
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
-            var next = queue.Dequeue();
-            next.Execute(queue, context, pointer, output);
+            var next = context.queue.Dequeue();
+            next.Execute(context);
         }
     }
 
@@ -78,7 +129,7 @@ namespace LunarLabs.WebServer.Templates
             this.name = name;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
             var node = engine.FindTemplate(this.name);
 
@@ -87,7 +138,7 @@ namespace LunarLabs.WebServer.Templates
                 throw new Exception("Could not find include :" +name);
             }
 
-            node.Execute(queue, context, pointer, output);
+            node.Execute(context);
         }
     }
 
@@ -102,11 +153,11 @@ namespace LunarLabs.WebServer.Templates
             this.escape = escape;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
-            var obj = TemplateEngine.EvaluateObject(context, pointer, key);
+            var obj = context.EvaluateObject(key);
 
-            if (obj == null && context != pointer)
+            if (obj == null && context != context.pointer)
             {
                 obj = TemplateEngine.EvaluateObject(context, context, key);
             }
@@ -120,7 +171,7 @@ namespace LunarLabs.WebServer.Templates
                     temp = SecurityElement.Escape(temp);
                 }
 
-                output.Append(temp);
+                context.output.Append(temp);
             }
         }
     }
@@ -134,13 +185,13 @@ namespace LunarLabs.WebServer.Templates
             this.key = key;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
-            var obj = TemplateEngine.EvaluateObject(context, pointer, key);
+            var obj = context.EvaluateObject(key);
             if (obj != null)
             {
                 var temp = obj.ToString().ToUpper();
-                output.Append(temp);
+                context.output.Append(temp);
             }
         }
     }
@@ -154,13 +205,13 @@ namespace LunarLabs.WebServer.Templates
             this.key = key;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
-            var obj = TemplateEngine.EvaluateObject(context, pointer, key);
+            var obj = context.EvaluateObject(key);
             if (obj != null)
             {
                 var temp = obj.ToString().ToLower();
-                output.Append(temp);
+                context.output.Append(temp);
             }
         }
     }
@@ -174,33 +225,29 @@ namespace LunarLabs.WebServer.Templates
             this.key = key;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
-            var dic = context as Dictionary<string, object>;
-            if (dic != null)
-            {
-                dic[key] = true;
-            }
+            context.Set(key, true);
         }
     }
 
-    public class EncodeNode : TemplateNode
+    public class UrlEncodeNode : TemplateNode
     {
         public string key;
 
-        public EncodeNode(TemplateDocument document, string key) : base(document)
+        public UrlEncodeNode(TemplateDocument document, string key) : base(document)
         {
             this.key = key;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
-            var obj = TemplateEngine.EvaluateObject(context, pointer, key);
+            var obj = context.EvaluateObject(key);
             if (obj != null)
             {
                 var temp = obj.ToString();
                 temp = StringUtils.UrlEncode(temp);         
-                output.Append(temp);
+                context.output.Append(temp);
             }
         }
     }
@@ -216,14 +263,14 @@ namespace LunarLabs.WebServer.Templates
             this.condition = condition;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
             if (this.trueNode == null)
             {
                 throw new Exception("Missing true branch in If node");
             }
 
-            var result = TemplateEngine.EvaluateObject(context, pointer, condition);
+            var result = context.EvaluateObject(condition);
 
             var isFalse = result == null || result.Equals(false) || ((result is string) && ((string)result).Length == 0);
 
@@ -236,13 +283,13 @@ namespace LunarLabs.WebServer.Templates
             {
                 if (falseNode != null)
                 {
-                    falseNode.Execute(queue, context, pointer, output);
+                    falseNode.Execute(context);
                 }
 
                 return;
             }
 
-            trueNode.Execute(queue, context, pointer, output);
+            trueNode.Execute(context);
         }
     }
 
@@ -257,21 +304,19 @@ namespace LunarLabs.WebServer.Templates
             this.collection = collection;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
             if (inner == null)
             {
                 throw new Exception("Missing inner branch in Each node");
             }
 
-            var obj = TemplateEngine.EvaluateObject(context, pointer, collection);
+            var obj = context.EvaluateObject(collection);
 
             if (obj == null)
             {
                 return;
             }
-
-            var dic = (Dictionary<string, object>)context;
 
             var list = obj as IEnumerable;
 
@@ -281,19 +326,21 @@ namespace LunarLabs.WebServer.Templates
                 int last = list.Count() - 1;
                 foreach (var item in list)
                 {
-                    dic["@index"] = index;
-                    dic["@first"] = index == 0;
-                    dic["@last"] = index == last;
-                    inner.Execute(queue, context, item, output);
+                    context.Set("index", index);
+                    context.Set("first", index == 0);
+                    context.Set("last", index == last);
+                    context.pointer = item;
+                    inner.Execute(context);
                     index++;
                 }
             }
             else
             {
-                dic["@index"] = 0;
-                dic["@first"] = true;
-                dic["@last"] = true;
-                inner.Execute(queue, context, obj, output);
+                context.pointer = obj;
+                context.Set("index", 0);
+                context.Set("first", true);
+                context.Set("last", false);
+                inner.Execute(context);
             }
         }
     }
@@ -308,7 +355,7 @@ namespace LunarLabs.WebServer.Templates
             this.dependencies = dependencies;
         }
 
-        public override void Execute(Queue<TemplateDocument> queue, object context, object pointer, StringBuilder output)
+        public override void Execute(RenderingContext context)
         {
             if (body == null)
             {
@@ -318,7 +365,7 @@ namespace LunarLabs.WebServer.Templates
             var dependency = TemplateDependency.FindDependency(dependencies);
             //if (dependency != null)
             {
-                body.Execute(queue, context, pointer, output);
+                body.Execute(context);
             }
         }
     }
