@@ -26,10 +26,9 @@ namespace LunarLabs.WebServer.HTTP
 
         public Site Site { get; private set; }
 
-        public HTTPServer(Site site, Logger log, ServerSettings settings)
+        public HTTPServer(Logger log, ServerSettings settings)
         {
             this.log = log;
-            this.Site = site;
             this.startTime = DateTime.Now;
 
             if (log.level == LogLevel.Default)
@@ -60,8 +59,12 @@ namespace LunarLabs.WebServer.HTTP
             listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
         }
 
-        public void Run()
+        public void Run(Site site)
         {
+            this.Site = site;
+            log.Info("Initializating site: " + Site.host);
+            Site.Initialize();
+
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, settings.port);
 
             try
@@ -76,9 +79,6 @@ namespace LunarLabs.WebServer.HTTP
                 log.Error(e.StackTrace);
                 return;
             }
-
-            log.Info("Initializating site: " + Site.host);
-            Site.Initialize();
 
             // log.Info("Server is listening on " + listener.LocalEndpoint);
 
@@ -129,6 +129,7 @@ namespace LunarLabs.WebServer.HTTP
             try
             {
                 client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
+                client.ReceiveTimeout = 500;
 
                 List<string> lines;
                 byte[] unread;
