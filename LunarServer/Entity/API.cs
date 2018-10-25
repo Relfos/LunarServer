@@ -95,11 +95,11 @@ namespace LunarLabs.WebServer.Entity
         {
             var name = typeof(T).Name.ToLower() + "s";
             var baseURL = Combine($"api/{name}");
-            site.Get(baseURL, (request) => ListEntities<T>());
-            site.Get(baseURL + "/new", (request) => NewEntity<T>(request));
-            site.Get(baseURL + "/{id}/show", (request) => ShowEntity<T>(request));
-            site.Get(baseURL + "/{id}/edit", (request) => EditEntity<T>(request));
-            site.Get(baseURL + "/{id}/delete", (request) => DeleteEntity<T>(request));
+            Site.Get(baseURL, (request) => ListEntities<T>());
+            Site.Get(baseURL + "/new", (request) => NewEntity<T>(request));
+            Site.Get(baseURL + "/{id}/show", (request) => ShowEntity<T>(request));
+            Site.Get(baseURL + "/{id}/edit", (request) => EditEntity<T>(request));
+            Site.Get(baseURL + "/{id}/delete", (request) => DeleteEntity<T>(request));
         }
 
         private static void Check(Dictionary<string, string> dic, IEnumerable<string> args)

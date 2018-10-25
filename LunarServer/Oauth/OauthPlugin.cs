@@ -12,7 +12,7 @@ namespace LunarLabs.WebServer.Oauth
         private Dictionary<OauthKind, OauthConnection> _auths = new Dictionary<OauthKind, OauthConnection>();
         public IEnumerable<OauthConnection> auths { get { return _auths.Values; } }
 
-        private Logger log { get { return this.site.log; } }
+        private Logger log { get { return this.Site.log; } }
 
         public Func<OauthKind, HTTPRequest, object> OnLogin;
         public Func<OauthKind, HTTPRequest, object> OnError;
@@ -42,7 +42,7 @@ namespace LunarLabs.WebServer.Oauth
 
         public OauthConnection Create(OauthKind kind, Logger log, string client_id, string client_secret, string redirect_uri, string token = null)
         {
-            var app_url = this.site.server.settings.environment == ServerEnvironment.Prod ? this.site.host : "http://localhost";
+            var app_url = this.Site.server.settings.environment == ServerEnvironment.Prod ? this.Site.host : "http://localhost";
 
             switch (kind)
             {
@@ -57,7 +57,7 @@ namespace LunarLabs.WebServer.Oauth
             foreach (var auth in _auths.Values)
             {
                 var path = Combine(auth.localPath);
-                site.Get(path, request =>
+                Site.Get(path, request =>
                 {
                     var kind = auth.GetKind();
 

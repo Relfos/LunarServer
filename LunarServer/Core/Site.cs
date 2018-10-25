@@ -9,8 +9,8 @@ namespace LunarLabs.WebServer.Core
 {
     public abstract class SitePlugin
     {
-        public Site site { get; private set; }
-        public string rootPath { get; private set; }
+        public Site Site { get; private set; }
+        public string RootPath { get; private set; }
 
         public SitePlugin(Site site, string rootPath = null)
         {
@@ -19,8 +19,8 @@ namespace LunarLabs.WebServer.Core
                 rootPath = "/";
             }
 
-            this.site = site;
-            this.rootPath = rootPath;
+            this.Site = site;
+            this.RootPath = rootPath;
 
             site.AddPlugin(this);
         }
@@ -30,12 +30,12 @@ namespace LunarLabs.WebServer.Core
 
         public string Combine(string localPath)
         {
-            if (string.IsNullOrEmpty(rootPath) || rootPath.Equals("/"))
+            if (string.IsNullOrEmpty(RootPath) || RootPath.Equals("/"))
             {
                 return "/"+localPath;
             }
 
-            return rootPath + "/" + localPath;
+            return RootPath + "/" + localPath;
         }
     }
 
@@ -67,8 +67,6 @@ namespace LunarLabs.WebServer.Core
 
             this.router = new Router();
             this._cache = new AssetCache(this, this.filePath);
-
-            server.AddSite(this);
         }
 
         public virtual void Initialize()

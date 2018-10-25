@@ -2,18 +2,16 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-
-using LunarLabs.WebServer.Core;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Concurrent;
+using LunarLabs.WebServer.Core;
 
 namespace LunarLabs.WebServer.HTTP
 {
 
-    public sealed class HTTPServer: IDisposable
+    public sealed class HTTPServer : IDisposable
     {
         public Logger log { get; private set; }
         private Socket listener;
@@ -26,12 +24,12 @@ namespace LunarLabs.WebServer.HTTP
 
         public ServerSettings settings { get; private set; }
 
-        private List<Site> _sites = new List<Site>();
-        public IEnumerable<Site> sites { get { return _sites; } }
+        public Site Site { get; private set; }
 
-        public HTTPServer(Logger log, ServerSettings settings)
+        public HTTPServer(Site site, Logger log, ServerSettings settings)
         {
             this.log = log;
+            this.Site = site;
             this.startTime = DateTime.Now;
 
             if (log.level == LogLevel.Default)
@@ -55,19 +53,11 @@ namespace LunarLabs.WebServer.HTTP
             log.Info($"~LUNAR SERVER~ [{settings.environment} mode]");
             log.Info($"Port: {settings.port}");
             log.Info($"Root path: {fullPath}");
-            
+
             // Create a TCP/IP socket
             listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             listener.Blocking = true;
-            listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);                       
-        }
-
-        public void AddSite(Site site)
-        {
-            lock (_sites)
-            {
-                this._sites.Add(site);
-            }            
+            listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
         }
 
         public void Run()
@@ -87,15 +77,13 @@ namespace LunarLabs.WebServer.HTTP
                 return;
             }
 
-            foreach (var site in sites)
-            {
-                log.Info("Initializating site: " + site.host);
-                site.Initialize();
-            }
+            log.Info("Initializating site: " + Site.host);
+            Site.Initialize();
 
-           // log.Info("Server is listening on " + listener.LocalEndpoint);
+            // log.Info("Server is listening on " + listener.LocalEndpoint);
 
             running = true;
+
             while (running)
             {
 
@@ -104,11 +92,10 @@ namespace LunarLabs.WebServer.HTTP
                 try
                 {
                     var client = listener.Accept();
-                    
+
                     log.Debug("Got a connection...");
 
-                    var task = new Task(() => HandleClient(client));
-                    task.Start();
+                    Task.Run(() => { HandleClient(client); });
                 }
                 catch (Exception e)
                 {
@@ -141,6 +128,8 @@ namespace LunarLabs.WebServer.HTTP
 
             try
             {
+                client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
+
                 List<string> lines;
                 byte[] unread;
 
@@ -166,16 +155,16 @@ namespace LunarLabs.WebServer.HTTP
                             case "PUT": request.method = HTTPRequest.Method.Put; break;
                             case "DELETE": request.method = HTTPRequest.Method.Delete; break;
 
-                            default: throw new Exception("Invalid HTTP method: "+s[0]);
+                            default: throw new Exception("Invalid HTTP method: " + s[0]);
                         }
-                        
+
                         request.version = s[2];
 
                         var path = s[1].Split('?');
                         request.path = path[0];
                         request.url = s[1];
 
-                        log.Info(request.method.ToString() +" "+ s[1]);
+                        log.Info(request.method.ToString() + " " + s[1]);
 
                         if (path.Length > 1)
                         {
@@ -220,26 +209,16 @@ namespace LunarLabs.WebServer.HTTP
                     string setCookie;
                     request.session = GetSession(request, out setCookie);
 
-                    if (setCookie!=null && OnNewVisitor!=null)
+                    if (setCookie != null && OnNewVisitor != null)
                     {
                         log.Debug("Handling visitors...");
-                        OnNewVisitor(request);                        
+                        OnNewVisitor(request);
                     }
 
                     log.Debug("Handling request...");
 
-                    var site = LookUpSite(request);
+                    HTTPResponse response = Site.HandleRequest(request);
 
-                    HTTPResponse response;
-                    if (site == null)
-                    {
-                        response = HTTPResponse.FromString("", HTTPCode.BadRequest);
-                    }
-                    else
-                    {
-                        response = site.HandleRequest(request);
-                    }
-                        
                     if (response == null || response.bytes == null)
                     {
                         log.Debug($"Got no response...");
@@ -268,7 +247,7 @@ namespace LunarLabs.WebServer.HTTP
                         response.headers["Set-Cookie"] = setCookie;
                     }
 
-                    using (var stream = new MemoryStream(1024))
+                    using (var stream = new NetworkStream(client))
                     {
                         using (var writer = new BinaryWriter(stream))
                         {
@@ -277,20 +256,15 @@ namespace LunarLabs.WebServer.HTTP
                             WriteString(writer, head);
                             foreach (var header in response.headers)
                             {
-                                WriteString(writer, header.Key+ ": " + header.Value);
+                                WriteString(writer, header.Key + ": " + header.Value);
                             }
 
                             WriteNewLine(writer);
 
                             writer.Write(response.bytes);
                         }
-
-                        var bytes = stream.ToArray();
-                        //log.Debug($"Sending {bytes.Length} bytes...");
-
-                        client.Send(bytes);
                     }
-                    
+
                 }
                 else
                 {
@@ -301,37 +275,9 @@ namespace LunarLabs.WebServer.HTTP
             }
             finally
             {
-                client.Dispose();
+                client.Close();
             }
 
-        }
-
-        private Site LookUpSite(HTTPRequest request)
-        {
-            if (!request.headers.ContainsKey("Host"))
-            {
-                return null;
-            }
-
-            var targetHost = request.headers["Host"];
-
-            if (settings.environment == ServerEnvironment.Dev || _sites.Count == 1)
-            {
-                return _sites.Count> 0 ? _sites[0] : null;
-            }
-
-            lock (_sites)
-            {
-                foreach (var site in _sites)
-                {
-                    if (site.host.Equals(targetHost))
-                    {
-                        return site;
-                    }
-                }
-            }
-
-            return null;
         }
 
         private bool ParsePost(HTTPRequest request, Socket client, byte[] unread)
@@ -348,18 +294,19 @@ namespace LunarLabs.WebServer.HTTP
             int.TryParse(lenStr, out bodySize);
             request.bytes = new byte[bodySize];
 
-            if (unread.Length > 0) {
+            if (unread.Length > 0)
+            {
                 Array.Copy(unread, request.bytes, unread.Length);
             }
 
             int ofs = unread.Length;
             int left = bodySize - ofs;
 
-            while (left>0)
+            while (left > 0)
             {
                 int n = client.Receive(request.bytes, ofs, left, SocketFlags.None);
 
-                if (n <=0)
+                if (n <= 0)
                 {
                     return false;
                 }
@@ -368,7 +315,7 @@ namespace LunarLabs.WebServer.HTTP
                 left -= n;
             }
 
-            var contentTypeHeader = request.headers.ContainsKey("Content-Type") ? request.headers["Content-Type"]: "application/x-www-form-urlencoded; charset=UTF-8";
+            var contentTypeHeader = request.headers.ContainsKey("Content-Type") ? request.headers["Content-Type"] : "application/x-www-form-urlencoded; charset=UTF-8";
 
             if (contentTypeHeader.ToLowerInvariant().StartsWith("multipart/form-data"))
             {
@@ -473,7 +420,7 @@ namespace LunarLabs.WebServer.HTTP
             {
                 string[] cookies = requestCookies.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-                for (int i=cookies.Length-1; i>=0; i--)
+                for (int i = cookies.Length - 1; i >= 0; i--)
                 {
                     var cookie = cookies[i];
 
