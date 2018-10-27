@@ -88,7 +88,7 @@ namespace LunarLabs.WebServer.Templates
                 return;
             }
 
-            this.steps = key.Split(new char[] { '.' }, 2);
+            this.steps = key.Split( '.' );
         }
 
         public override object Evaluate(RenderingContext context)
