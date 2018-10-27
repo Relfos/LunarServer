@@ -101,7 +101,7 @@ namespace LunarLabs.WebServer.Core
 
         public static bool ReadLines(this Socket client, out List<string> lines, out byte[] unread)
         {
-            var buffer = new byte[2048];
+            var buffer = new byte[1024*64];
 
             int ofs = 0;
             int left = buffer.Length;

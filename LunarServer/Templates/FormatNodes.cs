@@ -20,12 +20,12 @@ namespace LunarLabs.WebServer.Templates
             { "KB", 1000},
         };
 
-        private string key;
+        private RenderingKey key;
         private Dictionary<string, decimal> dictionary;
 
         public NumericFormatNode(TemplateDocument document, string key, Dictionary<string, decimal> dictionary) : base(document)
         {
-            this.key = key;
+            this.key = RenderingKey.Parse(key, RenderingType.Numeric);
             this.dictionary = dictionary;
         }
 

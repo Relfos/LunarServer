@@ -1,9 +1,7 @@
-﻿using LunarLabs.Parser;
-using LunarLabs.WebServer.Core;
+﻿using LunarLabs.WebServer.Core;
 using LunarLabs.WebServer.HTTP;
 using LunarLabs.WebServer.Minifiers;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -94,6 +92,7 @@ namespace LunarLabs.WebServer.Templates
             RegisterTag("upper", (doc, key) => new UpperNode(doc, key));
             RegisterTag("lower", (doc, key) => new LowerNode(doc, key));
             RegisterTag("set", (doc, key) => new SetNode(doc, key));
+            RegisterTag("break", (doc, key) => new BreakNode(doc, key));
 
             RegisterTag("url-encode", (doc, key) => new UrlEncodeNode(doc, key));
 
@@ -149,165 +148,6 @@ namespace LunarLabs.WebServer.Templates
             }
         }
 
-        public static object EvaluateObject(object context, object obj, string key)
-        {
-            bool negate = false;
-
-            if (key.StartsWith("!"))
-            {
-                key = key.Substring(1);
-                negate = true;
-            }
-
-            switch (key)
-            {
-                case "true": return !negate;
-                case "false": return negate;
-                case "this": return obj;
-            }
-
-            if (key.StartsWith("'") && key.EndsWith("'"))
-            {
-                return key.Substring(1, key.Length - 2);
-            }
-
-            int intVal;
-            if (int.TryParse(key, out intVal))
-            {
-                return intVal;
-            }
-
-            if (key.Contains("="))
-            {
-                var temp = key.Split(new char[] { '=' }, 2);
-                var leftSide = EvaluateObject(context, obj, temp[0]);
-                var rightSide = EvaluateObject(context, obj, temp[1]);
-
-                bool val;
-
-                if (leftSide == null && rightSide == null)
-                {
-                    val = true;
-                }
-                else
-                if ((leftSide == null && rightSide != null) || (leftSide != null && rightSide == null))
-                {
-                    val = false;
-                }
-                else
-                {
-                    val = leftSide.ToString().Equals(rightSide.ToString());
-                }
-                
-                if (negate) val = !val;
-
-                return val;
-            }
-
-            if (key.Contains("."))
-            {
-                var temp = key.Split(new char[] { '.' }, 2);
-                var objName = temp[0];
-                var fieldName = temp[1];
-
-                obj = EvaluateObject(context, obj, objName);
-
-                if (obj != null)
-                {
-                    return EvaluateObject(context, obj, fieldName);
-                }
-
-                return null;
-            }
-
-            Type type = obj.GetType();
-            var field = type.GetField(key);
-            if (field != null)
-            {
-                var result = field.GetValue(obj);
-
-                if (negate && result is bool)
-                {
-                    return !((bool)result);
-                }
-
-                return result;
-            }
-
-            var prop = type.GetProperty(key);
-            if (prop != null)
-            {
-                var result = prop.GetValue(obj);
-
-                if (negate && result is bool)
-                {
-                    return !((bool)result);
-                }
-
-                return result;
-            }
-
-            DataNode node = obj as DataNode;
-            if (node != null)
-            {
-                if (node.HasNode(key))
-                {
-                    var val = node.GetNode(key);
-                    if (val != null)
-                    {
-                        if (val.ChildCount > 0)
-                        {
-                            return val;
-                        }
-                        else
-                        {
-                            return val.Value;
-                        }
-                    }
-
-                    return null;
-                }
-
-                return null;
-            }
-
-            IDictionary dict = obj as IDictionary;
-            if (dict != null)
-            {
-                if (dict.Contains(key))
-                {
-                    obj = dict[key];
-                    return obj;
-                }
-
-                type = obj.GetType();
-                Type valueType = type.GetGenericArguments()[1];
-                return valueType.GetDefault();
-            }
-
-            ICollection collection;
-            try
-            {
-                collection = (ICollection)obj;
-            }
-            catch
-            {
-                collection = null;
-            }
-
-            if (collection != null && key.Equals("count"))
-            {
-                return collection.Count;
-            }
-
-            if (obj != context)
-            {
-                return EvaluateObject(context, context, key);
-            }
-
-            return null;
-        }
-
         public void RegisterTemplate(string name, string content)
         {
             lock (_cache)
@@ -319,6 +159,8 @@ namespace LunarLabs.WebServer.Templates
 
         public string Render(object data, params string[] templateList)
         {
+            var startTime = Environment.TickCount;
+
             var queue = new Queue<TemplateDocument>();
 
             foreach (var templateName in templateList)
@@ -330,13 +172,18 @@ namespace LunarLabs.WebServer.Templates
             var next = queue.Dequeue();
 
             var context = new RenderingContext();
-            context.DataContext = data;
-            context.pointer = data;
+            context.DataRoot = data;
+            context.DataPointer = data;
             context.queue = queue;
             context.output = new StringBuilder();
             next.Execute(context);
 
             var html = context.output.ToString();
+
+            var endTime = Environment.TickCount;
+            var renderDuration = endTime - startTime;
+            Console.WriteLine($"RENDERED IN {renderDuration} ms");
+
             return html;
         }
 

@@ -9,57 +9,6 @@ using LunarLabs.WebServer.Utils;
 
 namespace LunarLabs.WebServer.Templates
 {
-    public class RenderingContext
-    {
-        public Queue<TemplateDocument> queue;
-        public object DataContext;
-        public object pointer;
-        public StringBuilder output;
-        
-        private Dictionary<string, object> variables;
-
-        internal void Set(string key, object val)
-        {
-            if (variables == null)
-            {
-                variables = new Dictionary<string, object>();
-            }
-
-            variables[key] = val;
-        }
-
-        internal object Get(string key)
-        {
-            if (variables == null)
-            {
-                return null;
-            }
-
-            if (variables.ContainsKey(key))
-            {
-                return variables[key];
-            }
-
-            return null;
-        }
-
-        public object EvaluateObject(string key)
-        {
-            if (string.IsNullOrEmpty(key))
-            {
-                return null;
-            }
-
-            if (key.StartsWith("@"))
-            {
-                key = key.Substring(1);
-                return Get(key);
-            }
-
-            return TemplateEngine.EvaluateObject(DataContext, pointer, key);
-        }
-    }
-
     public abstract class TemplateNode
     {
         public TemplateEngine engine { get; internal set; }
@@ -85,7 +34,9 @@ namespace LunarLabs.WebServer.Templates
         {
             foreach (var node in nodes)
             {
+                var temp = context.DataPointer;
                 node.Execute(context);
+                context.DataPointer = temp;
             }
         }
     }
@@ -115,8 +66,11 @@ namespace LunarLabs.WebServer.Templates
 
         public override void Execute(RenderingContext context)
         {
+            var temp = context.DataPointer;
+            context.DataPointer = context.DataRoot;
             var next = context.queue.Dequeue();
             next.Execute(context);
+            context.DataPointer = temp;
         }
     }
 
@@ -144,12 +98,12 @@ namespace LunarLabs.WebServer.Templates
 
     public class EvalNode : TemplateNode
     {
-        public string key;
+        public RenderingKey key;
         public bool escape;
 
         public EvalNode(TemplateDocument document, string key, bool escape) : base(document)
         {
-            this.key = key;
+            this.key = RenderingKey.Parse(key, RenderingType.Any);
             this.escape = escape;
         }
 
@@ -157,9 +111,9 @@ namespace LunarLabs.WebServer.Templates
         {
             var obj = context.EvaluateObject(key);
 
-            if (obj == null && context != context.pointer)
+            if (obj == null && context != context.DataPointer)
             {
-                obj = TemplateEngine.EvaluateObject(context, context, key);
+                obj = context.EvaluateObject(key);
             }
 
             if (obj != null)
@@ -178,11 +132,11 @@ namespace LunarLabs.WebServer.Templates
 
     public class UpperNode : TemplateNode
     {
-        public string key;
+        public RenderingKey key;
 
         public UpperNode(TemplateDocument document, string key) : base(document)
         {
-            this.key = key;
+            this.key = RenderingKey.Parse(key, RenderingType.String);
         }
 
         public override void Execute(RenderingContext context)
@@ -198,11 +152,11 @@ namespace LunarLabs.WebServer.Templates
 
     public class LowerNode : TemplateNode
     {
-        public string key;
+        public RenderingKey key;
 
         public LowerNode(TemplateDocument document, string key) : base(document)
         {
-            this.key = key;
+            this.key = RenderingKey.Parse(key, RenderingType.String);
         }
 
         public override void Execute(RenderingContext context)
@@ -233,11 +187,11 @@ namespace LunarLabs.WebServer.Templates
 
     public class UrlEncodeNode : TemplateNode
     {
-        public string key;
+        public RenderingKey key;
 
         public UrlEncodeNode(TemplateDocument document, string key) : base(document)
         {
-            this.key = key;
+            this.key = RenderingKey.Parse(key, RenderingType.String);
         }
 
         public override void Execute(RenderingContext context)
@@ -254,13 +208,13 @@ namespace LunarLabs.WebServer.Templates
 
     public class IfNode : TemplateNode
     {
-        public string condition;
+        public RenderingKey condition;
         public TemplateNode trueNode;
         public TemplateNode falseNode;
 
         public IfNode(TemplateDocument document, string condition) : base(document)
         {
-            this.condition = condition;
+            this.condition = RenderingKey.Parse(condition, RenderingType.Any);
         }
 
         public override void Execute(RenderingContext context)
@@ -295,13 +249,13 @@ namespace LunarLabs.WebServer.Templates
 
     public class EachNode : TemplateNode
     {
-        public string collection;
+        public RenderingKey key;
 
         public TemplateNode inner;
 
         public EachNode(TemplateDocument document, string collection) : base(document)
         {
-            this.collection = collection;
+            this.key = RenderingKey.Parse(collection, RenderingType.Collection);
         }
 
         public override void Execute(RenderingContext context)
@@ -311,7 +265,7 @@ namespace LunarLabs.WebServer.Templates
                 throw new Exception("Missing inner branch in Each node");
             }
 
-            var obj = context.EvaluateObject(collection);
+            var obj = context.EvaluateObject(key);
 
             if (obj == null)
             {
@@ -322,24 +276,33 @@ namespace LunarLabs.WebServer.Templates
 
             if (list != null)
             {
+                context.operation = RenderingOperation.None;
+
                 int index = 0;
                 int last = list.Count() - 1;
                 foreach (var item in list)
                 {
-                    context.Set("index", index);
+                    /*context.Set("index", index);
                     context.Set("first", index == 0);
-                    context.Set("last", index == last);
-                    context.pointer = item;
+                    context.Set("last", index == last);*/
+                    context.DataPointer = item;
                     inner.Execute(context);
+
+                    if (context.operation == RenderingOperation.Break)
+                    {
+                        context.operation = RenderingOperation.None;
+                        break;
+                    }
+
                     index++;
                 }
             }
             else
             {
-                context.pointer = obj;
-                context.Set("index", 0);
+                context.DataPointer = obj;
+                /*context.Set("index", 0);
                 context.Set("first", true);
-                context.Set("last", false);
+                context.Set("last", false);*/
                 inner.Execute(context);
             }
         }
@@ -369,5 +332,18 @@ namespace LunarLabs.WebServer.Templates
             }
         }
     }
+
+    public class BreakNode : TemplateNode
+    {
+        public BreakNode(TemplateDocument document, string key) : base(document)
+        {
+        }
+
+        public override void Execute(RenderingContext context)
+        {
+            context.operation = RenderingOperation.Break;
+        }
+    }
+
 
 }

@@ -12,12 +12,12 @@ namespace LunarLabs.WebServer.Templates
             "None", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
         };
 
-        private string key;
+        private RenderingKey key;
         private string format;
 
         public DateNode(TemplateDocument document, string key, string format = "dd yyyy | hh:mm tt") : base(document)
         {
-            this.key = key;
+            this.key = RenderingKey.Parse(key, RenderingType.DateTime);
             this.format = " " + format;
         }
 
@@ -36,33 +36,35 @@ namespace LunarLabs.WebServer.Templates
 
     public class SpanNode : TemplateNode
     {
-        private string key;
+        private RenderingKey key;
 
         public SpanNode(TemplateDocument document, string key) : base(document)
         {
-            this.key = key;
+            this.key = RenderingKey.Parse(key, RenderingType.DateTime);
         }
 
         private static string FetchTranslation(string key, object context)
         {
-            try
-            {
-                var translation = (Dictionary<string, string>)(((Dictionary<string, object>)context)["translation"]);
-                if (translation != null)
-                {
-                    var obj = TemplateEngine.EvaluateObject(context, translation, "time_" + key);
-                    if (obj != null)
-                    {
-                        return (string)obj;
-                    }
-                }
+            /*            try
+                        {
+                            var translation = (Dictionary<string, string>)(((Dictionary<string, object>)context)["translation"]);
+                            if (translation != null)
+                            {
+                                var obj = TemplateEngine.EvaluateObject(context, translation, "time_" + key);
+                                if (obj != null)
+                                {
+                                    return (string)obj;
+                                }
+                            }
 
-                return key;
-            }
-            catch
-            {
-                return key;
-            }
+                            return key;
+                        }
+                        catch
+                        {
+                            return key;
+                        }*/
+
+            return key;
         }
 
         public static string FormatTimeSpan(TimeSpan span, object context)
@@ -102,9 +104,10 @@ namespace LunarLabs.WebServer.Templates
 
         public override void Execute(RenderingContext context)
         {
-            var obj = TemplateEngine.EvaluateObject(context, context, "current_time");
+            //var obj = TemplateEngine.EvaluateObject(context, context, "current_time");
+            //DateTime cur_time = (obj != null) ? (DateTime)obj : DateTime.Now;
 
-            DateTime cur_time = (obj != null) ? (DateTime)obj : DateTime.Now;
+            DateTime cur_time = DateTime.Now;
 
             var temp = context.EvaluateObject(key);
             if (temp != null)

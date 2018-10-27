@@ -128,8 +128,25 @@ namespace LunarLabs.WebServer.HTTP
 
             try
             {
-                client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, true);
-                client.ReceiveTimeout = 500;
+                // Disable the Nagle Algorithm for this tcp socket.
+                client.NoDelay = true;
+
+                // Set the receive buffer size to 8k
+                client.ReceiveBufferSize = 8192;
+
+                // Set the timeout for synchronous receive methods to 
+                // 1 second (1000 milliseconds.)
+                client.ReceiveTimeout = 1000;
+
+                // Set the send buffer size to 8k.
+                client.SendBufferSize = 8192;
+
+                // Set the timeout for synchronous send methods
+                // to 1 second (1000 milliseconds.)			
+                client.SendTimeout = 1000;
+
+                // Set the Time To Live (TTL) to 42 router hops.
+                client.Ttl = 42;
 
                 List<string> lines;
                 byte[] unread;
