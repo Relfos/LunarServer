@@ -34,9 +34,7 @@ namespace LunarLabs.WebServer.Templates
         {
             foreach (var node in nodes)
             {
-                var temp = context.DataPointer;
                 node.Execute(context);
-                context.DataPointer = temp;
             }
         }
     }
@@ -66,11 +64,12 @@ namespace LunarLabs.WebServer.Templates
 
         public override void Execute(RenderingContext context)
         {
-            var temp = context.DataPointer;
-            context.DataPointer = context.DataRoot;
+            var temp = context.DataStack;
+            context.DataStack = new List<object>();
+            context.DataStack.Add(context.DataRoot);
             var next = context.queue.Dequeue();
             next.Execute(context);
-            context.DataPointer = temp;
+            context.DataStack = temp;
         }
     }
 
@@ -111,7 +110,8 @@ namespace LunarLabs.WebServer.Templates
         {
             var obj = context.EvaluateObject(key);
 
-            if (obj == null && context != context.DataPointer)
+            var pointer = context.DataStack[context.DataStack.Count - 1];
+            if (obj == null && context != pointer)
             {
                 obj = context.EvaluateObject(key);
             }
@@ -285,8 +285,9 @@ namespace LunarLabs.WebServer.Templates
                     /*context.Set("index", index);
                     context.Set("first", index == 0);
                     context.Set("last", index == last);*/
-                    context.DataPointer = item;
+                    context.DataStack.Add(item);
                     inner.Execute(context);
+                    context.DataStack.RemoveAt(context.DataStack.Count - 1);
 
                     if (context.operation == RenderingOperation.Break)
                     {
@@ -299,11 +300,12 @@ namespace LunarLabs.WebServer.Templates
             }
             else
             {
-                context.DataPointer = obj;
+                context.DataStack.Add(obj);
                 /*context.Set("index", 0);
                 context.Set("first", true);
                 context.Set("last", false);*/
                 inner.Execute(context);
+                context.DataStack.RemoveAt(context.DataStack.Count - 1);
             }
         }
     }

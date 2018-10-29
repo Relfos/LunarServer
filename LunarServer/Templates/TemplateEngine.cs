@@ -173,7 +173,8 @@ namespace LunarLabs.WebServer.Templates
 
             var context = new RenderingContext();
             context.DataRoot = data;
-            context.DataPointer = data;
+            context.DataStack = new List<object>();
+            context.DataStack.Add(data);
             context.queue = queue;
             context.output = new StringBuilder();
             next.Execute(context);

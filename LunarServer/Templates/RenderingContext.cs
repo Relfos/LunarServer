@@ -14,7 +14,7 @@ namespace LunarLabs.WebServer.Templates
     {
         public Queue<TemplateDocument> queue;
         public object DataRoot;
-        public object DataPointer;
+        public List<object> DataStack;
         public StringBuilder output;
 
         internal RenderingOperation operation;

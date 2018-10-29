@@ -5,6 +5,14 @@ using System.Collections;
 
 namespace LunarLabs.WebServer.Templates
 {
+    internal class TemplateException: Exception
+    {
+        public TemplateException(string msg): base(msg)
+        {
+
+        }
+    }
+
     public class SingleRenderingKey: RenderingKey
     {
         private bool negate;
@@ -103,81 +111,100 @@ namespace LunarLabs.WebServer.Templates
                 return context.Get(global);
             }
 
-            var obj = context.DataPointer;
+            int stackPointer = context.DataStack.Count - 1;
+            var obj = context.DataStack[stackPointer];
 
             if (steps != null)
             {
-                for (int i = 0; i < steps.Length; i++)
+                // NOTE this while is required for support access to out of scope variables 
+                while (stackPointer >= 0)
                 {
-                    Type type = obj.GetType();
-                    var key = steps[i];
-
-                    var field = type.GetField(key);
-                    if (field != null)
+                    try
                     {
-                        obj = field.GetValue(obj);
-                        continue;
-                    }
-
-                    var prop = type.GetProperty(key);
-                    if (prop != null)
-                    {
-                        obj = prop.GetValue(obj);
-                        continue;
-                    }
-
-                    if (type == typeof(DataNode))
-                    {
-                        var node = obj as DataNode;
-                        if (node.HasNode(key))
+                        for (int i = 0; i < steps.Length; i++)
                         {
-                            var val = node.GetNode(key);
-                            if (val != null)
-                            {
-                                if (val.ChildCount > 0)
-                                {
-                                    obj = val;
-                                }
-                                else
-                                {
-                                    obj = val.Value;
-                                }
+                            Type type = obj.GetType();
+                            var key = steps[i];
 
+                            var field = type.GetField(key);
+                            if (field != null)
+                            {
+                                obj = field.GetValue(obj);
                                 continue;
                             }
+
+                            var prop = type.GetProperty(key);
+                            if (prop != null)
+                            {
+                                obj = prop.GetValue(obj);
+                                continue;
+                            }
+
+                            if (type == typeof(DataNode))
+                            {
+                                var node = obj as DataNode;
+                                if (node.HasNode(key))
+                                {
+                                    var val = node.GetNode(key);
+                                    if (val != null)
+                                    {
+                                        if (val.ChildCount > 0)
+                                        {
+                                            obj = val;
+                                        }
+                                        else
+                                        {
+                                            obj = val.Value;
+                                        }
+
+                                        continue;
+                                    }
+                                }
+
+                                throw new TemplateException("node key not found");
+                            }
+
+                            IDictionary dict = obj as IDictionary;
+                            if (dict != null)
+                            {
+                                if (dict.Contains(key))
+                                {
+                                    obj = dict[key];
+                                    continue;
+                                }
+
+                                type = obj.GetType();
+                                Type valueType = type.GetGenericArguments()[1];
+                                obj = valueType.GetDefault();
+                                continue;
+                            }
+
+                            if (key.Equals("count"))
+                            {
+                                ICollection collection = obj as ICollection;
+                                if (collection != null)
+                                {
+                                    obj = collection.Count;
+                                    continue;
+                                }
+
+                                throw new TemplateException("count key not found");
+                            }
+
+                            throw new TemplateException("key not found");
                         }
 
-                        throw new Exception("node key not found");
                     }
-
-                    IDictionary dict = obj as IDictionary;
-                    if (dict != null)
+                    catch (TemplateException e)
                     {
-                        if (dict.Contains(key))
+                        // if an eval exception was thrown, try searching in the parent scope
+                        stackPointer--;
+                        if (stackPointer < 0)
                         {
-                            obj = dict[key];
-                            continue;
+                            throw e;
                         }
-
-                        type = obj.GetType();
-                        Type valueType = type.GetGenericArguments()[1];
-                        obj = valueType.GetDefault();
-                        continue;
                     }
-
-                    if (key.Equals("count"))
-                    {
-                        ICollection collection = obj as ICollection;
-                        if (collection != null)
-                        {
-                            obj = collection.Count;
-                            continue;
-                        }
-
-                        throw new Exception("count key not found");
-                    }
-
-                    throw new Exception("key not found");
+                    break;
                 }
             }
 
