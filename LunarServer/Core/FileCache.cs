@@ -88,6 +88,11 @@ namespace LunarLabs.WebServer.Core
 
         public HTTPResponse GetFile(HTTPRequest request)
         {
+            if (this.filePath == null)
+            {
+                return null;
+            }
+
             var path = request.path.StartsWith("/") ? request.path.Substring(1): request.path;
             path = filePath + path;
             log.Debug($"Returning static file...{path}");

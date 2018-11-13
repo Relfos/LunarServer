@@ -61,8 +61,8 @@ namespace LunarLabs.WebServer.Templates
 
             if (operatorMatch != null)
             {
-                var leftText = key.Substring(0, operatorIndex);
-                var righText = key.Substring(operatorIndex + operatorMatch.Length);
+                var leftText = key.Substring(0, operatorIndex).Trim();
+                var righText = key.Substring(operatorIndex + operatorMatch.Length).Trim();
 
                 var op = operatorSymbols[operatorMatch];
                 return new CompositeRenderingKey(op, leftText, righText);

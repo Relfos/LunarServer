@@ -59,10 +59,17 @@ namespace LunarLabs.WebServer.Core
         {
             this.server = server;
 
-            this.filePath = server.settings.path + filePath;
-            if (!this.filePath.EndsWith("/"))
+            if (string.IsNullOrEmpty(filePath))
             {
-                this.filePath += "/";
+                this.filePath = null;
+            }
+            else
+            {
+                this.filePath = server.settings.path + filePath;
+                if (!this.filePath.EndsWith("/"))
+                {
+                    this.filePath += "/";
+                }
             }
 
             this.router = new Router();

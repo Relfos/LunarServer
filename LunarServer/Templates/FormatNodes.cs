@@ -35,27 +35,30 @@ namespace LunarLabs.WebServer.Templates
 
             if (temp != null)
             {
-                decimal num = (decimal)temp;
-
-                string key = null;
-                foreach (var entry in dictionary)
+                decimal num;
+                
+                if (decimal.TryParse(temp.ToString(), out num))
                 {
-                    if (num >= entry.Value || num<= -entry.Value)
+                    string key = null;
+                    foreach (var entry in dictionary)
                     {
-                        key = entry.Key;
+                        if (num >= entry.Value || num <= -entry.Value)
+                        {
+                            key = entry.Key;
+                        }
                     }
-                }
 
-                if (key != null)
-                {
-                    num /= dictionary[key];
-                    num = num.TruncateEx(2);
-                    context.output.Append(num.ToString());
-                    context.output.Append(key);
-                }
-                else
-                {
-                    context.output.Append(num.ToString());
+                    if (key != null)
+                    {
+                        num /= dictionary[key];
+                        num = num.TruncateEx(2);
+                        context.output.Append(num.ToString());
+                        context.output.Append(key);
+                    }
+                    else
+                    {
+                        context.output.Append(num.ToString());
+                    }
                 }
             }
         }
