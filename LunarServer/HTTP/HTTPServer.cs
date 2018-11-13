@@ -48,10 +48,19 @@ namespace LunarLabs.WebServer.HTTP
             RestoreSessionData();
 
             var fullPath = settings.path;
-            fullPath = fullPath.Replace("\\", "/");
+
             log.Info($"~LUNAR SERVER~ [{settings.environment} mode]");
             log.Info($"Port: {settings.port}");
-            log.Info($"Root path: {fullPath}");
+
+            if (fullPath != null)
+            {
+                fullPath = fullPath.Replace("\\", "/");
+                log.Info($"Root path: {fullPath}");
+            }
+            else
+            {
+                log.Info($"No root path specified.");
+            }
 
             // Create a TCP/IP socket
             listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
