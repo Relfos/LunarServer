@@ -68,7 +68,15 @@ namespace LunarLabs.WebServer.Core
             {
                 Console.ForegroundColor = temp;
             }
-       }
+        }
+    }
+
+    public class NullLogger : Logger
+    {
+        protected override void Log(ConsoleColor c, string s)
+        {
+            // do nothing
+        }
     }
 
 }
