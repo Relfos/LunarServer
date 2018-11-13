@@ -335,7 +335,9 @@ namespace LunarLabs.WebServer.HTTP
 
             var contentTypeHeader = request.headers.ContainsKey("Content-Type") ? request.headers["Content-Type"] : "application/x-www-form-urlencoded; charset=UTF-8";
 
-            if (contentTypeHeader.ToLowerInvariant().StartsWith("multipart/form-data"))
+            contentTypeHeader = contentTypeHeader.ToLowerInvariant();
+
+            if (contentTypeHeader.StartsWith("multipart/form-data"))
             {
                 var parser = new MultipartParser(new MemoryStream(request.bytes), (key, val) =>
                 {
@@ -348,6 +350,7 @@ namespace LunarLabs.WebServer.HTTP
                 }
             }
             else
+            if (contentTypeHeader.StartsWith("application/x-www-form-urlencoded"))
             {
                 var encoding = System.Text.Encoding.UTF8; //request.headers["Content-Encoding"]
 
@@ -392,6 +395,12 @@ namespace LunarLabs.WebServer.HTTP
                     // Simply set the key to the parsed value
                     request.args[key] = value.UrlDecode();
                 }
+            }
+            else
+            {
+                var encoding = System.Text.Encoding.UTF8; //request.headers["Content-Encoding"]
+
+                request.postBody = encoding.GetString(request.bytes);
             }
 
             return true;

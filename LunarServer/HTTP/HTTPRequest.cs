@@ -38,6 +38,8 @@ namespace LunarLabs.WebServer.HTTP
 
         public byte[] bytes;
 
+        public string postBody;
+
         public Session session;
 
         public Dictionary<string, string> headers = new Dictionary<string, string>();
