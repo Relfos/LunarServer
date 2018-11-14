@@ -118,7 +118,26 @@ namespace LunarLabs.WebServer.Templates
 
             if (obj != null)
             {
-                var temp = obj.ToString();
+                string temp;
+
+                if (obj is decimal)
+                {
+                    temp = ((decimal)obj).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                }
+                else
+                if (obj is float)
+                {
+                    temp = ((float)obj).ToString(".################", System.Globalization.CultureInfo.InvariantCulture);
+                }
+                else
+                if (obj is double)
+                {
+                    temp = ((double)obj).ToString(".################", System.Globalization.CultureInfo.InvariantCulture);
+                }
+                else
+                {
+                    temp = obj.ToString();
+                }
 
                 if (escape)
                 {
