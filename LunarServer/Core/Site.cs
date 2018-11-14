@@ -41,44 +41,45 @@ namespace LunarLabs.WebServer.Core
 
     public class Site
     {
-        public string host { get { return server.settings.host; } }
-        public Router router { get; private set; }
-        public string filePath { get; private set; }
+        public string Host { get { return Server.Settings.host; } }
+        public Router Router { get; private set; }
+        public string FilePath { get; private set; }
 
-        public Logger log { get { return server.log; } }
+        public Logger Logger { get { return Server.Logger; } }
 
         private AssetCache _cache;
         public FileCache Cache => _cache;
 
-        public HTTPServer server { get; private set; }
+        public HTTPServer Server { get; private set; }
 
         private List<SitePlugin> _plugins = new List<SitePlugin>();
-        public IEnumerable<SitePlugin> plugins { get { return _plugins; } }
+        public IEnumerable<SitePlugin> Plugins { get { return _plugins; } }
 
         public Site(HTTPServer server, string filePath)
         {
-            this.server = server;
+            this.Server = server;
 
             if (string.IsNullOrEmpty(filePath))
             {
-                this.filePath = null;
+                this.FilePath = null;
             }
             else
             {
-                this.filePath = server.settings.path + filePath;
-                if (!this.filePath.EndsWith("/"))
+                this.FilePath = server.Settings.path + filePath;
+                if (!this.FilePath.EndsWith("/"))
                 {
-                    this.filePath += "/";
+                    this.FilePath += "/";
                 }
             }
 
-            this.router = new Router();
-            this._cache = new AssetCache(this, this.filePath);
+            server.Site = this;
+            this.Router = new Router();
+            this._cache = new AssetCache(this, this.FilePath);
         }
 
         public virtual void Initialize()
         {
-            foreach (var plugin in plugins)
+            foreach (var plugin in Plugins)
             {
                 plugin.Install();
             }
@@ -86,22 +87,22 @@ namespace LunarLabs.WebServer.Core
 
         public void Get(string path, Func<HTTPRequest, object> handler)
         {
-            router.Register(HTTPRequest.Method.Get, path, handler);
+            Router.Register(HTTPRequest.Method.Get, path, handler);
         }
 
         public void Post(string path, Func<HTTPRequest, object> handler)
         {
-            router.Register(HTTPRequest.Method.Post, path, handler);
+            Router.Register(HTTPRequest.Method.Post, path, handler);
         }
 
         public void Put(string path, Func<HTTPRequest, object> handler)
         {
-            router.Register(HTTPRequest.Method.Put, path, handler);
+            Router.Register(HTTPRequest.Method.Put, path, handler);
         }
 
         public void Delete(string path, Func<HTTPRequest, object> handler)
         {
-            router.Register(HTTPRequest.Method.Delete, path, handler);
+            Router.Register(HTTPRequest.Method.Delete, path, handler);
         }
 
         public void AddPlugin(SitePlugin plugin)
@@ -111,12 +112,12 @@ namespace LunarLabs.WebServer.Core
 
         public virtual HTTPResponse HandleRequest(HTTPRequest request)
         {
-            log.Debug($"Router find {request.method}=>{request.url}");
-            var route = router.Find(request.method, request.path, request.args);
+            Logger.Debug($"Router find {request.method}=>{request.url}");
+            var route = Router.Find(request.method, request.path, request.args);
 
             if (route != null)
             {
-                log.Debug("Calling route handler...");
+                Logger.Debug("Calling route handler...");
                 var obj = route.handler(request);
                 
                 if (obj == null)
@@ -131,7 +132,7 @@ namespace LunarLabs.WebServer.Core
 
                 if (obj is string)
                 {
-                    return HTTPResponse.FromString((string)obj, HTTPCode.OK, true);
+                    return HTTPResponse.FromString((string)obj, HTTPCode.OK, Server.AutoCompress);
                 }
 
                 if (obj is byte[])
@@ -143,15 +144,14 @@ namespace LunarLabs.WebServer.Core
                 {
                     var root = (DataNode)obj;
                     var json = JSONWriter.WriteToString(root);
-                    var bytes = System.Text.Encoding.UTF8.GetBytes(json);
-                    return HTTPResponse.FromBytes(bytes, "application/json");
+                    return HTTPResponse.FromString((string)obj, HTTPCode.OK, Server.AutoCompress, "application/json");
                 }
 
                 return null;
             }
             else
             {
-                log.Debug("Route handler not found...");
+                Logger.Debug("Route handler not found...");
             }
 
             _cache.Update();

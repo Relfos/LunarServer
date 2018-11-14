@@ -68,12 +68,12 @@ namespace LunarLabs.WebServer.Templates
         public Func<string, TemplateDocument> On404;
 
         public Site Site { get; private set; }
-        public HTTPServer Server => Site.server;
+        public HTTPServer Server => Site.Server;
 
         public TemplateEngine(Site site, string filePath)
         {
             this.Site = site;
-            this.filePath = site.server.settings.path + filePath;
+            this.filePath = site.Server.Settings.path + filePath;
 
             if (!this.filePath.EndsWith("/"))
             {

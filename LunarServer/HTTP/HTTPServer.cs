@@ -13,23 +13,26 @@ namespace LunarLabs.WebServer.HTTP
 
     public sealed class HTTPServer : IDisposable
     {
-        public Logger log { get; private set; }
         private Socket listener;
 
-        public bool running { get; private set; }
+        public Logger Logger { get; private set; }
 
-        public DateTime startTime { get; private set; }
+        public bool AutoCompress = true;
+
+        public bool Running { get; private set; }
+
+        public DateTime StartTime { get; private set; }
 
         public Action<HTTPRequest> OnNewVisitor;
 
-        public ServerSettings settings { get; private set; }
+        public ServerSettings Settings { get; private set; }
 
-        public Site Site { get; private set; }
+        public Site Site { get; set; }
 
         public HTTPServer(Logger log, ServerSettings settings)
         {
-            this.log = log;
-            this.startTime = DateTime.Now;
+            this.Logger = log;
+            this.StartTime = DateTime.Now;
 
             if (log.level == LogLevel.Default)
             {
@@ -43,7 +46,7 @@ namespace LunarLabs.WebServer.HTTP
                 }
             }
 
-            this.settings = settings;
+            this.Settings = settings;
 
             RestoreSessionData();
 
@@ -68,13 +71,18 @@ namespace LunarLabs.WebServer.HTTP
             listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
         }
 
-        public void Run(Site site)
+        public void Run()
         {
-            this.Site = site;
-            log.Info("Initializating site: " + Site.host);
+            if (Site == null)
+            {
+                Logger.Error("Site required, can't be null");
+                return;
+            }
+
+            Logger.Info("Initializating site: " + Site.Host);
             Site.Initialize();
 
-            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, settings.port);
+            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, Settings.port);
 
             try
             {
@@ -84,38 +92,38 @@ namespace LunarLabs.WebServer.HTTP
             }
             catch (Exception e)
             {
-                log.Error(e.Message);
-                log.Error(e.StackTrace);
+                Logger.Error(e.Message);
+                Logger.Error(e.StackTrace);
                 return;
             }
 
             // log.Info("Server is listening on " + listener.LocalEndpoint);
 
-            running = true;
+            Running = true;
 
-            while (running)
+            while (Running)
             {
 
-                log.Debug("Waiting for a connection...");
+                Logger.Debug("Waiting for a connection...");
 
                 try
                 {
                     var client = listener.Accept();
 
-                    log.Debug("Got a connection...");
+                    Logger.Debug("Got a connection...");
 
                     Task.Run(() => { HandleClient(client); });
                 }
                 catch (Exception e)
                 {
-                    log.Error(e.ToString());
+                    Logger.Error(e.ToString());
                 }
             }
         }
 
         public void Stop()
         {
-            running = false;
+            Running = false;
         }
 
         private void WriteString(BinaryWriter writer, string s)
@@ -133,7 +141,7 @@ namespace LunarLabs.WebServer.HTTP
 
         private void HandleClient(Socket client)
         {
-            log.Debug("Connection accepted.");
+            Logger.Debug("Connection accepted.");
 
             try
             {
@@ -167,7 +175,7 @@ namespace LunarLabs.WebServer.HTTP
 
                     foreach (var line in lines)
                     {
-                        log.Debug(line);
+                        Logger.Debug(line);
                     }
 
                     var s = lines[0].Split(' ');
@@ -191,7 +199,7 @@ namespace LunarLabs.WebServer.HTTP
                         request.path = path[0];
                         request.url = s[1];
 
-                        log.Info(request.method.ToString() + " " + s[1]);
+                        Logger.Info(request.method.ToString() + " " + s[1]);
 
                         if (path.Length > 1)
                         {
@@ -222,14 +230,14 @@ namespace LunarLabs.WebServer.HTTP
                         {
                             if (!ParsePost(request, client, unread))
                             {
-                                log.Error("Failed parsing post data");
+                                Logger.Error("Failed parsing post data");
                                 return;
                             }
                         }
                     }
                     else
                     {
-                        log.Error("Failed parsing request method");
+                        Logger.Error("Failed parsing request method");
                         return;
                     }
 
@@ -238,22 +246,22 @@ namespace LunarLabs.WebServer.HTTP
 
                     if (setCookie != null && OnNewVisitor != null)
                     {
-                        log.Debug("Handling visitors...");
+                        Logger.Debug("Handling visitors...");
                         OnNewVisitor(request);
                     }
 
-                    log.Debug("Handling request...");
+                    Logger.Debug("Handling request...");
 
                     HTTPResponse response = Site.HandleRequest(request);
 
                     if (response == null || response.bytes == null)
                     {
-                        log.Debug($"Got no response...");
+                        Logger.Debug($"Got no response...");
                         response = HTTPResponse.FromString("Not found...", HTTPCode.NotFound);
                     }
                     else
                     {
-                        log.Debug($"Got response with {response.bytes.Length} bytes...");
+                        Logger.Debug($"Got response with {response.bytes.Length} bytes...");
                     }
 
                     response.headers["Content-Length"] = response.bytes != null ? response.bytes.Length.ToString() : "0";
@@ -295,10 +303,14 @@ namespace LunarLabs.WebServer.HTTP
                 }
                 else
                 {
-                    log.Error("Failed parsing request data");
+                    Logger.Error("Failed parsing request data");
                 }
 
 
+            }
+            catch
+            {
+                // ignore
             }
             finally
             {
@@ -479,7 +491,7 @@ namespace LunarLabs.WebServer.HTTP
                 _sessions[cookieValue] = session;
 
                 setCookie = SessionCookieName + "=" + cookieValue;
-                log.Debug($"Session: {cookieValue}");
+                Logger.Debug($"Session: {cookieValue}");
                 return session;
             }
 
@@ -489,12 +501,12 @@ namespace LunarLabs.WebServer.HTTP
                 _sessions[cookieValue] = session;
 
                 setCookie = SessionCookieName + "=" + cookieValue;
-                log.Debug($"Session: {cookieValue}");
+                Logger.Debug($"Session: {cookieValue}");
                 return session;
             }
             else
             {
-                log.Debug($"Session: {cookieValue}");
+                Logger.Debug($"Session: {cookieValue}");
                 var session = _sessions[cookieValue];
                 session.lastActivity = DateTime.Now;
                 return session;

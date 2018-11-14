@@ -70,7 +70,7 @@ namespace LunarLabs.WebServer.Templates
         {
             string fileName;
 
-            if (this.engine.Server.settings.environment == Core.ServerEnvironment.Dev)
+            if (this.engine.Server.Settings.environment == Core.ServerEnvironment.Dev)
             {
                 if (skip)
                 {
