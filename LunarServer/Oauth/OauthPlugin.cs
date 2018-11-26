@@ -2,7 +2,6 @@
 using LunarLabs.WebServer.HTTP;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace LunarLabs.WebServer.Oauth
 {
@@ -66,7 +65,7 @@ namespace LunarLabs.WebServer.Oauth
                         var profile = auth.Login(request.args["code"]);
                         if (profile != null)
                         {
-                            request.session.Set(Profile.sessionKey, profile);
+                            profile.Save(request.session);
                             return OnLogin(kind, request);
                         }
                     }

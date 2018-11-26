@@ -4,13 +4,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 using System.Threading.Tasks;
-using System.Linq;
-using System.Collections.Concurrent;
 using LunarLabs.WebServer.Core;
 
 namespace LunarLabs.WebServer.HTTP
 {
-
     public sealed class HTTPServer : IDisposable
     {
         private Socket listener;
@@ -27,11 +24,14 @@ namespace LunarLabs.WebServer.HTTP
 
         public ServerSettings Settings { get; private set; }
 
+        public SessionStorage SessionStorage { get; private set; }
+
         public Site Site { get; set; }
 
-        public HTTPServer(Logger log, ServerSettings settings)
+        public HTTPServer(ServerSettings settings, Logger log = null, SessionStorage sessionStorage = null)
         {
-            this.Logger = log;
+            this.SessionStorage = sessionStorage != null ? sessionStorage : new MemorySessionStorage();
+            this.Logger = log != null ? log : new NullLogger();
             this.StartTime = DateTime.Now;
 
             if (log.level == LogLevel.Default)
@@ -48,7 +48,7 @@ namespace LunarLabs.WebServer.HTTP
 
             this.Settings = settings;
 
-            RestoreSessionData();
+            SessionStorage.Restore();
 
             var fullPath = settings.path;
 
@@ -151,16 +151,14 @@ namespace LunarLabs.WebServer.HTTP
                 // Set the receive buffer size to 8k
                 client.ReceiveBufferSize = 8192;
 
-                // Set the timeout for synchronous receive methods to 
-                // 1 second (1000 milliseconds.)
-                client.ReceiveTimeout = 1000;
+                // Set the timeout for synchronous receive methods
+                client.ReceiveTimeout = 5000;
 
                 // Set the send buffer size to 8k.
                 client.SendBufferSize = 8192;
 
                 // Set the timeout for synchronous send methods
-                // to 1 second (1000 milliseconds.)			
-                client.SendTimeout = 1000;
+                client.SendTimeout = 5000;
 
                 // Set the Time To Live (TTL) to 42 router hops.
                 client.Ttl = 42;
@@ -438,29 +436,15 @@ namespace LunarLabs.WebServer.HTTP
                 listener = null;
             }
 
-            SaveSessionData();
+            SessionStorage.Save();
         }
 
         #region SESSIONS
-        private const string SessionCookieName = "_synk_session_";
-        private ConcurrentDictionary<string, Session> _sessions = new ConcurrentDictionary<string, Session>(StringComparer.InvariantCultureIgnoreCase);
-        public TimeSpan CookieExpiration = TimeSpan.FromMinutes(30);
+        private const string SessionCookieName = "_lunar_session_";
 
         private Session GetSession(HTTPRequest request, out string setCookie)
         {
             setCookie = null;
-
-            // expire old sessions
-            var allKeys = _sessions.Keys.ToArray();
-            foreach (var key in allKeys)
-            {
-                var sessionInfo = _sessions[key];
-                if (DateTime.Now.Subtract(sessionInfo.lastActivity) > this.CookieExpiration)
-                {
-                    Session temp;
-                    _sessions.TryRemove(key, out temp);
-                }
-            }
 
             string cookieValue = null;
 
@@ -485,50 +469,36 @@ namespace LunarLabs.WebServer.HTTP
                 }
             }
 
+            Session session;
+            SessionStorage.Update();
+
             if (cookieValue == null)
             {
-                var session = new Session(request);
+                session = SessionStorage.CreateSession();
                 cookieValue = session.ID;
-                _sessions[cookieValue] = session;
 
                 setCookie = SessionCookieName + "=" + cookieValue;
                 Logger.Debug($"Session: {cookieValue}");
-                return session;
             }
-
-            if (!_sessions.ContainsKey(cookieValue))
+            else
+            if (SessionStorage.HasSession(cookieValue))
             {
-                var session = new Session(request, cookieValue);
-                _sessions[cookieValue] = session;
-
-                setCookie = SessionCookieName + "=" + cookieValue;
                 Logger.Debug($"Session: {cookieValue}");
+                session = SessionStorage.GetSession(cookieValue);
+                session.lastActivity = DateTime.Now;
                 return session;
             }
             else
             {
+                session = SessionStorage.CreateSession(cookieValue);
+                setCookie = SessionCookieName + "=" + cookieValue;
                 Logger.Debug($"Session: {cookieValue}");
-                var session = _sessions[cookieValue];
-                session.lastActivity = DateTime.Now;
                 return session;
             }
+
+            return session;
         }
 
-        private void SaveSessionData()
-        {
-            foreach (var session in _sessions.Values)
-            {
-                foreach (var entry in session.data)
-                {
-
-                }
-            }
-        }
-
-        private void RestoreSessionData()
-        {
-            _sessions.Clear();
-        }
         #endregion
 
     }

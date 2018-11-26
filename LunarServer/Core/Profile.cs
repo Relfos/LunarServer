@@ -1,4 +1,5 @@
 ﻿using LunarLabs.Parser;
+using LunarLabs.WebServer.Core;
 using LunarLabs.WebServer.HTTP;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ namespace LunarLabs.WebServer.Oauth
 {
     public class Profile
     {
-        public const string sessionKey = "_profile";
+        public const string SessionPrefix = "profile_";
 
         public string id;
         public string name;
@@ -17,19 +18,53 @@ namespace LunarLabs.WebServer.Oauth
         public string birthday;
 
         public string token;
-        public DataNode data;
+        public DataNode data; // TODO not serialized
+
+        public void Save(Session session)
+        {
+            session.SetString(SessionPrefix + "id", id);
+            session.SetString(SessionPrefix + "token", token);
+            session.SetString(SessionPrefix + "name", name);
+            session.SetString(SessionPrefix + "email", email);
+            session.SetString(SessionPrefix + "photo", photo);
+            session.SetString(SessionPrefix + "birthday", birthday);
+        }
+
+        public static void Remove(Session session)
+        {
+            session.Remove(SessionPrefix + "id");
+            session.Remove(SessionPrefix + "token");
+            session.Remove(SessionPrefix + "name");
+            session.Remove(SessionPrefix + "email");
+            session.Remove(SessionPrefix + "photo");
+            session.Remove(SessionPrefix + "birthday");
+        }
+
+        public static Profile Load(Session session)
+        {
+            var id = session.GetString(SessionPrefix + "id", null);
+
+            if (id == null)
+            {
+                return null;
+            }
+
+            var profile = new Profile();
+            profile.id = id;
+            profile.token = session.GetString(SessionPrefix + "token");
+            profile.name = session.GetString(SessionPrefix + "name");
+            profile.email = session.GetString(SessionPrefix + "email");
+            profile.photo = session.GetString(SessionPrefix + "photo");
+            profile.birthday = session.GetString(SessionPrefix + "birthday");
+            return profile;
+        }
     }
 
     public static class ProfileUtils
     {
         public static Profile GetProfile(this HTTPRequest request)
         {
-            if (request.session.Contains(Profile.sessionKey))
-            {
-                return request.session.Get<Profile>(Profile.sessionKey);
-            }
-
-            return null;
+            return Profile.Load(request.session);
         }
 
         public static bool IsAuthenticated(this HTTPRequest request)
@@ -41,7 +76,7 @@ namespace LunarLabs.WebServer.Oauth
         {
             if (request.IsAuthenticated())
             {
-                request.session.Remove(Profile.sessionKey);
+                Profile.Remove(request.session);
                 return true;
             }
 

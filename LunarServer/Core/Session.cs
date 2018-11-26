@@ -1,8 +1,6 @@
-﻿using LunarLabs.WebServer.HTTP;
-using LunarLabs.WebServer.Utils;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Net;
+using System.Linq;
 
 namespace LunarLabs.WebServer.Core
 {
@@ -10,18 +8,15 @@ namespace LunarLabs.WebServer.Core
     {
         private Dictionary<string, object> _data = new Dictionary<string, object>();
 
-        public IEnumerable<KeyValuePair<string, object>> data { get { return _data; } }
+        public IEnumerable<KeyValuePair<string, object>> Data { get { return _data; } }
 
         public string ID;
         public DateTime lastActivity;
 
-        public Session(HTTPRequest request, string ID = null)
+        public Session(string ID = null)
         {
             this.ID = ID != null ? ID : Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Guid.NewGuid().ToString() + DateTime.Now.Millisecond.ToString() + DateTime.Now.Ticks.ToString()));
             this.lastActivity = DateTime.Now;
-
-            this.OS = DetectOS(request);
-            this.country = DetectCountry(request);
         }
 
         public bool Contains(string name)
@@ -29,7 +24,7 @@ namespace LunarLabs.WebServer.Core
             return _data.ContainsKey(name);
         }
 
-        public T Get<T>(string name, T defaultValue = default(T))
+        private T Get<T>(string name, T defaultValue = default(T))
         {
             if (_data.ContainsKey(name))
             {
@@ -39,9 +34,101 @@ namespace LunarLabs.WebServer.Core
             return defaultValue;
         }
 
-        public void Set(string name, object value)
+        private void Set(string name, object value)
         {
             _data[name] = value;
+        }
+
+        public void SetString(string name, string value)
+        {
+            Set(name, value);
+        }
+
+        public void SetBool(string name, bool value)
+        {
+            Set(name, value);
+        }
+
+        public void SetInt(string name, int value)
+        {
+            Set(name, value);
+        }
+
+        public void SetStruct<T>(string name, object obj) where T : struct 
+        {
+            var type = typeof(T);
+            var fields = type.GetFields();
+            foreach (var field in fields)
+            {
+                if (field.FieldType == typeof(string))
+                {
+                    var val = (string)field.GetValue(obj);
+                    SetString(name + "." + field.Name, val);
+                }
+                else
+                if (field.FieldType == typeof(bool))
+                {
+                    var val = (bool)field.GetValue(obj);
+                    SetBool(name + "." + field.Name, val);
+                }
+                else
+                if (field.FieldType == typeof(int))
+                {
+                    var val = (int)field.GetValue(obj);
+                    SetInt(name + "." + field.Name, val);
+                }
+                else
+                {
+                    throw new Exception("Unsupport field type for session storage: " + field.FieldType.Name);
+                }
+            }
+        }
+
+        public string GetString(string name, string defaultVal = null)
+        {
+            return Get<string>(name, defaultVal);
+        }
+
+        public bool GetBool(string name, bool defaultVal = false)
+        {
+            return Get<bool>(name, defaultVal);
+        }
+
+        public int GetInt(string name, int defaultVal = 0)
+        {
+            return Get<int>(name, defaultVal);
+        }
+
+        public T GetStruct<T>(string name) where T : struct
+        {
+            var type = typeof(T);
+            var fields = type.GetFields();
+            T obj = default(T);
+            foreach (var field in fields)
+            {
+                if (field.FieldType == typeof(string))
+                {
+                    var val = GetString(name + "." + field.Name);
+                    field.SetValue(obj, val);
+                }
+                else
+                if (field.FieldType == typeof(bool))
+                {
+                    var val = GetBool(name + "." + field.Name);
+                    field.SetValue(obj, val);
+                }
+                else
+                if (field.FieldType == typeof(int))
+                {
+                    var val = GetInt(name + "." + field.Name);
+                    field.SetValue(obj, val);
+                }
+                else
+                {
+                    throw new Exception("Unsupport field type for session storage: " + field.FieldType.Name);
+                }
+            }
+            return obj;
         }
 
         public void Remove(string name)
@@ -55,106 +142,6 @@ namespace LunarLabs.WebServer.Core
         public void Destroy()
         {
             _data.Clear();
-        }
-
-        public enum OSType
-        {
-            Unknown,
-            Windows,
-            Linux,
-            OSX,
-            Android,
-            iOS,
-            WindowsPhone,
-            XboxOne,
-            Playstation4,
-        }
-
-        public OSType OS { get; private set; }
-
-        public string country;
-
-        private static string[] uaHttpHeaders = {
-            // The default User-Agent string.
-            "User-Agent",
-            // Header can occur on devices using Opera Mini.
-            "X-OperaMini-Phone-UA",
-            // Vodafone specific header: http://www.seoprinciple.com/mobile-web-community-still-angry-at-vodafone/24/
-            "X-Device-User-Agent",
-            "X-Original-User-Agent",
-        };
-
-        public OSType DetectOS(HTTPRequest request)
-        {
-            foreach (var ua in uaHttpHeaders)
-            {
-                if (!request.headers.ContainsKey(ua))
-                {
-                    continue;
-                }
-
-                var value = request.headers[ua];
-                if (value == null)
-                {
-                    continue;
-                }
-
-                if (value.Contains("Windows Phone")) { return OSType.WindowsPhone; }
-
-                if (value.Contains("Android")) { return OSType.Android; }
-
-                if (value.Contains("AppleTV") || value.Contains("iPhone") || value.Contains("iPad")) { return OSType.iOS; }
-
-                if (value.Contains("Xbox One")) { return OSType.XboxOne; }
-
-                if (value.Contains("PlayStation 4")) { return OSType.Playstation4; }
-
-                if (value.Contains("Win64") || value.Contains("WOW64")) { return OSType.Windows; }
-
-                if (value.Contains("OS X")) { return OSType.OSX; }
-
-                if (value.Contains("Linux")) { return OSType.Linux; }
-            }
-
-            return OSType.Unknown;
-        }
-
-        private static string[] ipHttpHeaders = {
-            "Remote-Addr",
-            "X_Forwarded_For",
-            "Client-Ip",
-            "X-Forwarded",
-            "X-Cluster-Client-Ip",
-            "Forwarded-For",
-            "Forwarded"
-        };
-
-        public string DetectCountry(HTTPRequest request)
-        {
-            foreach (var ipHeader in ipHttpHeaders)
-            {
-                if (!request.headers.ContainsKey(ipHeader))
-                {
-                    continue;
-                }
-
-                var value = request.headers[ipHeader];
-                if (value == null)
-                {
-                    continue;
-                }
-
-                var ipAddress = IPAddress.Parse(value);
-                var ipBytes = ipAddress.GetAddressBytes();
-                uint ip = (uint)ipBytes[0] << 24;
-                ip += (uint)ipBytes[1] << 16;
-                ip += (uint)ipBytes[2] << 8;
-                ip += (uint)ipBytes[3];
-
-                return CountryUtils.IPToCountry(ip);
-            }
-
-            return "";
         }
 
     }
