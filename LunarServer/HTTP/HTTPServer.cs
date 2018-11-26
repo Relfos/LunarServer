@@ -308,8 +308,9 @@ namespace LunarLabs.WebServer.HTTP
 
 
             }
-            catch
+            catch (Exception e)
             {
+                Logger.Error(e.ToString());
                 // ignore
             }
             finally
