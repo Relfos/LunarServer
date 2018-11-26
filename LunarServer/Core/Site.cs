@@ -144,7 +144,7 @@ namespace LunarLabs.WebServer.Core
                 {
                     var root = (DataNode)obj;
                     var json = JSONWriter.WriteToString(root);
-                    return HTTPResponse.FromString((string)obj, HTTPCode.OK, Server.AutoCompress, "application/json");
+                    return HTTPResponse.FromString(json, HTTPCode.OK, Server.AutoCompress, "application/json");
                 }
 
                 return null;
