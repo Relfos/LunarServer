@@ -139,7 +139,10 @@ namespace LunarLabs.WebServer.Templates
 
                 content = File.ReadAllText(fileName);
 
-                content = HTMLMinifier.Compress(content);
+                if (Server.Settings.environment == ServerEnvironment.Prod)
+                {
+                    content = HTMLMinifier.Compress(content);
+                }
 
                 var doc = CompileTemplate(content); 
 
@@ -310,17 +313,23 @@ namespace LunarLabs.WebServer.Templates
 
             while (i < code.Length)
             {
-                bool shouldContinue;
+                /*bool shouldContinue;
                 do
-                {
+                {*/
                     prev = c;
                     c = code[i];
                     i++;
 
-                    var isWhitespace = char.IsWhiteSpace(c);
+/*                    var isWhitespace = char.IsWhiteSpace(c);
 
-                    shouldContinue = false;
-                } while (shouldContinue);
+                    switch (state)
+                    {
+                        case ParseState.String: shouldContinue = false; break;
+                        case ParseState.Default: shouldContinue = isWhitespace; break;
+                        default: shouldContinue = false; break;
+                    }
+                    
+                } while (shouldContinue);*/
 
                 switch (state)
                 {
