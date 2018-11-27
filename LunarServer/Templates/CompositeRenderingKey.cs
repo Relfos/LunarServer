@@ -1,25 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace LunarLabs.WebServer.Templates
 {
     public class CompositeRenderingKey : RenderingKey
     {
-        private RenderingKey leftSide;
-        private RenderingKey rightSide;
+        public RenderingKey leftSide { get; private set; }
+        public RenderingKey rightSide { get; private set; }
 
-        private KeyOperator _operator;
+        public KeyOperator Operator { get; private set; }
 
         internal CompositeRenderingKey(KeyOperator op, string leftText, string rightText)
         {
-            _operator = op;
+            Operator = op;
 
             RenderingType expectedType;
 
-            switch (_operator)
+            switch (Operator)
             {
                 case KeyOperator.Equal:
                 case KeyOperator.Different:
+                case KeyOperator.Assignment:
                     expectedType = RenderingType.Any;
                     break;
 
@@ -104,7 +104,7 @@ namespace LunarLabs.WebServer.Templates
         {
             var left = this.leftSide.Evaluate(context);
             var right = this.rightSide.Evaluate(context);
-            return InternalEvaluate(_operator, left, right);
+            return InternalEvaluate(Operator, left, right);
         }
     }
 }

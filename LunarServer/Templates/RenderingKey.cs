@@ -1,8 +1,4 @@
-﻿using LunarLabs.Parser;
-using LunarLabs.WebServer.Core;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace LunarLabs.WebServer.Templates
 {
@@ -16,7 +12,7 @@ namespace LunarLabs.WebServer.Templates
         DateTime,
     }
 
-    internal enum KeyOperator
+    public enum KeyOperator
     {
         Equal,
         Different,
@@ -24,6 +20,7 @@ namespace LunarLabs.WebServer.Templates
         Less,
         GreaterOrEqual,
         LessOrEqual,
+        Assignment,
     }
 
     public abstract class RenderingKey
@@ -36,6 +33,7 @@ namespace LunarLabs.WebServer.Templates
             { "<", KeyOperator.Less },
             { ">=" , KeyOperator.GreaterOrEqual},
             { "<=" , KeyOperator.LessOrEqual},
+            { ":=" , KeyOperator.Assignment},
         };
 
         public static RenderingKey Parse(string key, RenderingType expectedType)

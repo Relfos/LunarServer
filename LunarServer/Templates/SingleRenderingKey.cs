@@ -18,14 +18,47 @@ namespace LunarLabs.WebServer.Templates
         private bool negate;
         private object literal;
         private string global;
+        private bool self;
 
         private string[] steps;
 
         public RenderingType RenderingType { get; private set; }
 
+        public override string ToString()
+        {
+            string result;
+
+            if (self)
+            {
+                return "this";
+            }
+
+            if (literal != null)
+            {
+                result = literal.ToString();
+            }
+            else
+            if (global != null)
+            {
+                result = "@" + global;
+            }
+            else
+            {
+                result = String.Join(".", steps);
+            }
+
+            if (negate)
+            {
+                result = "!" + result;
+            }
+
+            return result;
+        }
+
         internal SingleRenderingKey(string key, RenderingType expectedType)
         {
             negate = false;
+            self = false;
             RenderingType = expectedType;
 
             if (key.StartsWith("!"))
@@ -68,7 +101,9 @@ namespace LunarLabs.WebServer.Templates
                     literal = negate;
                     return;
 
-                case "this": return;
+                case "this":
+                    self = true;
+                    return;
             }
 
             if (key.StartsWith("'") && key.EndsWith("'"))
@@ -101,6 +136,11 @@ namespace LunarLabs.WebServer.Templates
 
         public override object Evaluate(RenderingContext context)
         {
+            if (self)
+            {
+                return context.DataStack[context.DataStack.Count - 1];
+            }
+
             if (literal != null)
             {
                 return literal;
@@ -112,33 +152,21 @@ namespace LunarLabs.WebServer.Templates
             }
 
             int stackPointer = context.DataStack.Count - 1;
-            var obj = context.DataStack[stackPointer];
+            object obj = null;
 
             if (steps != null)
             {
                 // NOTE this while is required for support access to out of scope variables 
                 while (stackPointer >= 0)
                 {
+                    obj = context.DataStack[stackPointer]; 
+
                     try
                     {
                         for (int i = 0; i < steps.Length; i++)
                         {
                             Type type = obj.GetType();
                             var key = steps[i];
-
-                            var field = type.GetField(key);
-                            if (field != null)
-                            {
-                                obj = field.GetValue(obj);
-                                continue;
-                            }
-
-                            var prop = type.GetProperty(key);
-                            if (prop != null)
-                            {
-                                obj = prop.GetValue(obj);
-                                continue;
-                            }
 
                             if (type == typeof(DataNode))
                             {
@@ -161,7 +189,28 @@ namespace LunarLabs.WebServer.Templates
                                     }
                                 }
 
-                                throw new TemplateException("node key not found");
+                                if (stackPointer > 0)
+                                {
+                                    throw new TemplateException("node key not found");
+                                }
+                                else
+                                {
+                                    return null;
+                                }                                
+                            }
+
+                            var field = type.GetField(key);
+                            if (field != null)
+                            {
+                                obj = field.GetValue(obj);
+                                continue;
+                            }
+
+                            var prop = type.GetProperty(key);
+                            if (prop != null)
+                            {
+                                obj = prop.GetValue(obj);
+                                continue;
                             }
 
                             IDictionary dict = obj as IDictionary;
@@ -202,6 +251,10 @@ namespace LunarLabs.WebServer.Templates
                         if (stackPointer < 0)
                         {
                             throw e;
+                        }
+                        else
+                        {
+                            continue;
                         }
                     }
                     break;
