@@ -191,16 +191,39 @@ namespace LunarLabs.WebServer.Templates
 
     public class SetNode : TemplateNode
     {
-        public string key;
+        public RenderingKey key;
 
         public SetNode(TemplateDocument document, string key) : base(document)
         {
-            this.key = key;
+            this.key = RenderingKey.Parse(key, RenderingType.Any);
         }
 
         public override void Execute(RenderingContext context)
         {
-            context.Set(key, true);
+            if (this.key is CompositeRenderingKey)
+            {
+                var composite = (CompositeRenderingKey)this.key;
+                if (composite.Operator == KeyOperator.Assignment)
+                {
+                    var varName = composite.leftSide.ToString();
+                    var val = composite.rightSide.Evaluate(context);
+                    context.Set(varName, val);
+                }
+                else
+                {
+                    throw new Exception("Expected assignment operator for set node");
+                }
+            }
+            else
+            if (this.key is CompositeRenderingKey)
+            {
+                var varName = key.ToString();
+                context.Set(varName, true);
+            }
+            else
+            {
+
+            }
         }
     }
 
