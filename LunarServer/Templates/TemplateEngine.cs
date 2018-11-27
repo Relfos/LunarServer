@@ -103,6 +103,7 @@ namespace LunarLabs.WebServer.Templates
 
             RegisterTag("javascript", (doc, key) => new AssetNode(doc, key, "js"));
             RegisterTag("css", (doc, key) => new AssetNode(doc, key, "css"));
+            RegisterTag("store", (doc, key) => new StoreNode(doc, key));
         }
 
         public TemplateDocument FindTemplate(string name)
@@ -193,8 +194,8 @@ namespace LunarLabs.WebServer.Templates
             Default,
             OpenTag,
             CloseTag,
-            InsideTag,
-            EndTag
+            EndTag,
+            String,
         }
 
         public static void Print(TemplateNode node, int level = 0)
@@ -459,6 +460,23 @@ namespace LunarLabs.WebServer.Templates
                             else
                             {
                                 temp.Append(c);
+
+                                if (c == '\'')
+                                {
+                                    state = ParseState.String;
+                                }
+                            }
+
+                            break;
+                        }
+
+                    case ParseState.String:
+                        {
+                            temp.Append(c);
+
+                            if (c == '\'')
+                            {
+                                state = ParseState.OpenTag;
                             }
 
                             break;
