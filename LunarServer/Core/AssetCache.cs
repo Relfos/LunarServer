@@ -9,6 +9,8 @@ namespace LunarLabs.WebServer.Core
 {
     public class AssetGroup
     {
+        public static readonly string AssetFileName = "lunarpack.";
+
         public string extension;
         public string contentType;
         public Func<string, string> minifier;
@@ -78,7 +80,7 @@ namespace LunarLabs.WebServer.Core
 
             var bytes = Encoding.UTF8.GetBytes(content.ToString());
 
-            var fileName = "synkpack." + extension;
+            var fileName = AssetFileName + extension;
 
             var entry = new CacheEntry();
             entry.hash = StringUtils.MD5(bytes);
@@ -101,7 +103,7 @@ namespace LunarLabs.WebServer.Core
 
         public AssetCache(Site site, string filePath) : base(site.Logger, filePath)
         {
-            BuildAssetCache("js", "application/javascript"/*, x => JSMinifier.Compress(x)*/);
+            BuildAssetCache("js", "application/javascript", x => JSMinifier.Compress(x));
             BuildAssetCache("css", "text/css", x => CSSMinifier.Compress(x));
         }
 
