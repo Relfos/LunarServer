@@ -324,9 +324,9 @@ namespace LunarLabs.WebServer.Templates
                 int last = list.Count() - 1;
                 foreach (var item in list)
                 {
-                    /*context.Set("index", index);
+                    context.Set("index", index);
                     context.Set("first", index == 0);
-                    context.Set("last", index == last);*/
+                    context.Set("last", index == last);
                     context.DataStack.Add(item);
                     inner.Execute(context);
                     context.DataStack.RemoveAt(context.DataStack.Count - 1);
@@ -343,9 +343,9 @@ namespace LunarLabs.WebServer.Templates
             else
             {
                 context.DataStack.Add(obj);
-                /*context.Set("index", 0);
+                context.Set("index", 0);
                 context.Set("first", true);
-                context.Set("last", false);*/
+                context.Set("last", true);
                 inner.Execute(context);
                 context.DataStack.RemoveAt(context.DataStack.Count - 1);
             }
