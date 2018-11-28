@@ -1,81 +1,10 @@
-﻿using LunarLabs.Parser;
-using LunarLabs.Parser.XML;
-using LunarLabs.Parser.JSON;
-using LunarLabs.WebServer.Core;
+﻿using LunarLabs.WebServer.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using LunarLabs.Parser.CSV;
-using LunarLabs.Parser.YAML;
 
 namespace LunarLabs.WebServer.Templates
 {
-    public class StoreNode : TemplateNode
-    {
-        public static Dictionary<string, DataNode> _storeMap = new Dictionary<string, DataNode>();
-        private string _key;
-
-        private static readonly string[] _extensions = new string[] { ".xml", ".json", ".csv", ".yaml" };
-
-        public StoreNode(TemplateDocument document, string key) : base(document)
-        {
-            this._key = key;
-        }
-
-        public override void Execute(RenderingContext context)
-        {
-            DataNode store;
-
-            if (_storeMap.ContainsKey(_key))
-            {
-                store = _storeMap[_key];
-            }
-            else
-            {
-                var basePath = this.engine.Server.Settings.path + "store";
-
-                string fileName = null;
-                string targetExtension = null;
-
-                foreach (var extension in _extensions)
-                {
-                    var temp = basePath + "/" + _key + extension;
-                    if (File.Exists(temp))
-                    {
-                        targetExtension = extension;
-                        fileName = temp;
-                        break;
-                    }
-                }
-
-                if (fileName == null)
-                {
-                    throw new TemplateException("Could not find any file for store: " + _key);
-                }
-
-                var contents = File.ReadAllText(fileName);
-
-                switch (targetExtension)
-                {
-                    case ".xml": store = XMLReader.ReadFromString(contents); break;
-                    case ".json": store = JSONReader.ReadFromString(contents); break;
-                    case ".csv": store = CSVReader.ReadFromString(contents); break;
-                    case ".yaml": store = YAMLReader.ReadFromString(contents); break;
-                    default: throw new TemplateException("Unsupported store extension: " + targetExtension);
-                }
-
-                if (store.Name == null)
-                {
-                    store = store.GetNodeByIndex(0);
-                }
-
-                _storeMap[_key] = store;
-            }
-
-            context.Set(_key, store);
-        }
-    }
-
     public class AssetNode : TemplateNode
     {
         public static Dictionary<string, List<string>> assetList = new Dictionary<string, List<string>>();
