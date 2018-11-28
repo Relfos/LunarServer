@@ -187,7 +187,8 @@ namespace LunarLabs.WebServer.Templates
 
             var endTime = Environment.TickCount;
             var renderDuration = endTime - startTime;
-            Console.WriteLine($"RENDERED IN {renderDuration} ms");
+
+            //Console.WriteLine($"RENDERED IN {renderDuration} ms");
 
             return html;
         }
