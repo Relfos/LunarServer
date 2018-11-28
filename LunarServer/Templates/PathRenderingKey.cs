@@ -13,25 +13,18 @@ namespace LunarLabs.WebServer.Templates
         }
     }
 
-    public class SingleRenderingKey: RenderingKey
+    public class PathRenderingKey : RenderingKey
     {
-        private bool negate;
         private object literal;
         private string global;
-        private bool self;
 
         private string[] steps;
 
-        public RenderingType RenderingType { get; private set; }
+        public override RenderingType RenderingType => RenderingType.Any;
 
         public override string ToString()
         {
             string result;
-
-            if (self)
-            {
-                return "this";
-            }
 
             if (literal != null)
             {
@@ -47,119 +40,25 @@ namespace LunarLabs.WebServer.Templates
                 result = String.Join(".", steps);
             }
 
-            if (negate)
-            {
-                result = "!" + result;
-            }
-
             return result;
         }
 
-        internal SingleRenderingKey(string key, RenderingType expectedType)
+        internal PathRenderingKey(string key)
         {
-            negate = false;
-            self = false;
-            RenderingType = expectedType;
-
-            if (key.StartsWith("!"))
-            {
-                if (expectedType != RenderingType.Bool && expectedType != RenderingType.Any)
-                {
-                    throw new Exception("expected bool");
-                }
-
-                RenderingType = RenderingType.Bool;
-                key = key.Substring(1);
-                negate = true;
-            }
-
-            if (key.StartsWith("@"))
-            {
-                global = key.Substring(1);
-                return;
-            }
-
-            switch (key)
-            {
-                case "true":
-                    if (expectedType != RenderingType.Bool && expectedType != RenderingType.Any)
-                    {
-                        throw new Exception("expected bool");
-                    }
-
-                    RenderingType = RenderingType.Bool;
-                    literal = (!negate);
-                    return;
-
-                case "false":
-                    if (expectedType != RenderingType.Bool && expectedType != RenderingType.Any)
-                    {
-                        throw new Exception("expected bool");
-                    }
-
-                    RenderingType = RenderingType.Bool;
-                    literal = negate;
-                    return;
-
-                case "this":
-                    self = true;
-                    return;
-            }
-
-            if (key.StartsWith("'") && key.EndsWith("'"))
-            {
-                if (expectedType != RenderingType.String && expectedType != RenderingType.Any)
-                {
-                    throw new Exception("expected string");
-                }
-
-                RenderingType = RenderingType.String;
-                literal = key.Substring(1, key.Length - 2);
-                return;
-            }
-
-            decimal number;
-            if (decimal.TryParse(key, out number))
-            {
-                if (expectedType != RenderingType.Numeric && expectedType != RenderingType.Any)
-                {
-                    throw new Exception("expected number");
-                }
-
-                RenderingType = RenderingType.Numeric;
-                literal = number;
-                return;
-            }
-
             this.steps = key.Split( '.' );
         }
 
         public override object Evaluate(RenderingContext context)
         {
-            if (self)
-            {
-                return context.DataStack[context.DataStack.Count - 1];
-            }
-
-            if (literal != null)
-            {
-                return literal;
-            }
-
-            if (global != null)
-            {
-                return context.Get(global);
-            }
-
-            int stackPointer = context.DataStack.Count - 1;
             object obj = null;
+            int stackPointer = context.DataStack.Count - 1;
 
             if (steps != null)
             {
                 // NOTE this while is required for support access to out of scope variables 
                 while (stackPointer >= 0)
                 {
-                    obj = context.DataStack[stackPointer]; 
+                    obj = context.DataStack[stackPointer];
 
                     try
                     {
@@ -196,7 +95,7 @@ namespace LunarLabs.WebServer.Templates
                                 else
                                 {
                                     return null;
-                                }                                
+                                }
                             }
 
                             var field = type.GetField(key);
@@ -259,11 +158,6 @@ namespace LunarLabs.WebServer.Templates
                     }
                     break;
                 }
-            }
-
-            if (negate && obj is bool)
-            {
-                obj = !((bool)obj);
             }
 
             return obj;

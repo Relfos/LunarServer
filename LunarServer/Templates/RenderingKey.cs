@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace LunarLabs.WebServer.Templates
 {
@@ -25,6 +26,8 @@ namespace LunarLabs.WebServer.Templates
 
     public abstract class RenderingKey
     {
+        public abstract RenderingType RenderingType { get;}
+
         private static readonly Dictionary<string, KeyOperator> operatorSymbols = new Dictionary<string, KeyOperator>()
         {
             { "==" , KeyOperator.Equal},
@@ -38,6 +41,18 @@ namespace LunarLabs.WebServer.Templates
 
         public static RenderingKey Parse(string key, RenderingType expectedType)
         {
+            if (key.StartsWith("!"))
+            {
+                if (expectedType != RenderingType.Bool && expectedType != RenderingType.Any)
+                {
+                    throw new Exception("expected bool");
+                }
+
+                key = key.Substring(1);
+                var body = Parse(key, expectedType);
+                return new NegationKey(body);
+            }
+
             string operatorMatch = null;
             int operatorIndex = -1;
 
@@ -65,10 +80,57 @@ namespace LunarLabs.WebServer.Templates
                 var op = operatorSymbols[operatorMatch];
                 return new CompositeRenderingKey(op, leftText, righText);
             }
-            else
+
+            if (key.StartsWith("@"))
             {
-                return new SingleRenderingKey(key, expectedType);
+                return new GlobalKey(key.Substring(1));
             }
+
+            switch (key)
+            {
+                case "true":
+                    if (expectedType != RenderingType.Bool && expectedType != RenderingType.Any)
+                    {
+                        throw new Exception("expected bool");
+                    }
+
+                    return new LiteralKey(true, RenderingType.Bool);
+
+                case "false":
+                    if (expectedType != RenderingType.Bool && expectedType != RenderingType.Any)
+                    {
+                        throw new Exception("expected bool");
+                    }
+
+                    return new LiteralKey(false, RenderingType.Bool);
+
+                case "this":
+                    return new SelfKey();
+            }
+
+            if (key.StartsWith("'") && key.EndsWith("'"))
+            {
+                if (expectedType != RenderingType.String && expectedType != RenderingType.Any)
+                {
+                    throw new Exception("expected string");
+                }
+
+                var str = key.Substring(1, key.Length - 2);
+                return new LiteralKey(str, RenderingType.String);
+            }
+
+            decimal number;
+            if (decimal.TryParse(key, out number))
+            {
+                if (expectedType != RenderingType.Numeric && expectedType != RenderingType.Any)
+                {
+                    throw new Exception("expected number");
+                }
+
+                return new LiteralKey(number, RenderingType.Numeric);
+            }
+
+            return new PathRenderingKey(key);
         }
 
         public abstract object Evaluate(RenderingContext context);

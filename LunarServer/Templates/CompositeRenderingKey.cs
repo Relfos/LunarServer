@@ -9,6 +9,19 @@ namespace LunarLabs.WebServer.Templates
 
         public KeyOperator Operator { get; private set; }
 
+        public override RenderingType RenderingType
+        {
+            get
+            {
+                if (leftSide.RenderingType == rightSide.RenderingType)
+                {
+                    return leftSide.RenderingType;
+                }
+
+                return RenderingType.Any;
+            }
+        }
+
         internal CompositeRenderingKey(KeyOperator op, string leftText, string rightText)
         {
             Operator = op;
@@ -26,7 +39,7 @@ namespace LunarLabs.WebServer.Templates
                 default:
                     expectedType = RenderingType.Numeric;
                     break;
-                    
+
             }
 
             this.leftSide = RenderingKey.Parse(leftText, expectedType);
