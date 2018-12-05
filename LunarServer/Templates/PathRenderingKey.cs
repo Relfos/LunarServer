@@ -15,36 +15,19 @@ namespace LunarLabs.WebServer.Templates
 
     public class PathRenderingKey : RenderingKey
     {
-        private object literal;
-        private string global;
-
+        private string key;
         private string[] steps;
 
         public override RenderingType RenderingType => RenderingType.Any;
 
         public override string ToString()
         {
-            string result;
-
-            if (literal != null)
-            {
-                result = literal.ToString();
-            }
-            else
-            if (global != null)
-            {
-                result = "@" + global;
-            }
-            else
-            {
-                result = String.Join(".", steps);
-            }
-
-            return result;
+            return key;
         }
 
         internal PathRenderingKey(string key)
         {
+            this.key = key;
             this.steps = key.Split( '.' );
         }
 
@@ -90,7 +73,7 @@ namespace LunarLabs.WebServer.Templates
 
                                 if (stackPointer > 0)
                                 {
-                                    throw new TemplateException("node key not found");
+                                    throw new TemplateException("node key not found: "+ this.key);
                                 }
                                 else
                                 {
@@ -112,7 +95,19 @@ namespace LunarLabs.WebServer.Templates
                                 continue;
                             }
 
-                            IDictionary dict = obj as IDictionary;
+                            if (key.Equals("count"))
+                            {
+                                var collection = obj as ICollection;
+                                if (collection != null)
+                                {
+                                    obj = collection.Count;
+                                    continue;
+                                }
+
+                                throw new TemplateException("count key not found: " + this.key);
+                            }
+
+                            var dict = obj as IDictionary;
                             if (dict != null)
                             {
                                 if (dict.Contains(key))
@@ -124,22 +119,17 @@ namespace LunarLabs.WebServer.Templates
                                 type = obj.GetType();
                                 Type valueType = type.GetGenericArguments()[1];
                                 obj = valueType.GetDefault();
+                                
+                                if (obj == null && i < steps.Length -1)
+                                {
+                                    //throw new TemplateException("key not found: " + this.key);
+                                    return null;
+                                }
+
                                 continue;
                             }
 
-                            if (key.Equals("count"))
-                            {
-                                ICollection collection = obj as ICollection;
-                                if (collection != null)
-                                {
-                                    obj = collection.Count;
-                                    continue;
-                                }
-
-                                throw new TemplateException("count key not found");
-                            }
-
-                            throw new TemplateException("key not found");
+                            throw new TemplateException("key not found: " + this.key);
                         }
 
                     }

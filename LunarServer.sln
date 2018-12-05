@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27004.2008
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LunarServer", "LunarServer\LunarServer.csproj", "{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerTests", "ServerTests\ServerTests.csproj", "{0ACBAD14-DFA8-4F78-A788-F438BB89A39D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9AA0B55-4D5D-4151-BF9A-AEC1999DE217}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0ACBAD14-DFA8-4F78-A788-F438BB89A39D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0ACBAD14-DFA8-4F78-A788-F438BB89A39D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0ACBAD14-DFA8-4F78-A788-F438BB89A39D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0ACBAD14-DFA8-4F78-A788-F438BB89A39D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

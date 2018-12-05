@@ -2,5 +2,7 @@
 packages/
 LunarServer/bin/
 LunarServer/obj/
+ServerTests/bin/
+ServerTests/obj/
 SynkMVC/bin/
 SynkMVC/obj/
