@@ -104,24 +104,25 @@ namespace LunarLabs.WebServer.Core
             var type = typeof(T);
             var fields = type.GetFields();
             T obj = default(T);
+            var ptr = __makeref(obj);
             foreach (var field in fields)
             {
                 if (field.FieldType == typeof(string))
                 {
                     var val = GetString(name + "." + field.Name);
-                    field.SetValue(obj, val);
+                    field.SetValueDirect(ptr, val);
                 }
                 else
                 if (field.FieldType == typeof(bool))
                 {
                     var val = GetBool(name + "." + field.Name);
-                    field.SetValue(obj, val);
+                    field.SetValueDirect(ptr, val);
                 }
                 else
                 if (field.FieldType == typeof(int))
                 {
                     var val = GetInt(name + "." + field.Name);
-                    field.SetValue(obj, val);
+                    field.SetValueDirect(ptr, val);
                 }
                 else
                 {
