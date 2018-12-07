@@ -5,16 +5,21 @@ using System.Net.Sockets;
 using System.IO;
 using System.Threading.Tasks;
 using LunarLabs.WebServer.Core;
+using LunarLabs.Parser;
+using LunarLabs.Parser.JSON;
 
 namespace LunarLabs.WebServer.HTTP
 {
     public sealed class HTTPServer : IDisposable
     {
         private Socket listener;
+        private AssetCache _cache;
+        private Router _router;
+        private List<ServerPlugin> _plugins = new List<ServerPlugin>();
 
+        public FileCache Cache => _cache;
+        public IEnumerable<ServerPlugin> Plugins { get { return _plugins; } }
         public Logger Logger { get; private set; }
-
-        public bool AutoCompress = true;
 
         public bool Running { get; private set; }
 
@@ -26,17 +31,17 @@ namespace LunarLabs.WebServer.HTTP
 
         public SessionStorage SessionStorage { get; private set; }
 
-        public Site Site { get; set; }
-
         public HTTPServer(ServerSettings settings, Logger log = null, SessionStorage sessionStorage = null)
         {
             this.SessionStorage = sessionStorage != null ? sessionStorage : new MemorySessionStorage();
             this.Logger = log != null ? log : new NullLogger();
             this.StartTime = DateTime.Now;
 
+            this._router = new Router();
+
             if (log.level == LogLevel.Default)
             {
-                if (settings.environment == ServerEnvironment.Prod)
+                if (settings.Environment == ServerEnvironment.Prod)
                 {
                     log.level = LogLevel.Info;
                 }
@@ -50,19 +55,28 @@ namespace LunarLabs.WebServer.HTTP
 
             SessionStorage.Restore();
 
-            var fullPath = settings.path;
+            var fullPath = settings.Path;
 
-            log.Info($"~LUNAR SERVER~ [{settings.environment} mode]");
-            log.Info($"Port: {settings.port}");
+            log.Info($"~LUNAR SERVER~ [{settings.Environment} mode]");
+            log.Info($"Port: {settings.Port}");
 
             if (fullPath != null)
             {
                 fullPath = fullPath.Replace("\\", "/");
+                if (!fullPath.EndsWith("/"))
+                {
+                    fullPath += "/";
+                }
+
                 log.Info($"Root path: {fullPath}");
+
+                this._cache = new AssetCache(Logger, fullPath);
             }
             else
             {
                 log.Info($"No root path specified.");
+
+                this._cache = null;
             }
 
             // Create a TCP/IP socket
@@ -73,16 +87,13 @@ namespace LunarLabs.WebServer.HTTP
 
         public void Run()
         {
-            if (Site == null)
+            foreach (var plugin in Plugins)
             {
-                Logger.Error("Site required, can't be null");
-                return;
+                Logger.Info("Initializating plugin: " + plugin.GetType().Name);
+                plugin.Install();
             }
 
-            Logger.Info("Initializating site: " + Site.Host);
-            Site.Initialize();
-
-            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, Settings.port);
+            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, Settings.Port);
 
             try
             {
@@ -250,7 +261,7 @@ namespace LunarLabs.WebServer.HTTP
 
                     Logger.Debug("Handling request...");
 
-                    HTTPResponse response = Site.HandleRequest(request);
+                    HTTPResponse response = HandleRequest(request);
 
                     if (response == null || response.bytes == null)
                     {
@@ -317,6 +328,7 @@ namespace LunarLabs.WebServer.HTTP
             }
 
         }
+
 
         private bool ParsePost(HTTPRequest request, Socket client, byte[] unread)
         {
@@ -439,6 +451,60 @@ namespace LunarLabs.WebServer.HTTP
             SessionStorage.Save();
         }
 
+        public HTTPResponse HandleRequest(HTTPRequest request, int index = 0)
+        {
+            Logger.Debug($"Router find {request.method}=>{request.url}");
+            var route = _router.Find(request.method, request.path, request.args);
+
+            if (route != null)
+            {
+                Logger.Debug("Calling route handler...");
+                var obj = route.handler(request);
+
+                if (obj == null)
+                {
+                    return null;
+                }
+
+                if (obj is HTTPResponse)
+                {
+                    return (HTTPResponse)obj;
+                }
+
+                if (obj is string)
+                {
+                    return HTTPResponse.FromString((string)obj, HTTPCode.OK, Settings.Compression);
+                }
+
+                if (obj is byte[])
+                {
+                    return HTTPResponse.FromBytes((byte[])obj);
+                }
+
+                if (obj is DataNode)
+                {
+                    var root = (DataNode)obj;
+                    var json = JSONWriter.WriteToString(root);
+                    return HTTPResponse.FromString(json, HTTPCode.OK, Settings.Compression, "application/json");
+                }
+
+                return null;
+            }
+            else
+            {
+                Logger.Debug("Route handler not found...");
+            }
+
+            if (_cache != null)
+            {
+                _cache.Update();
+
+                return _cache.GetFile(request);
+            }
+
+            return null;
+        }
+
         #region SESSIONS
         private const string SessionCookieName = "_lunar_session_";
 
@@ -501,5 +567,36 @@ namespace LunarLabs.WebServer.HTTP
 
         #endregion
 
+        #region HANDLERS
+        internal void RegisterHandler(HTTPRequest.Method method, string path, Func<HTTPRequest, object> handler)
+        {
+            _router.Register(method, path, handler);
+        }
+
+        public void Get(string path, Func<HTTPRequest, object> handler)
+        {
+            _router.Register(HTTPRequest.Method.Get, path, handler);
+        }
+
+        public void Post(string path, Func<HTTPRequest, object> handler)
+        {
+            _router.Register(HTTPRequest.Method.Post, path, handler);
+        }
+
+        public void Put(string path, Func<HTTPRequest, object> handler)
+        {
+            _router.Register(HTTPRequest.Method.Put, path, handler);
+        }
+
+        public void Delete(string path, Func<HTTPRequest, object> handler)
+        {
+            _router.Register(HTTPRequest.Method.Delete, path, handler);
+        }
+
+        internal void AddPlugin(ServerPlugin plugin)
+        {
+            this._plugins.Add(plugin);
+        }
+        #endregion
     }
 }

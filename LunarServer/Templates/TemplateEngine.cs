@@ -67,17 +67,23 @@ namespace LunarLabs.WebServer.Templates
 
         public Func<string, TemplateDocument> On404;
 
-        public Site Site { get; private set; }
-        public HTTPServer Server => Site.Server;
+        public readonly HTTPServer Server;
 
-        public TemplateEngine(Site site, string filePath)
+        public TemplateEngine(HTTPServer server, string filePath)
         {
-            this.Site = site;
-            this.filePath = site.Server.Settings.path + filePath;
+            this.Server = server;
 
-            if (!this.filePath.EndsWith("/"))
+            if (filePath == null)
             {
-                this.filePath += "/";
+                this.filePath = Server.Settings.Path;
+            }
+            else
+            {
+                if (!filePath.EndsWith("/"))
+                {
+                    filePath += "/";
+                }
+                this.filePath = Server.Settings.Path + filePath;
             }
 
             this.On404 = (name) =>
@@ -139,7 +145,7 @@ namespace LunarLabs.WebServer.Templates
 
                 content = File.ReadAllText(fileName);
 
-                if (Server.Settings.environment == ServerEnvironment.Prod)
+                if (Server.Settings.Environment == ServerEnvironment.Prod)
                 {
                     content = HTMLMinifier.Compress(content);
                 }

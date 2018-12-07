@@ -17,7 +17,7 @@ namespace LunarLabs.WebServer.Analytics
     {
         private Dictionary<string, AnalyticsCollection> _collections = new Dictionary<string, AnalyticsCollection>();
 
-        private Site site;
+        private readonly Logger log;
 
         private bool changed = false;
 
@@ -29,9 +29,9 @@ namespace LunarLabs.WebServer.Analytics
             private set;
         }
 
-        public AnalyticsPlugin(Site site, string fileName)
+        public AnalyticsPlugin(Logger logger, string fileName)
         {
-            this.site = site;
+            this.log = logger;
             this.FileName = fileName;
             this.LoadAnalyticsData();
             this.RequestBackgroundThread();
@@ -89,7 +89,7 @@ namespace LunarLabs.WebServer.Analytics
 
         private void RequestBackgroundThread()
         {
-            this.site.Logger.Info("Running analytics thread");
+            log.Info("Running analytics thread");
             AnalyticsPlugin.saveThread = new Thread((ThreadStart)delegate
             {
                 Thread.CurrentThread.IsBackground = true;

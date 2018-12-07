@@ -191,7 +191,7 @@ namespace LunarLabs.WebServer.Entity
 
         private string GetFileName()
         {
-            return Store.settings.path + "store/" + objectType.Name.ToLower() + ".xml";
+            return Store.settings.Path + "store/" + objectType.Name.ToLower() + ".xml";
         }
     }
 

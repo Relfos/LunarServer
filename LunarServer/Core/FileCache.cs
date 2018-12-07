@@ -81,9 +81,9 @@ namespace LunarLabs.WebServer.Core
         public Logger log { get; private set; }
 
         public FileCache(Logger log, string filePath)
-        {
+        {           
             this.log = log;
-            this.filePath = filePath;           
+            this.filePath = filePath + "public/";           
         }
 
         public HTTPResponse GetFile(HTTPRequest request)

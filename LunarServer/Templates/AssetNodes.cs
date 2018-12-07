@@ -69,7 +69,7 @@ namespace LunarLabs.WebServer.Templates
         {
             string fileName;
 
-            if (this.engine.Server.Settings.environment == Core.ServerEnvironment.Prod)
+            if (this.engine.Server.Settings.Environment == Core.ServerEnvironment.Prod)
             {
                 if (skip)
                 {
@@ -82,7 +82,7 @@ namespace LunarLabs.WebServer.Templates
             {
                 fileName = key + "." + extension;
 
-                var rootPath = this.engine.Site.Cache.filePath + extension + "/";
+                var rootPath = this.engine.Server.Cache.filePath + extension + "/";
 
                 if (!File.Exists(rootPath + fileName))
                 {

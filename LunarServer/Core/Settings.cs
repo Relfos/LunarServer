@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 
 namespace LunarLabs.WebServer.Core
 {
@@ -11,21 +10,23 @@ namespace LunarLabs.WebServer.Core
 
     public struct ServerSettings
     {
-        public int port;
-        public string path;
-        public string host;
-        public ServerEnvironment environment;
+        public int Port;
+        public string Path;
+        public string Host;
+        public bool Compression;
+        public ServerEnvironment Environment;
 
         public static ServerSettings Parse(string[] args)
         {
-            var exePath = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+            var exePath = System.IO.Path.GetDirectoryName(System.Environment.GetCommandLineArgs()[0]);
 
             var result = new ServerSettings()
             {
-                port = 80,
-                path = exePath,
-                host = "localhost",
-                environment = ServerEnvironment.Dev
+                Port = 80,
+                Compression = true,
+                Path = exePath,
+                Host = "localhost",
+                Environment = ServerEnvironment.Dev
             };
 
             foreach (var arg in args)
@@ -41,21 +42,22 @@ namespace LunarLabs.WebServer.Core
 
                 switch (key)
                 {
-                    case "host": result.host = val; break;
-                    case "port": int.TryParse(val, out result.port); break;
+                    case "host": result.Host = val; break;
+                    case "port": int.TryParse(val, out result.Port); break;
+                    case "compression": bool.TryParse(val, out result.Compression); break;
                     case "path":
                         {
-                            result.path = Path.GetFullPath(val);
+                            result.Path = System.IO.Path.GetFullPath(val);
                             break;
                         }
-                    case "env": Enum.TryParse(val.FirstLetterToUpper(), out result.environment); break;
+                    case "env": Enum.TryParse(val.FirstLetterToUpper(), out result.Environment); break;
                 }
             }
 
-            result.path = result.path.Replace("\\", "/");
-            if (!result.path.EndsWith("/"))
+            result.Path = result.Path.Replace("\\", "/");
+            if (!result.Path.EndsWith("/"))
             {
-                result.path += "/";
+                result.Path += "/";
             }
 
             return result;

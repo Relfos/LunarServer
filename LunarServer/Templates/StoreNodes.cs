@@ -83,7 +83,7 @@ namespace LunarLabs.WebServer.Templates
                 return entry.content;
             }
 
-            var basePath = this.engine.Server.Settings.path + "store";
+            var basePath = this.engine.Server.Settings.Path + "store";
 
             string fileName = null;
             

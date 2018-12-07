@@ -15,23 +15,18 @@ namespace LunarLabs.WebServer.Entity
         }
     }
 
-    public class EntityAPI: SitePlugin
+    public class EntityAPI: ServerPlugin
     {
         private DataFormat format;
         private string mimeType;
 
         public EntityStore Store { get; private set; }
         
-        public EntityAPI(Site site, EntityStore store, string rootPath = null, DataFormat format = DataFormat.JSON)  : base(site, rootPath)
+        public EntityAPI(HTTPServer server, EntityStore store, string rootPath = null, DataFormat format = DataFormat.JSON)  : base(server, rootPath)
         {
             this.format = format;
             this.Store = store;
             this.mimeType = "application/" + format.ToString().ToLower();
-        }
-
-        public override bool Install()
-        {
-            return true;
         }
 
         protected HTTPResponse HandleRequest(HTTPRequest request)
@@ -94,12 +89,12 @@ namespace LunarLabs.WebServer.Entity
         public void GenerateAPI<T>() where T : Entity
         {
             var name = typeof(T).Name.ToLower() + "s";
-            var baseURL = Combine($"api/{name}");
-            Site.Get(baseURL, (request) => ListEntities<T>());
-            Site.Get(baseURL + "/new", (request) => NewEntity<T>(request));
-            Site.Get(baseURL + "/{id}/show", (request) => ShowEntity<T>(request));
-            Site.Get(baseURL + "/{id}/edit", (request) => EditEntity<T>(request));
-            Site.Get(baseURL + "/{id}/delete", (request) => DeleteEntity<T>(request));
+            var baseURL =  $"{this.Path}api /{name}";
+            Server.Get(baseURL, (request) => ListEntities<T>());
+            Server.Get(baseURL + "/new", (request) => NewEntity<T>(request));
+            Server.Get(baseURL + "/{id}/show", (request) => ShowEntity<T>(request));
+            Server.Get(baseURL + "/{id}/edit", (request) => EditEntity<T>(request));
+            Server.Get(baseURL + "/{id}/delete", (request) => DeleteEntity<T>(request));
         }
 
         private static void Check(Dictionary<string, string> dic, IEnumerable<string> args)

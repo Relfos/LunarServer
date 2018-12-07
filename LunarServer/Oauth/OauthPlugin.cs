@@ -6,17 +6,17 @@ using System.Collections.Generic;
 namespace LunarLabs.WebServer.Oauth
 {
 
-    public class OauthPlugin: SitePlugin
+    public class OauthPlugin: ServerPlugin
     {
         private Dictionary<OauthKind, OauthConnection> _auths = new Dictionary<OauthKind, OauthConnection>();
         public IEnumerable<OauthConnection> auths { get { return _auths.Values; } }
 
-        private Logger log { get { return this.Site.Logger; } }
+        private Logger log { get { return this.Server.Logger; } }
 
         public Func<OauthKind, HTTPRequest, object> OnLogin;
         public Func<OauthKind, HTTPRequest, object> OnError;
 
-        public OauthPlugin(Site site, string rootPath = null) : base(site, rootPath)
+        public OauthPlugin(HTTPServer server, string rootPath = null) : base(server, rootPath)
         { 
             this.OnLogin = OnLoginException;
             this.OnError = OnErrorLog;
@@ -41,7 +41,12 @@ namespace LunarLabs.WebServer.Oauth
 
         public OauthConnection Create(OauthKind kind, Logger log, string client_id, string client_secret, string redirect_uri, string token = null)
         {
-            var app_url = this.Site.Server.Settings.environment == ServerEnvironment.Prod ? this.Site.Host : "http://localhost";
+            var app_url = this.Server.Settings.Host;
+
+            if (!app_url.StartsWith("http://"))
+            {
+                app_url = "http://" + app_url;
+            }
 
             switch (kind)
             {
@@ -51,12 +56,12 @@ namespace LunarLabs.WebServer.Oauth
             }
         }
 
-        public override bool Install()
+        protected override bool OnInstall()
         {
             foreach (var auth in _auths.Values)
             {
-                var path = Combine(auth.localPath);
-                Site.Get(path, request =>
+                var path = this.Path + auth.localPath;
+                Server.Get(path, request =>
                 {
                     var kind = auth.GetKind();
 
