@@ -15,6 +15,7 @@ namespace LunarLabs.WebServer.Core
         public string Host;
         public bool Compression;
         public ServerEnvironment Environment;
+        public int MaxPostSizeInBytes;
 
         public static ServerSettings Parse(string[] args)
         {
@@ -26,6 +27,7 @@ namespace LunarLabs.WebServer.Core
                 Compression = true,
                 Path = exePath,
                 Host = "localhost",
+                MaxPostSizeInBytes = 1024 * 1024 * 8,
                 Environment = ServerEnvironment.Dev
             };
 
@@ -37,13 +39,14 @@ namespace LunarLabs.WebServer.Core
                 }
 
                 var temp = arg.Substring(2).Split(new char[] { '=' }, 2);
-                var key = temp[0];
+                var key = temp[0].ToLower();
                 var val = temp.Length > 1 ? temp[1] : "";
 
                 switch (key)
                 {
                     case "host": result.Host = val; break;
                     case "port": int.TryParse(val, out result.Port); break;
+                    case "postsize": int.TryParse(val, out result.MaxPostSizeInBytes); break;
                     case "compression": bool.TryParse(val, out result.Compression); break;
                     case "path":
                         {

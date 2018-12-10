@@ -342,6 +342,12 @@ namespace LunarLabs.WebServer.HTTP
             var lenStr = request.headers["Content-Length"];
 
             int.TryParse(lenStr, out bodySize);
+
+            if (bodySize <0 || bodySize > Settings.MaxPostSizeInBytes)
+            {
+                return false;
+            }
+
             request.bytes = new byte[bodySize];
 
             if (unread.Length > 0)
