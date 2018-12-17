@@ -28,45 +28,51 @@ namespace LunarLabs.WebServer.Protocols
             _handlers[methodName] = handler;
         }
 
+        private object HandleGet(HTTPRequest request)
+        {
+            var version = request.GetVariable("jsonrpc");
+            if (version != "2" && version != "2.0")
+            {
+                return GenerateRPCError("Invalid jsonrpc version", -32602);
+            }
+
+            var method = request.GetVariable("method");
+            var id = request.GetVariable("id");
+            if (string.IsNullOrEmpty(id))
+            {
+                id = "0";
+            }
+
+            var encodedParams = request.GetVariable("params");
+
+            var decodedParams = encodedParams.UrlDecode();
+
+            DataNode paramNode;
+            try
+            {
+                paramNode = JSONReader.ReadFromString(decodedParams);
+            }
+            catch
+            {
+                return GenerateRPCError("Parsing error", -32700);
+            }
+
+            return HandleRPCRequest(id, method, paramNode);
+        }
+
         protected override bool OnInstall()
         {
-           Server.Get(this.Path, (request) =>
-            {
-                var version = request.GetVariable("jsonrpc");
-                if (version != "2" && version != "2.0")
-                {
-                    return GenerateRPCError("Invalid jsonrpc version", -32602);
-                }
-
-                var method = request.GetVariable("method");
-                var id = request.GetVariable("id");
-                if (string.IsNullOrEmpty(id))
-                {
-                    id = "0";
-                }
-
-                var encodedParams = request.GetVariable("params");
-
-                var decodedParams = encodedParams.UrlDecode();
-
-                DataNode paramNode;
-                try
-                {
-                    paramNode = JSONReader.ReadFromString(decodedParams);
-                }
-                catch
-                {
-                    return GenerateRPCError("Parsing error", -32700);
-                }
-
-                return HandleRPCRequest(id, method, paramNode);
-
-            });
+           Server.Get(this.Path, HandleGet);
 
             Server.Post(this.Path, (request) =>
             {
                 if (string.IsNullOrEmpty(request.postBody))
                 {
+                    if (request.args.Count > 0)
+                    {
+                        return HandleGet(request);
+                    }
+
                     return GenerateRPCError("Invalid request", -32600);
                 }
                 else

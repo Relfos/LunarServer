@@ -42,7 +42,7 @@ namespace LunarLabs.WebServer.HTTP
 
         public Session session;
 
-        public Dictionary<string, string> headers = new Dictionary<string, string>();
+        public Dictionary<string, string> headers = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         public Dictionary<string, string> args = new Dictionary<string, string>();
 
         public List<FileUpload> uploads = new List<FileUpload>();

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using LunarLabs.WebServer.Core;
 using LunarLabs.Parser;
 using LunarLabs.Parser.JSON;
+using System.Text;
 
 namespace LunarLabs.WebServer.HTTP
 {
@@ -163,29 +164,79 @@ namespace LunarLabs.WebServer.HTTP
                 client.ReceiveBufferSize = 8192;
 
                 // Set the timeout for synchronous receive methods
-                client.ReceiveTimeout = 5000;
+                //client.ReceiveTimeout = 5000;
 
                 // Set the send buffer size to 8k.
                 client.SendBufferSize = 8192;
 
                 // Set the timeout for synchronous send methods
-                client.SendTimeout = 5000;
+                //client.SendTimeout = 5000;
 
                 // Set the Time To Live (TTL) to 42 router hops.
                 client.Ttl = 42;
 
-                List<string> lines;
-                byte[] unread;
+                var lines = new List<string>();
+                HTTPRequest request = null;
 
-                if (client.ReadLines(out lines, out unread))
+                using (var stream = new NetworkStream(client))
                 {
-                    var request = new HTTPRequest();
-                    request.server = this;
-
-                    foreach (var line in lines)
+                    using (var reader = new BinaryReader(stream))
                     {
-                        Logger.Debug(line);
+                        var line = new StringBuilder();
+                        char prevChar;
+                        char currentChar = '\0';
+                        while (true)
+                        {
+                            prevChar = currentChar;
+                            currentChar = (char)reader.ReadByte();
+
+                            if (currentChar == '\n' && prevChar == '\r')
+                            {
+                                if (line.Length == 0)
+                                {
+                                    request = new HTTPRequest();
+                                    break;
+                                }
+
+                                var temp = line.ToString();
+                                Logger.Debug(temp);
+                                lines.Add(temp);
+                                line.Length = 0;
+                            }
+                            else
+                            if (currentChar != '\r' && currentChar != '\n')
+                            {
+                                line.Append(currentChar);
+                            }
+                        }
+
+                        // parse headers
+                        if (request != null)
+                        {
+                            for (int i = 1; i < lines.Count; i++)
+                            {
+                                var temp = lines[i].Split(':');
+                                if (temp.Length >= 2)
+                                {
+                                    var key = temp[0];
+                                    var val = temp[1].TrimStart();
+
+                                    request.headers[key] = val;
+
+                                    if (key.Equals("Content-Length", StringComparison.InvariantCultureIgnoreCase))
+                                    {
+                                        int contentLength = int.Parse(val);
+                                        request.bytes = reader.ReadBytes(contentLength);
+                                    }
+                                }
+                            }
+                        }
                     }
+                }
+
+                if (request != null)
+                {
+                    request.server = this;
 
                     var s = lines[0].Split(' ');
 
@@ -223,21 +274,9 @@ namespace LunarLabs.WebServer.HTTP
                             }
                         }
 
-                        for (int i = 1; i < lines.Count; i++)
-                        {
-                            var temp = lines[i].Split(':');
-                            if (temp.Length >= 2)
-                            {
-                                var key = temp[0];
-                                var val = temp[1].TrimStart();
-
-                                request.headers[key] = val;
-                            }
-                        }
-
                         if (request.method == HTTPRequest.Method.Post)
                         {
-                            if (!ParsePost(request, client, unread))
+                            if (!ParsePost(request, client))
                             {
                                 Logger.Error("Failed parsing post data");
                                 return;
@@ -285,7 +324,7 @@ namespace LunarLabs.WebServer.HTTP
                     {
                         response.headers["Cache-Control"] = "no-cache";
                     }
-
+                    
                     if (setCookie != null)
                     {
                         response.headers["Set-Cookie"] = setCookie;
@@ -326,11 +365,9 @@ namespace LunarLabs.WebServer.HTTP
             {
                 client.Close();
             }
-
         }
 
-
-        private bool ParsePost(HTTPRequest request, Socket client, byte[] unread)
+        private bool ParsePost(HTTPRequest request, Socket client)
         {
             if (!request.headers.ContainsKey("Content-Length"))
             {
@@ -340,35 +377,21 @@ namespace LunarLabs.WebServer.HTTP
             int bodySize;
 
             var lenStr = request.headers["Content-Length"];
-
             int.TryParse(lenStr, out bodySize);
 
-            if (bodySize <0 || bodySize > Settings.MaxPostSizeInBytes)
+            if (bodySize < 0 || bodySize > Settings.MaxPostSizeInBytes)
             {
                 return false;
             }
 
-            request.bytes = new byte[bodySize];
-
-            if (unread.Length > 0)
+            if (bodySize > 0 && request.bytes == null)
             {
-                Array.Copy(unread, request.bytes, unread.Length);
+                return false;
             }
 
-            int ofs = unread.Length;
-            int left = bodySize - ofs;
-
-            while (left > 0)
+            if (bodySize > request.bytes.Length)
             {
-                int n = client.Receive(request.bytes, ofs, left, SocketFlags.None);
-
-                if (n <= 0)
-                {
-                    return false;
-                }
-
-                ofs += n;
-                left -= n;
+                return false;
             }
 
             var contentTypeHeader = request.headers.ContainsKey("Content-Type") ? request.headers["Content-Type"] : "application/x-www-form-urlencoded; charset=UTF-8";

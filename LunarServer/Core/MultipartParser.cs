@@ -37,7 +37,7 @@ namespace LunarLabs.WebServer.Core
             {
                 string delimiter = content.Substring(0, content.IndexOf("\r\n"));
 
-                Regex re = new Regex("Content-Disposition:.*?name=\"(\\w*)\"*\r\n\r\n(.*)\r\n");
+                var re = new Regex("Content-Disposition:.*?name=\"(\\w*)\"*\r\n\r\n(.*)\r\n");
                 var matches = re.Matches(content);
                 foreach (Match match in matches)
                 {

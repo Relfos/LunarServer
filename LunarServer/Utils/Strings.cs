@@ -99,64 +99,6 @@ namespace LunarLabs.WebServer.Core
             return outputBuffer;
         }
 
-        public static bool ReadLines(this Socket client, out List<string> lines, out byte[] unread)
-        {
-            var buffer = new byte[1024*64];
-
-            int ofs = 0;
-            int left = buffer.Length;
-
-            var sb = new StringBuilder();
-
-            lines = new List<string>();
-            unread = null;
-
-            do
-            {
-                int index = ofs;
-
-                int n = client.Receive(buffer, ofs, left, SocketFlags.None);
-                if (n <= 0)
-                {
-                    return false;
-                }
-
-                ofs += n;
-                left -= n;
-
-                int prev = 0;
-
-                for (int i = index; i < ofs; i++)
-                {
-                    int cur = buffer[i];
-
-                    if (cur == 10 && prev == 13)
-                    {
-                        sb.Length--;
-                        var str = sb.ToString();
-
-                        if (str.Length == 0)
-                        {
-                            unread = new byte[ofs - (i + 1)];
-                            Array.Copy(buffer, i + 1, unread, 0, unread.Length);
-                            return true;
-                        }
-
-                        lines.Add(str);
-                        sb.Length = 0;
-                    }
-                    else
-                    {
-                        sb.Append((char)cur);
-                    }
-
-                    prev = cur;
-                }
-            } while (left >= 0);
-
-            return true;
-        }
-
         public static string UrlDecode(this string text)
         {
             // pre-process for + sign space formatting since System.Uri doesn't handle it
