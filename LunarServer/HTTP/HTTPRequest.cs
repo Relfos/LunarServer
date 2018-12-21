@@ -100,6 +100,7 @@ namespace LunarLabs.WebServer.HTTP
 
             using (var client = new TcpClient(host, port))
             {
+                var response = new HTTPResponse();
                 using (NetworkStream nwStream = client.GetStream())
                 {
                     byte[] bytesToSend = Encoding.ASCII.GetBytes(requestBody);
@@ -108,7 +109,6 @@ namespace LunarLabs.WebServer.HTTP
 
                     using (var reader = new StreamReader(nwStream))
                     {
-                        var response = new HTTPResponse();
                         var status = reader.ReadLine();
                         if (status.StartsWith(version))
                         {
@@ -138,6 +138,7 @@ namespace LunarLabs.WebServer.HTTP
                 }
 
                 client.Close();
+                return response;
             }
         }
 
