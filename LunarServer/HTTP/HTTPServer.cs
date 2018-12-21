@@ -11,6 +11,14 @@ using System.Text;
 
 namespace LunarLabs.WebServer.HTTP
 {
+    public class NullByteInjectionException : Exception
+    {
+        public NullByteInjectionException() : base ("NullByte Injection detected")
+        {
+
+        }
+    }
+
     public sealed class HTTPServer : IDisposable
     {
         private Socket listener;
@@ -200,6 +208,12 @@ namespace LunarLabs.WebServer.HTTP
 
                                 var temp = line.ToString();
                                 Logger.Debug(temp);
+
+                                if (temp.Contains("\0"))
+                                {
+                                    throw new NullByteInjectionException();
+                                }
+
                                 lines.Add(temp);
                                 line.Length = 0;
                             }
@@ -236,8 +250,6 @@ namespace LunarLabs.WebServer.HTTP
 
                 if (request != null)
                 {
-                    request.server = this;
-
                     var s = lines[0].Split(' ');
 
                     if (s.Length == 3)
@@ -377,6 +389,11 @@ namespace LunarLabs.WebServer.HTTP
             int bodySize;
 
             var lenStr = request.headers["Content-Length"];
+            if (lenStr.Contains("\0"))
+            {
+                throw new NullByteInjectionException();
+            }
+
             int.TryParse(lenStr, out bodySize);
 
             if (bodySize < 0 || bodySize > Settings.MaxPostSizeInBytes)
@@ -396,13 +413,23 @@ namespace LunarLabs.WebServer.HTTP
 
             var contentTypeHeader = request.headers.ContainsKey("Content-Type") ? request.headers["Content-Type"] : "application/x-www-form-urlencoded; charset=UTF-8";
 
+            if (contentTypeHeader.Contains("\0"))
+            {
+                throw new NullByteInjectionException();
+            }
+
             contentTypeHeader = contentTypeHeader.ToLowerInvariant();
 
             if (contentTypeHeader.StartsWith("multipart/form-data"))
             {
                 var parser = new MultipartParser(new MemoryStream(request.bytes), (key, val) =>
                 {
-                    request.args[key] = val.UrlDecode();
+                    var value = val.UrlDecode();
+                    if (value.Contains("\0"))
+                    {
+                        throw new NullByteInjectionException();
+                    }
+                    request.args[key] = value;
                 });
 
                 if (parser.Success)
@@ -450,11 +477,21 @@ namespace LunarLabs.WebServer.HTTP
 
                     // Decode the key and the value. Discard Special Characters
                     var key = WebUtility.UrlDecode(kvpsParts[0]);
+                    if (key.Contains("\0"))
+                    {
+                        throw new NullByteInjectionException();
+                    }
 
                     var value = kvpsParts.Length >= 2 ? System.Net.WebUtility.UrlDecode(kvpsParts[1]) : null;
 
                     // Simply set the key to the parsed value
-                    request.args[key] = value.UrlDecode();
+                    value = value.UrlDecode();
+                    if (value.Contains("\0"))
+                    {
+                        throw new NullByteInjectionException();
+                    }
+
+                    request.args[key] = value;
                 }
             }
             else
@@ -462,6 +499,11 @@ namespace LunarLabs.WebServer.HTTP
                 var encoding = System.Text.Encoding.UTF8; //request.headers["Content-Encoding"]
 
                 request.postBody = encoding.GetString(request.bytes);
+
+                if (request.postBody.Contains("\0"))
+                {
+                    throw new NullByteInjectionException();
+                }
             }
 
             return true;
