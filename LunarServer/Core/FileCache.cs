@@ -78,11 +78,11 @@ namespace LunarLabs.WebServer.Core
 
         public string filePath { get; private set; }
 
-        public Logger log { get; private set; }
+        public LoggerCallback logger { get; private set; }
 
-        public FileCache(Logger log, string filePath)
+        public FileCache(LoggerCallback logger, string filePath)
         {           
-            this.log = log;
+            this.logger = logger;
             this.filePath = filePath + "public/";           
         }
 
@@ -95,7 +95,7 @@ namespace LunarLabs.WebServer.Core
 
             var path = request.path.StartsWith("/") ? request.path.Substring(1): request.path;
             path = filePath + path;
-            log.Debug($"Returning static file...{path}");
+            this.logger(LogLevel.Debug, $"Returning static file...{path}");
 
             CacheEntry entry;
 
@@ -128,7 +128,7 @@ namespace LunarLabs.WebServer.Core
             {
                 if (!File.Exists(path))
                 {
-                    log.Warning("Nothing found...");
+                    logger(LogLevel.Warning, "Nothing found...");
                     return null;
                 }
 

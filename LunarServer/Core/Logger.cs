@@ -2,12 +2,6 @@
 
 namespace LunarLabs.WebServer.Core
 {
-    public struct LogEntry
-    {
-        public DateTime timestamp;
-        public string text;
-    }
-
     public enum LogLevel
     {
         Default,
@@ -17,52 +11,34 @@ namespace LunarLabs.WebServer.Core
         Error
     }
 
-    public abstract class Logger
+    public delegate void LoggerCallback(LogLevel level, string text);
+
+    public static class ConsoleLogger
     {
-        public LogLevel level = LogLevel.Default;
+        public static LogLevel MaxLevel = LogLevel.Default;
 
-        public bool useColors = true;
+        public static bool useColors = true;
 
-        protected abstract void Log(ConsoleColor c, string s);
-
-        public void Debug(object message)
+        public static void Write(LogLevel level, string text)
         {
-            if (level > LogLevel.Debug) return;
-            Log(ConsoleColor.Cyan, message.ToString());
-        }
-
-        public void Info(object message)
-        {
-            if (level > LogLevel.Info) return;
-            Log(ConsoleColor.White, message.ToString());
-        }
-
-        public void Warning(object message)
-        {
-            if (level > LogLevel.Warning) return;
-            Log(ConsoleColor.Yellow, message.ToString());
-        }
-
-        public void Error(object message)
-        {
-            if (level > LogLevel.Error) return;
-            Log(ConsoleColor.Red, message.ToString());
-        }
-    }
-
-    public class ConsoleLogger : Logger
-    {
-        protected override void Log(ConsoleColor c, string s)
-        {
-            //var isMono = Launcher.IsRunningOnMono();
+            if (MaxLevel > level) return;
 
             var temp = Console.ForegroundColor;
+
             if (useColors)
             {
+                ConsoleColor c;
+                switch (level)
+                {
+                    case LogLevel.Debug: c = ConsoleColor.Cyan; break;
+                    case LogLevel.Error: c = ConsoleColor.Red; break;
+                    case LogLevel.Warning: c = ConsoleColor.Yellow; break;
+                    default: c = ConsoleColor.Gray; break;
+                }
                 Console.ForegroundColor = c;
             }
 
-            Console.WriteLine(s);
+            Console.WriteLine(text);
 
             if (useColors)
             {
@@ -70,13 +46,4 @@ namespace LunarLabs.WebServer.Core
             }
         }
     }
-
-    public class NullLogger : Logger
-    {
-        protected override void Log(ConsoleColor c, string s)
-        {
-            // do nothing
-        }
-    }
-
 }

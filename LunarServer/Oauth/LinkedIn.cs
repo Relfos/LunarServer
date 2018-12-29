@@ -10,7 +10,7 @@ namespace LunarLabs.WebServer.Oauth
 {
     public class LinkedInAuth : OauthConnection
     {
-        public LinkedInAuth(Logger log, string app_url, string client_id, string client_secret, string redirect_uri)  : base(log, app_url, client_id, client_secret, redirect_uri)
+        public LinkedInAuth(LoggerCallback log, string app_url, string client_id, string client_secret, string redirect_uri)  : base(log, app_url, client_id, client_secret, redirect_uri)
         {
         }
 
@@ -45,7 +45,7 @@ namespace LunarLabs.WebServer.Oauth
             }
             catch (Exception e)
             {
-                log.Error(e.ToString());
+                logger(LogLevel.Error, e.ToString());
                 return null;
             }
         }
@@ -93,7 +93,7 @@ namespace LunarLabs.WebServer.Oauth
             }
             catch (Exception e)
             {
-                log.Error(e.ToString());
+                logger(LogLevel.Error, e.ToString());
                 return null;
             }
         }

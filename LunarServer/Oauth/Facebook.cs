@@ -22,7 +22,7 @@ namespace LunarLabs.WebServer.Oauth
         private const string authorization_base_url = "https://www.facebook.com/dialog/oauth";
         private const string token_url = "https://graph.facebook.com/oauth/access_token";
         
-        public FacebookAuth(Logger log, string app_url, string client_id, string client_secret, string localPath)  : base(log, app_url, client_id, client_secret, localPath)
+        public FacebookAuth(LoggerCallback log, string app_url, string client_id, string client_secret, string localPath)  : base(log, app_url, client_id, client_secret, localPath)
         {
         }
 
@@ -52,7 +52,7 @@ namespace LunarLabs.WebServer.Oauth
             }
             catch (Exception e)
             {
-                log.Error(e.ToString());
+                logger(LogLevel.Error, e.ToString());
                 return null;
             }
         }
@@ -110,7 +110,7 @@ namespace LunarLabs.WebServer.Oauth
             }
             catch (Exception e)
             {
-                log.Error(e.ToString());
+                logger(LogLevel.Error, e.ToString());
                 return null;
             }
         }
@@ -128,7 +128,7 @@ namespace LunarLabs.WebServer.Oauth
             }
             catch (Exception e)
             {
-                log.Error(e.ToString());
+                logger(LogLevel.Error, e.ToString());
                 return null;
             }
         }

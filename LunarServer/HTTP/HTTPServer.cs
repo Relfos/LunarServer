@@ -28,7 +28,7 @@ namespace LunarLabs.WebServer.HTTP
 
         public FileCache Cache => _cache;
         public IEnumerable<ServerPlugin> Plugins { get { return _plugins; } }
-        public Logger Logger { get; private set; }
+        public LoggerCallback Logger { get; private set; }
 
         public bool Running { get; private set; }
 
@@ -40,25 +40,13 @@ namespace LunarLabs.WebServer.HTTP
 
         public SessionStorage SessionStorage { get; private set; }
 
-        public HTTPServer(ServerSettings settings, Logger log = null, SessionStorage sessionStorage = null)
+        public HTTPServer(ServerSettings settings, LoggerCallback log = null, SessionStorage sessionStorage = null)
         {
             this.SessionStorage = sessionStorage != null ? sessionStorage : new MemorySessionStorage();
-            this.Logger = log != null ? log : new NullLogger();
+            this.Logger = log != null ? log : (_, __) => {};
             this.StartTime = DateTime.Now;
 
             this._router = new Router();
-
-            if (log.level == LogLevel.Default)
-            {
-                if (settings.Environment == ServerEnvironment.Prod)
-                {
-                    log.level = LogLevel.Info;
-                }
-                else
-                {
-                    log.level = LogLevel.Debug;
-                }
-            }
 
             this.Settings = settings;
 
@@ -66,8 +54,7 @@ namespace LunarLabs.WebServer.HTTP
 
             var fullPath = settings.Path;
 
-            log.Info($"~LUNAR SERVER~ [{settings.Environment} mode]");
-            log.Info($"Port: {settings.Port}");
+            Logger(LogLevel.Info, $"~LUNAR SERVER~ [{settings.Environment} mode] using port: {settings.Port}");
 
             if (fullPath != null)
             {
@@ -77,13 +64,13 @@ namespace LunarLabs.WebServer.HTTP
                     fullPath += "/";
                 }
 
-                log.Info($"Root path: {fullPath}");
+                Logger(LogLevel.Info, $"Root path: {fullPath}");
 
                 this._cache = new AssetCache(Logger, fullPath);
             }
             else
             {
-                log.Info($"No root path specified.");
+                Logger(LogLevel.Warning, $"No root path specified.");
 
                 this._cache = null;
             }
@@ -98,7 +85,7 @@ namespace LunarLabs.WebServer.HTTP
         {
             foreach (var plugin in Plugins)
             {
-                Logger.Info("Initializating plugin: " + plugin.GetType().Name);
+                Logger(LogLevel.Info, "Initializating plugin: " + plugin.GetType().Name);
                 plugin.Install();
             }
 
@@ -112,8 +99,7 @@ namespace LunarLabs.WebServer.HTTP
             }
             catch (Exception e)
             {
-                Logger.Error(e.Message);
-                Logger.Error(e.StackTrace);
+                Logger(LogLevel.Error, e.ToString());
                 return;
             }
 
@@ -124,19 +110,19 @@ namespace LunarLabs.WebServer.HTTP
             while (Running)
             {
 
-                Logger.Debug("Waiting for a connection...");
+                Logger(LogLevel.Debug, "Waiting for a connection...");
 
                 try
                 {
                     var client = listener.Accept();
 
-                    Logger.Debug("Got a connection...");
+                    Logger(LogLevel.Debug, "Got a connection...");
 
                     Task.Run(() => { HandleClient(client); });
                 }
                 catch (Exception e)
                 {
-                    Logger.Error(e.ToString());
+                    Logger(LogLevel.Error, e.ToString());
                 }
             }
         }
@@ -161,7 +147,7 @@ namespace LunarLabs.WebServer.HTTP
 
         private void HandleClient(Socket client)
         {
-            Logger.Debug("Connection accepted.");
+            Logger(LogLevel.Debug, "Connection accepted.");
 
             try
             {
@@ -207,7 +193,7 @@ namespace LunarLabs.WebServer.HTTP
                                 }
 
                                 var temp = line.ToString();
-                                Logger.Debug(temp);
+                                Logger(LogLevel.Debug, temp);
 
                                 if (temp.Contains("\0"))
                                 {
@@ -271,7 +257,7 @@ namespace LunarLabs.WebServer.HTTP
                         request.path = path[0];
                         request.url = s[1];
 
-                        Logger.Info(request.method.ToString() + " " + s[1]);
+                        Logger(LogLevel.Info, request.method.ToString() + " " + s[1]);
 
                         if (path.Length > 1)
                         {
@@ -290,14 +276,14 @@ namespace LunarLabs.WebServer.HTTP
                         {
                             if (!ParsePost(request, client))
                             {
-                                Logger.Error("Failed parsing post data");
+                                Logger(LogLevel.Error, "Failed parsing post data");
                                 return;
                             }
                         }
                     }
                     else
                     {
-                        Logger.Error("Failed parsing request method");
+                        Logger(LogLevel.Error, "Failed parsing request method");
                         return;
                     }
 
@@ -306,22 +292,22 @@ namespace LunarLabs.WebServer.HTTP
 
                     if (setCookie != null && OnNewVisitor != null)
                     {
-                        Logger.Debug("Handling visitors...");
+                        Logger(LogLevel.Debug, "Handling visitors...");
                         OnNewVisitor(request);
                     }
 
-                    Logger.Debug("Handling request...");
+                    Logger(LogLevel.Debug, "Handling request...");
 
                     HTTPResponse response = HandleRequest(request);
 
                     if (response == null || response.bytes == null)
                     {
-                        Logger.Debug($"Got no response...");
+                        Logger(LogLevel.Debug, $"Got no response...");
                         response = HTTPResponse.FromString("Not found...", HTTPCode.NotFound);
                     }
                     else
                     {
-                        Logger.Debug($"Got response with {response.bytes.Length} bytes...");
+                        Logger(LogLevel.Debug, $"Got response with {response.bytes.Length} bytes...");
                     }
 
                     response.headers["Content-Length"] = response.bytes != null ? response.bytes.Length.ToString() : "0";
@@ -363,15 +349,14 @@ namespace LunarLabs.WebServer.HTTP
                 }
                 else
                 {
-                    Logger.Error("Failed parsing request data");
+                    Logger(LogLevel.Error, "Failed parsing request data");
                 }
 
 
             }
             catch (Exception e)
             {
-                Logger.Error(e.ToString());
-                // ignore
+                Logger(LogLevel.Error, e.ToString());
             }
             finally
             {
@@ -524,12 +509,12 @@ namespace LunarLabs.WebServer.HTTP
 
         public HTTPResponse HandleRequest(HTTPRequest request, int index = 0)
         {
-            Logger.Debug($"Router find {request.method}=>{request.url}");
+            Logger(LogLevel.Debug, $"Router find {request.method}=>{request.url}");
             var route = _router.Find(request.method, request.path, request.args);
 
             if (route != null)
             {
-                Logger.Debug("Calling route handler...");
+                Logger(LogLevel.Debug, "Calling route handler...");
                 var obj = route.handler(request);
 
                 if (obj == null)
@@ -563,7 +548,7 @@ namespace LunarLabs.WebServer.HTTP
             }
             else
             {
-                Logger.Debug("Route handler not found...");
+                Logger(LogLevel.Debug, "Route handler not found...");
             }
 
             if (_cache != null)
@@ -615,12 +600,12 @@ namespace LunarLabs.WebServer.HTTP
                 cookieValue = session.ID;
 
                 setCookie = SessionCookieName + "=" + cookieValue;
-                Logger.Debug($"Session: {cookieValue}");
+                Logger(LogLevel.Debug, $"Session: {cookieValue}");
             }
             else
             if (SessionStorage.HasSession(cookieValue))
             {
-                Logger.Debug($"Session: {cookieValue}");
+                Logger(LogLevel.Debug, $"Session: {cookieValue}");
                 session = SessionStorage.GetSession(cookieValue);
                 session.lastActivity = DateTime.Now;
                 return session;
@@ -629,7 +614,7 @@ namespace LunarLabs.WebServer.HTTP
             {
                 session = SessionStorage.CreateSession(cookieValue);
                 setCookie = SessionCookieName + "=" + cookieValue;
-                Logger.Debug($"Session: {cookieValue}");
+                Logger(LogLevel.Debug, $"Session: {cookieValue}");
                 return session;
             }
 

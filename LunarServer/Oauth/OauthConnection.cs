@@ -16,7 +16,7 @@ namespace LunarLabs.WebServer.Oauth
     {
         public static string OAUTH_ID = "KEeF3KEYWfZI53sSTAf22";
 
-        public Logger log { get; private set; }
+        public LoggerCallback logger { get; private set; }
 
         public string localPath { get; private set; }//Should match Site URL        
 
@@ -24,14 +24,14 @@ namespace LunarLabs.WebServer.Oauth
         protected string client_secret;
         protected string app_url;
 
-        public OauthConnection(Logger log, string app_url, string client_id, string client_secret, string localPath)
+        public OauthConnection(LoggerCallback log, string app_url, string client_id, string client_secret, string localPath)
         {
             if (!app_url.StartsWith("http://"))
             {
                 app_url = "http://" + app_url;
             }
 
-            this.log = log;
+            this.logger = log;
             this.app_url = app_url;
             this.client_id = client_id;
             this.client_secret = client_secret;

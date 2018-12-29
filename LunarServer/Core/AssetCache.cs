@@ -101,7 +101,7 @@ namespace LunarLabs.WebServer.Core
     {
         private List<AssetGroup> groups = new List<AssetGroup>();
 
-        public AssetCache(Logger logger, string filePath) : base(logger, filePath)
+        public AssetCache(LoggerCallback logger, string filePath) : base(logger, filePath)
         {
             BuildAssetCache("js", "application/javascript", x => JSMinifier.Compress(x));
             BuildAssetCache("css", "text/css", x => CSSMinifier.Compress(x));

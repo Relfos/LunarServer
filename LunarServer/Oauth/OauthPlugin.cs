@@ -11,7 +11,7 @@ namespace LunarLabs.WebServer.Oauth
         private Dictionary<OauthKind, OauthConnection> _auths = new Dictionary<OauthKind, OauthConnection>();
         public IEnumerable<OauthConnection> auths { get { return _auths.Values; } }
 
-        private Logger log { get { return this.Server.Logger; } }
+        private LoggerCallback logger { get { return this.Server.Logger; } }
 
         public Func<OauthKind, HTTPRequest, object> OnLogin;
         public Func<OauthKind, HTTPRequest, object> OnError;
@@ -24,7 +24,7 @@ namespace LunarLabs.WebServer.Oauth
 
         private object OnErrorLog(OauthKind kind, HTTPRequest request)
         {
-            log.Error("Auth failed for " + kind);
+            logger(LogLevel.Error, "Auth failed for " + kind);
             return null;
         }
 
@@ -36,10 +36,10 @@ namespace LunarLabs.WebServer.Oauth
         public void AddAuth(OauthKind kind, string client_id, string client_secret)
         {
             var redirect_uri = $"{kind.ToString().ToLowerInvariant()}_auth";
-            _auths[kind] = Create(kind, log, client_id, client_secret, redirect_uri);
+            _auths[kind] = Create(kind, logger, client_id, client_secret, redirect_uri);
         }
 
-        public OauthConnection Create(OauthKind kind, Logger log, string client_id, string client_secret, string redirect_uri, string token = null)
+        public OauthConnection Create(OauthKind kind, LoggerCallback logger, string client_id, string client_secret, string redirect_uri, string token = null)
         {
             var app_url = this.Server.Settings.Host;
 
@@ -50,8 +50,8 @@ namespace LunarLabs.WebServer.Oauth
 
             switch (kind)
             {
-                case OauthKind.Facebook: return new FacebookAuth(log, app_url, client_id, client_secret, redirect_uri);
-                case OauthKind.LinkedIn: return new LinkedInAuth(log, app_url, client_id, client_secret, redirect_uri);
+                case OauthKind.Facebook: return new FacebookAuth(logger, app_url, client_id, client_secret, redirect_uri);
+                case OauthKind.LinkedIn: return new LinkedInAuth(logger, app_url, client_id, client_secret, redirect_uri);
                 default: return null;
             }
         }
