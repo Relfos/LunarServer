@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace LunarLabs.WebServer.Templates
+namespace LunarLabs.Templates
 {
     public enum RenderingOperation
     {

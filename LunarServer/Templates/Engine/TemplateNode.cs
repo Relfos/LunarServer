@@ -1,18 +1,13 @@
-﻿using LunarLabs.WebServer.Core;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Security;
 using System.Linq;
-using System.Text;
-using LunarLabs.WebServer.Utils;
 
-namespace LunarLabs.WebServer.Templates
+namespace LunarLabs.Templates
 {
     public abstract class TemplateNode
     {
-        public TemplateEngine engine { get; internal set; }
-
         public TemplateNode(TemplateDocument document)
         {
             document.AddNode(this);
@@ -70,28 +65,6 @@ namespace LunarLabs.WebServer.Templates
             var next = context.queue.Dequeue();
             next.Execute(context);
             context.DataStack = temp;
-        }
-    }
-
-    public class IncludeNode : TemplateNode
-    {
-        private string name;
-
-        public IncludeNode(TemplateDocument document, string name) : base(document)
-        {
-            this.name = name;
-        }
-
-        public override void Execute(RenderingContext context)
-        {
-            var node = engine.FindTemplate(this.name);
-
-            if (node == null)
-            {
-                throw new Exception("Could not find include :" +name);
-            }
-
-            node.Execute(context);
         }
     }
 
@@ -227,27 +200,6 @@ namespace LunarLabs.WebServer.Templates
         }
     }
 
-    public class UrlEncodeNode : TemplateNode
-    {
-        public RenderingKey key;
-
-        public UrlEncodeNode(TemplateDocument document, string key) : base(document)
-        {
-            this.key = RenderingKey.Parse(key, RenderingType.String);
-        }
-
-        public override void Execute(RenderingContext context)
-        {
-            var obj = context.EvaluateObject(key);
-            if (obj != null)
-            {
-                var temp = obj.ToString();
-                temp = StringUtils.UrlEncode(temp);         
-                context.output.Append(temp);
-            }
-        }
-    }
-
     public class IfNode : TemplateNode
     {
         public RenderingKey condition;
@@ -348,31 +300,6 @@ namespace LunarLabs.WebServer.Templates
                 context.Set("last", true);
                 inner.Execute(context);
                 context.DataStack.RemoveAt(context.DataStack.Count - 1);
-            }
-        }
-    }
-
-    public class CacheNode : TemplateNode
-    {
-        public string dependencies;
-        public TemplateNode body;
-
-        public CacheNode(TemplateDocument document, string dependencies) : base(document)
-        {
-            this.dependencies = dependencies;
-        }
-
-        public override void Execute(RenderingContext context)
-        {
-            if (body == null)
-            {
-                throw new Exception("Missing body branch in template node");
-            }
-
-            var dependency = TemplateDependency.FindDependency(dependencies);
-            //if (dependency != null)
-            {
-                body.Execute(context);
             }
         }
     }

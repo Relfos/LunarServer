@@ -3,7 +3,7 @@ using LunarLabs.WebServer.Core;
 using System;
 using System.Collections;
 
-namespace LunarLabs.WebServer.Templates
+namespace LunarLabs.Templates
 {
     internal class TemplateException: Exception
     {

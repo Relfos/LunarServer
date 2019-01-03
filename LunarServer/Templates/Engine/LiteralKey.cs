@@ -1,4 +1,4 @@
-﻿namespace LunarLabs.WebServer.Templates
+﻿namespace LunarLabs.Templates
 {
     public class LiteralKey : RenderingKey
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LunarLabs.WebServer.Templates
+namespace LunarLabs.Templates
 {
     public class CompositeRenderingKey : RenderingKey
     {

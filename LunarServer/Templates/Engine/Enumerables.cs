@@ -1,8 +1,8 @@
 ﻿using System.Collections;
 
-namespace LunarLabs.WebServer.Utils
+namespace LunarLabs.Templates
 {
-    static class EnumerableExtensions
+    public static class EnumerableExtensions
     {
         public static int Count(this IEnumerable source)
         {

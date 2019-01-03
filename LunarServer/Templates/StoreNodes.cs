@@ -6,6 +6,7 @@ using LunarLabs.Parser.XML;
 using LunarLabs.Parser.JSON;
 using LunarLabs.Parser.CSV;
 using LunarLabs.Parser.YAML;
+using LunarLabs.Templates;
 
 namespace LunarLabs.WebServer.Templates
 {
@@ -64,11 +65,14 @@ namespace LunarLabs.WebServer.Templates
         public static Dictionary<string, StoreEntry> _storeMap = new Dictionary<string, StoreEntry>();
         private string _key;
 
+        private TemplateEngine engine;
+
         private static readonly string[] _extensions = new string[] { ".xml", ".json", ".csv", ".yaml" };
 
-        public StoreNode(TemplateDocument document, string key) : base(document)
+        public StoreNode(TemplateDocument document, string key, TemplateEngine engine) : base(document)
         {
             this._key = key;
+            this.engine = engine;
         }
 
         private DataNode FetchStore()

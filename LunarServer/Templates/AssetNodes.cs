@@ -1,4 +1,5 @@
-﻿using LunarLabs.WebServer.Core;
+﻿using LunarLabs.Templates;
+using LunarLabs.WebServer.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,12 +13,15 @@ namespace LunarLabs.WebServer.Templates
         private string key;
         private string extension;
 
+        private TemplateEngine engine;
+
         private bool skip;
 
-        public AssetNode(TemplateDocument document, string key, string extension) : base(document)
+        public AssetNode(TemplateDocument document, string key, string extension, TemplateEngine engine) : base(document)
         {
             this.key = key;
             this.extension = extension;
+            this.engine = engine;
 
             this.skip = false;
 

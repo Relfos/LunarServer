@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using LunarLabs.Templates;
+using System;
 using System.Globalization;
-using System.Text;
 
 namespace LunarLabs.WebServer.Templates
 {

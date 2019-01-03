@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace LunarLabs.WebServer.Templates
+namespace LunarLabs.Templates
 {
     public enum RenderingType
     {
