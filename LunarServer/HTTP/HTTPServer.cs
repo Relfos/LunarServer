@@ -467,7 +467,13 @@ namespace LunarLabs.WebServer.HTTP
                         throw new NullByteInjectionException();
                     }
 
-                    var value = kvpsParts.Length >= 2 ? System.Net.WebUtility.UrlDecode(kvpsParts[1]) : null;
+                    if (kvpsParts.Length == 1 && keyValuePairStrings.Length == 1)
+                    {
+                        request.postBody = key;
+                        break;
+                    }
+
+                    var value = kvpsParts.Length >= 2 ? System.Net.WebUtility.UrlDecode(kvpsParts[1]) : "";
 
                     // Simply set the key to the parsed value
                     value = value.UrlDecode();
