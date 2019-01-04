@@ -1,8 +1,7 @@
-﻿using LunarLabs.Templates;
-using System;
+﻿using System;
 using System.Globalization;
 
-namespace LunarLabs.WebServer.Templates
+namespace LunarLabs.Templates
 {
     public class DateNode : TemplateNode
     {
@@ -14,7 +13,7 @@ namespace LunarLabs.WebServer.Templates
         private RenderingKey key;
         private string format;
 
-        public DateNode(TemplateDocument document, string key, string format = "dd yyyy | hh:mm tt") : base(document)
+        public DateNode(Document document, string key, string format = "dd yyyy | hh:mm tt") : base(document)
         {
             this.key = RenderingKey.Parse(key, RenderingType.DateTime);
             this.format = " " + format;
@@ -37,7 +36,7 @@ namespace LunarLabs.WebServer.Templates
     {
         private RenderingKey key;
 
-        public SpanNode(TemplateDocument document, string key) : base(document)
+        public SpanNode(Document document, string key) : base(document)
         {
             this.key = RenderingKey.Parse(key, RenderingType.DateTime);
         }

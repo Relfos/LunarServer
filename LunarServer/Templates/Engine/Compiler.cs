@@ -1,15 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace LunarLabs.Templates
 {
-    public class TemplateCompiler
+    public class Compiler
     {
-        private Dictionary<string, Func<TemplateDocument, string, TemplateNode>> _customTags = new Dictionary<string, Func<TemplateDocument, string, TemplateNode>>();
-        public IEnumerable<KeyValuePair<string, Func<TemplateDocument, string, TemplateNode>>> CustomTags => _customTags;
+        private Dictionary<string, Func<Document, string, TemplateNode>> _customTags = new Dictionary<string, Func<Document, string, TemplateNode>>();
+        public IEnumerable<KeyValuePair<string, Func<Document, string, TemplateNode>>> CustomTags => _customTags;
 
-        public void RegisterTag(string name, Func<TemplateDocument, string, TemplateNode> generator)
+        public bool ParseWhitespace = true;
+
+        public Compiler()
+        {
+            RegisterStandardTags();
+        }
+
+        public void RegisterTag(string name, Func<Document, string, TemplateNode> generator)
         {
             _customTags[name] = generator;
         }
@@ -105,7 +113,7 @@ namespace LunarLabs.Templates
             return result;
         }
 
-        public Func<TemplateDocument, string, TemplateNode> GetCustomTag(string tag)
+        public Func<Document, string, TemplateNode> GetCustomTag(string tag)
         {
             if (_customTags.ContainsKey(tag))
             {
@@ -145,23 +153,28 @@ namespace LunarLabs.Templates
 
             while (i < code.Length)
             {
-                /*bool shouldContinue;
+                bool shouldContinue;
                 do
-                {*/
-                prev = c;
-                c = code[i];
-                i++;
+                {
+                    prev = c;
+                    c = code[i];
+                    i++;
 
-                /*                    var isWhitespace = char.IsWhiteSpace(c);
+                    if (ParseWhitespace)
+                    {
+                        break;
+                    }
 
-                                    switch (state)
-                                    {
-                                        case ParseState.String: shouldContinue = false; break;
-                                        case ParseState.Default: shouldContinue = isWhitespace; break;
-                                        default: shouldContinue = false; break;
-                                    }
+                    var isWhitespace = char.IsWhiteSpace(c);
 
-                                } while (shouldContinue);*/
+                    switch (state)
+                    {
+                        case ParseState.String: shouldContinue = false; break;
+                        case ParseState.Default: shouldContinue = isWhitespace; break;
+                        default: shouldContinue = false; break;
+                    }
+
+                } while (shouldContinue);
 
                 switch (state)
                 {
@@ -390,11 +403,41 @@ namespace LunarLabs.Templates
             }
         }
 
-        public TemplateDocument CompileTemplate(string code)
+        private void RegisterStandardTags()
+        {
+            RegisterTag("body", (doc, key) => new BodyNode(doc));
+            RegisterTag("set", (doc, key) => new SetNode(doc, key));
+            RegisterTag("break", (doc, key) => new BreakNode(doc, key));
+            RegisterTag("new-line", (doc, key) => new NewLineNode(doc));
+        }
+
+        public void RegisterDateTags()
+        {
+            RegisterTag("date", (doc, key) => new DateNode(doc, key));
+            RegisterTag("span", (doc, key) => new SpanNode(doc, key));
+        }
+
+        public void RegisterFormatTags()
+        {
+            RegisterTag("format-amount", (doc, key) => new NumericFormatNode(doc, key, NumericFormatNode.AmountFormatters));
+            RegisterTag("format-size", (doc, key) => new NumericFormatNode(doc, key, NumericFormatNode.SizeFormatters));
+        }
+
+        public void RegisterCaseTags()
+        {
+            var cases = Enum.GetValues(typeof(CaseKind)).Cast<CaseKind>();
+            foreach (var val in cases)
+            {
+                var name = val.ToString().ToLower();
+                RegisterTag($"{name}-case", (doc, key) => new CaseNode(doc, key, val));
+            }
+        }
+
+        public Document CompileTemplate(string code)
         {
             var obj = ParseTemplate(code);
 
-            var doc = new TemplateDocument();
+            var doc = new Document();
             var result = doc.CompileNode(obj, this);
 
             //Print(result);

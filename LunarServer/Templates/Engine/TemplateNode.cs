@@ -2,13 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Security;
-using System.Linq;
 
 namespace LunarLabs.Templates
 {
     public abstract class TemplateNode
     {
-        public TemplateNode(TemplateDocument document)
+        public TemplateNode(Document document)
         {
             document.AddNode(this);
         }
@@ -20,7 +19,7 @@ namespace LunarLabs.Templates
     {
         public List<TemplateNode> nodes = new List<TemplateNode>();
 
-        public GroupNode(TemplateDocument document) : base(document)
+        public GroupNode(Document document) : base(document)
         {
 
         }
@@ -38,7 +37,7 @@ namespace LunarLabs.Templates
     {
         public string content;
 
-        public TextNode(TemplateDocument document, string content) : base(document)
+        public TextNode(Document document, string content) : base(document)
         {
             this.content = content;
         }
@@ -52,7 +51,7 @@ namespace LunarLabs.Templates
     public class BodyNode : TemplateNode
     {
 
-        public BodyNode(TemplateDocument document) : base(document)
+        public BodyNode(Document document) : base(document)
         {
 
         }
@@ -73,7 +72,7 @@ namespace LunarLabs.Templates
         public RenderingKey key;
         public bool escape;
 
-        public EvalNode(TemplateDocument document, string key, bool escape) : base(document)
+        public EvalNode(Document document, string key, bool escape) : base(document)
         {
             this.key = RenderingKey.Parse(key, RenderingType.Any);
             this.escape = escape;
@@ -122,51 +121,11 @@ namespace LunarLabs.Templates
         }
     }
 
-    public class UpperNode : TemplateNode
-    {
-        public RenderingKey key;
-
-        public UpperNode(TemplateDocument document, string key) : base(document)
-        {
-            this.key = RenderingKey.Parse(key, RenderingType.String);
-        }
-
-        public override void Execute(RenderingContext context)
-        {
-            var obj = context.EvaluateObject(key);
-            if (obj != null)
-            {
-                var temp = obj.ToString().ToUpper();
-                context.output.Append(temp);
-            }
-        }
-    }
-
-    public class LowerNode : TemplateNode
-    {
-        public RenderingKey key;
-
-        public LowerNode(TemplateDocument document, string key) : base(document)
-        {
-            this.key = RenderingKey.Parse(key, RenderingType.String);
-        }
-
-        public override void Execute(RenderingContext context)
-        {
-            var obj = context.EvaluateObject(key);
-            if (obj != null)
-            {
-                var temp = obj.ToString().ToLower();
-                context.output.Append(temp);
-            }
-        }
-    }
-
     public class SetNode : TemplateNode
     {
         public RenderingKey key;
 
-        public SetNode(TemplateDocument document, string key) : base(document)
+        public SetNode(Document document, string key) : base(document)
         {
             this.key = RenderingKey.Parse(key, RenderingType.Any);
         }
@@ -206,7 +165,7 @@ namespace LunarLabs.Templates
         public TemplateNode trueNode;
         public TemplateNode falseNode;
 
-        public IfNode(TemplateDocument document, string condition) : base(document)
+        public IfNode(Document document, string condition) : base(document)
         {
             this.condition = RenderingKey.Parse(condition, RenderingType.Any);
         }
@@ -247,7 +206,7 @@ namespace LunarLabs.Templates
 
         public TemplateNode inner;
 
-        public EachNode(TemplateDocument document, string collection) : base(document)
+        public EachNode(Document document, string collection) : base(document)
         {
             this.key = RenderingKey.Parse(collection, RenderingType.Collection);
         }
@@ -306,7 +265,7 @@ namespace LunarLabs.Templates
 
     public class BreakNode : TemplateNode
     {
-        public BreakNode(TemplateDocument document, string key) : base(document)
+        public BreakNode(Document document, string key) : base(document)
         {
         }
 
@@ -316,5 +275,16 @@ namespace LunarLabs.Templates
         }
     }
 
+    public class NewLineNode : TemplateNode
+    {
+        public NewLineNode(Document document) : base(document)
+        {
+        }
+
+        public override void Execute(RenderingContext context)
+        {
+            context.output.AppendLine();
+        }
+    }
 
 }

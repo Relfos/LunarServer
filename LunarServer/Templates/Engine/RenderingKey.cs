@@ -22,6 +22,7 @@ namespace LunarLabs.Templates
         GreaterOrEqual,
         LessOrEqual,
         Assignment,
+        Contains,
     }
 
     public abstract class RenderingKey
@@ -37,6 +38,7 @@ namespace LunarLabs.Templates
             { ">=" , KeyOperator.GreaterOrEqual},
             { "<=" , KeyOperator.LessOrEqual},
             { ":=" , KeyOperator.Assignment},
+            { "contains" , KeyOperator.Contains},
         };
 
         public static RenderingKey Parse(string key, RenderingType expectedType)

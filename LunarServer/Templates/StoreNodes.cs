@@ -69,7 +69,7 @@ namespace LunarLabs.WebServer.Templates
 
         private static readonly string[] _extensions = new string[] { ".xml", ".json", ".csv", ".yaml" };
 
-        public StoreNode(TemplateDocument document, string key, TemplateEngine engine) : base(document)
+        public StoreNode(Document document, string key, TemplateEngine engine) : base(document)
         {
             this._key = key;
             this.engine = engine;

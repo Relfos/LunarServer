@@ -12,7 +12,7 @@ namespace LunarLabs.Templates
 
     public class RenderingContext
     {
-        public Queue<TemplateDocument> queue;
+        public Queue<Document> queue;
         public object DataRoot;
         public List<object> DataStack;
         public StringBuilder output;

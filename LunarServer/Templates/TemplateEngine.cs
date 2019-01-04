@@ -36,7 +36,7 @@ namespace LunarLabs.WebServer.Templates
         public readonly TemplateEngine engine;
         private string name;
 
-        public IncludeNode(TemplateDocument document, string name, TemplateEngine engine) : base(document)
+        public IncludeNode(Document document, string name, TemplateEngine engine) : base(document)
         {
             this.name = name;
             this.engine = engine;
@@ -59,7 +59,7 @@ namespace LunarLabs.WebServer.Templates
     {
         public RenderingKey key;
 
-        public UrlEncodeNode(TemplateDocument document, string key) : base(document)
+        public UrlEncodeNode(Document document, string key) : base(document)
         {
             this.key = RenderingKey.Parse(key, RenderingType.String);
         }
@@ -81,7 +81,7 @@ namespace LunarLabs.WebServer.Templates
         public string dependencies;
         public TemplateNode body;
 
-        public CacheNode(TemplateDocument document, string dependencies) : base(document)
+        public CacheNode(Document document, string dependencies) : base(document)
         {
             this.dependencies = dependencies;
         }
@@ -105,7 +105,7 @@ namespace LunarLabs.WebServer.Templates
     {
         private struct CacheEntry
         {
-            public TemplateDocument document;
+            public Document document;
             public DateTime lastModified;            
         }
 
@@ -113,16 +113,16 @@ namespace LunarLabs.WebServer.Templates
 
         public string filePath { get; private set; }
 
-        public Func<string, TemplateDocument> On404;
+        public Func<string, Document> On404;
 
         public readonly HTTPServer Server;
 
-        public readonly TemplateCompiler Compiler;
+        public readonly Compiler Compiler;
 
         public TemplateEngine(HTTPServer server, string filePath)
         {
             this.Server = server;
-            this.Compiler = new TemplateCompiler();
+            this.Compiler = new Compiler();
 
             if (filePath == null)
             {
@@ -139,33 +139,25 @@ namespace LunarLabs.WebServer.Templates
 
             this.On404 = (name) =>
             {
-                var doc = new TemplateDocument();
+                var doc = new Document();
                 doc.AddNode(new TextNode(doc, "error 404: \""+name+"\" view not found"));
                 return doc;
             };
 
-            Compiler.RegisterTag("body", (doc, key) => new BodyNode(doc));
+            Compiler.RegisterCaseTags();
+            Compiler.RegisterFormatTags();
+            Compiler.RegisterDateTags();
+
             Compiler.RegisterTag("include", (doc, key) => new IncludeNode(doc, key, this));
-            Compiler.RegisterTag("upper", (doc, key) => new UpperNode(doc, key));
-            Compiler.RegisterTag("lower", (doc, key) => new LowerNode(doc, key));
-            Compiler.RegisterTag("set", (doc, key) => new SetNode(doc, key));
-            Compiler.RegisterTag("break", (doc, key) => new BreakNode(doc, key));
-
             Compiler.RegisterTag("cache", (doc, key) => new CacheNode(doc, "")); // TODO fixme
-
             Compiler.RegisterTag("url-encode", (doc, key) => new UrlEncodeNode(doc, key));
-
-            Compiler.RegisterTag("date", (doc, key) => new DateNode(doc, key));
-            Compiler.RegisterTag("span", (doc, key) => new SpanNode(doc, key));
-            Compiler.RegisterTag("format-amount", (doc, key) => new NumericFormatNode(doc, key, NumericFormatNode.AmountFormatters));
-            Compiler.RegisterTag("format-size", (doc, key) => new NumericFormatNode(doc, key, NumericFormatNode.SizeFormatters));
 
             Compiler.RegisterTag("javascript", (doc, key) => new AssetNode(doc, key, "js", this));
             Compiler.RegisterTag("css", (doc, key) => new AssetNode(doc, key, "css", this));
             Compiler.RegisterTag("store", (doc, key) => new StoreNode(doc, key, this));
         }
 
-        public TemplateDocument FindTemplate(string name)
+        public Document FindTemplate(string name)
         {
             lock (_cache)
             {
@@ -224,7 +216,7 @@ namespace LunarLabs.WebServer.Templates
         {
             var startTime = Environment.TickCount;
 
-            var queue = new Queue<TemplateDocument>();
+            var queue = new Queue<Document>();
 
             foreach (var templateName in templateList)
             {

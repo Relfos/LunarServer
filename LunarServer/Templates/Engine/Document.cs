@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using static LunarLabs.Templates.TemplateCompiler;
+using static LunarLabs.Templates.Compiler;
 
 namespace LunarLabs.Templates
 {
-    public class TemplateDocument
+    public class Document
     {
         public TemplateNode Root { get; private set; }
 
@@ -26,7 +26,7 @@ namespace LunarLabs.Templates
             this.Root.Execute(context);
         }
 
-        public TemplateNode CompileNode(ParseNode node, TemplateCompiler compiler)
+        public TemplateNode CompileNode(ParseNode node, Compiler compiler)
         {
             switch (node.tag)
             {

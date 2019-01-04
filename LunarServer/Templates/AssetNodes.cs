@@ -17,7 +17,7 @@ namespace LunarLabs.WebServer.Templates
 
         private bool skip;
 
-        public AssetNode(TemplateDocument document, string key, string extension, TemplateEngine engine) : base(document)
+        public AssetNode(Document document, string key, string extension, TemplateEngine engine) : base(document)
         {
             this.key = key;
             this.extension = extension;

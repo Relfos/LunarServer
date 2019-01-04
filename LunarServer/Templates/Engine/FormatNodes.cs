@@ -22,7 +22,7 @@ namespace LunarLabs.Templates
         private RenderingKey key;
         private Dictionary<string, decimal> dictionary;
 
-        public NumericFormatNode(TemplateDocument document, string key, Dictionary<string, decimal> dictionary) : base(document)
+        public NumericFormatNode(Document document, string key, Dictionary<string, decimal> dictionary) : base(document)
         {
             this.key = RenderingKey.Parse(key, RenderingType.Numeric);
             this.dictionary = dictionary;
