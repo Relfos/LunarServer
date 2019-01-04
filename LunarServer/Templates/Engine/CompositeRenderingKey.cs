@@ -36,6 +36,10 @@ namespace LunarLabs.Templates
                     expectedType = RenderingType.Any;
                     break;
 
+                case KeyOperator.Contains:
+                    expectedType = RenderingType.String;
+                    break;
+
                 default:
                     expectedType = RenderingType.Numeric;
                     break;
@@ -76,6 +80,13 @@ namespace LunarLabs.Templates
 
                 case KeyOperator.GreaterOrEqual:
                     return !InternalEvaluate(KeyOperator.Less, left, right);
+
+                case KeyOperator.Contains:
+                    {
+                        var leftVal = left.ToString();
+                        var rightVal = right.ToString();
+                        return leftVal.Contains(rightVal);
+                    }
 
                 case KeyOperator.Equal:
                     {
