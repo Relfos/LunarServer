@@ -144,7 +144,7 @@ namespace LunarLabs.WebServer.Protocols
             if (result is DataNode)
             {
                 var content = JSONWriter.WriteToString((DataNode)result);
-                return "{\"jsonrpc\": \"2.0\", \"result\": " + content + ", \"id\": \"" + id + "\"}";
+                return "{\"jsonrpc\": \"2.0\", \"result\": " + content + ", \"id\": " + id + "}";
             }
             else
             {
@@ -155,7 +155,7 @@ namespace LunarLabs.WebServer.Protocols
 
         private string GenerateRPCError(string msg, int code = -32000, int id = 0)
         {
-            return "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": " + code + ", \"message\": \"" + msg + "\"}, \"id\": \"" + id + "\"}";
+            return "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": " + code + ", \"message\": \"" + msg + "\"}, \"id\": " + id + "}";
         }
     }
 }
