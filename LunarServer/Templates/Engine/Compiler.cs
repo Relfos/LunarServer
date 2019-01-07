@@ -10,7 +10,7 @@ namespace LunarLabs.Templates
         private Dictionary<string, Func<Document, string, TemplateNode>> _customTags = new Dictionary<string, Func<Document, string, TemplateNode>>();
         public IEnumerable<KeyValuePair<string, Func<Document, string, TemplateNode>>> CustomTags => _customTags;
 
-        public bool ParseWhitespace = true;
+        public bool ParseNewLines = true;
 
         public Compiler()
         {
@@ -40,7 +40,7 @@ namespace LunarLabs.Templates
             {
                 var temp = node as GroupNode;
 
-                foreach (var child in temp.nodes)
+                foreach (var child in temp.Nodes)
                 {
                     Print(child, level + 1);
                 }
@@ -160,12 +160,12 @@ namespace LunarLabs.Templates
                     c = code[i];
                     i++;
 
-                    if (ParseWhitespace)
+                    if (ParseNewLines)
                     {
                         break;
                     }
 
-                    var isWhitespace = char.IsWhiteSpace(c);
+                    var isWhitespace = c == '\n' || c=='\r'; // char.IsWhiteSpace(c) && c!=' ';
 
                     switch (state)
                     {
@@ -174,7 +174,7 @@ namespace LunarLabs.Templates
                         default: shouldContinue = false; break;
                     }
 
-                } while (shouldContinue);
+                } while (shouldContinue && i < code.Length);
 
                 switch (state)
                 {
@@ -224,6 +224,11 @@ namespace LunarLabs.Templates
                                         temp.Length = 0;
                                     }
 
+                                    if (tagName == "parse-lines")
+                                    {
+                                        this.ParseNewLines = bool.Parse(temp.ToString());
+                                    }
+                                    else
                                     if (tagName != null)
                                     {
                                         bool isCustom = false;
@@ -409,6 +414,7 @@ namespace LunarLabs.Templates
             RegisterTag("set", (doc, key) => new SetNode(doc, key));
             RegisterTag("break", (doc, key) => new BreakNode(doc, key));
             RegisterTag("new-line", (doc, key) => new NewLineNode(doc));
+            RegisterTag("tab", (doc, key) => new TabNode(doc, key));
         }
 
         public void RegisterDateTags()

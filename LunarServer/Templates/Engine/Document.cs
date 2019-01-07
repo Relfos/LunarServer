@@ -42,7 +42,7 @@ namespace LunarLabs.Templates
                         foreach (var child in node.nodes)
                         {
                             var temp = CompileNode(child, compiler);
-                            result.nodes.Add(temp);
+                            result.Nodes.Add(temp);
                         }
 
                         return result;
