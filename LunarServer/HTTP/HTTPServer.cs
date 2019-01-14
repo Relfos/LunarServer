@@ -94,7 +94,7 @@ namespace LunarLabs.WebServer.HTTP
             try
             {
                 listener.Bind(localEndPoint);
-                listener.Listen(100);
+                listener.Listen(500);
 
             }
             catch (Exception e)
@@ -169,190 +169,205 @@ namespace LunarLabs.WebServer.HTTP
                 // Set the Time To Live (TTL) to 42 router hops.
                 client.Ttl = 42;
 
-                var lines = new List<string>();
-                HTTPRequest request = null;
+                bool keepAlive = false;
+
+                int requestCount = 0;
 
                 using (var stream = new NetworkStream(client))
                 {
                     using (var reader = new BinaryReader(stream))
                     {
-                        var line = new StringBuilder();
-                        char prevChar;
-                        char currentChar = '\0';
-                        while (true)
-                        {
-                            prevChar = currentChar;
-                            currentChar = (char)reader.ReadByte();
-
-                            if (currentChar == '\n' && prevChar == '\r')
-                            {
-                                if (line.Length == 0)
-                                {
-                                    request = new HTTPRequest();
-                                    break;
-                                }
-
-                                var temp = line.ToString();
-                                Logger(LogLevel.Debug, temp);
-
-                                if (temp.Contains("\0"))
-                                {
-                                    throw new NullByteInjectionException();
-                                }
-
-                                lines.Add(temp);
-                                line.Length = 0;
-                            }
-                            else
-                            if (currentChar != '\r' && currentChar != '\n')
-                            {
-                                line.Append(currentChar);
-                            }
-                        }
-
-                        // parse headers
-                        if (request != null)
-                        {
-                            for (int i = 1; i < lines.Count; i++)
-                            {
-                                var temp = lines[i].Split(':');
-                                if (temp.Length >= 2)
-                                {
-                                    var key = temp[0];
-                                    var val = temp[1].TrimStart();
-
-                                    request.headers[key] = val;
-
-                                    if (key.Equals("Content-Length", StringComparison.InvariantCultureIgnoreCase))
-                                    {
-                                        int contentLength = int.Parse(val);
-                                        request.bytes = reader.ReadBytes(contentLength);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (request != null)
-                {
-                    var s = lines[0].Split(' ');
-
-                    if (s.Length == 3)
-                    {
-                        switch (s[0].ToUpperInvariant())
-                        {
-                            case "GET": request.method = HTTPRequest.Method.Get; break;
-                            case "POST": request.method = HTTPRequest.Method.Post; break;
-                            case "HEAD": request.method = HTTPRequest.Method.Head; break;
-                            case "PUT": request.method = HTTPRequest.Method.Put; break;
-                            case "DELETE": request.method = HTTPRequest.Method.Delete; break;
-
-                            default: throw new Exception("Invalid HTTP method: " + s[0]);
-                        }
-
-                        request.version = s[2];
-
-                        var path = s[1].Split('?');
-                        request.path = path[0];
-                        request.url = s[1];
-
-                        Logger(LogLevel.Info, request.method.ToString() + " " + s[1]);
-
-                        if (path.Length > 1)
-                        {
-                            var temp = path[1].Split('&');
-                            foreach (var entry in temp)
-                            {
-                                var str = entry.Split('=');
-                                var key = str[0].UrlDecode();
-                                var val = str.Length > 1 ? str[1].UrlDecode() : "";
-
-                                request.args[key] = val;
-                            }
-                        }
-
-                        if (request.method == HTTPRequest.Method.Post)
-                        {
-                            if (!ParsePost(request, client))
-                            {
-                                Logger(LogLevel.Error, "Failed parsing post data");
-                                return;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Logger(LogLevel.Error, "Failed parsing request method");
-                        return;
-                    }
-
-                    string setCookie;
-                    request.session = GetSession(request, out setCookie);
-
-                    if (setCookie != null && OnNewVisitor != null)
-                    {
-                        Logger(LogLevel.Debug, "Handling visitors...");
-                        OnNewVisitor(request);
-                    }
-
-                    Logger(LogLevel.Debug, "Handling request...");
-
-                    HTTPResponse response = HandleRequest(request);
-
-                    if (response == null || response.bytes == null)
-                    {
-                        Logger(LogLevel.Debug, $"Got no response...");
-                        response = HTTPResponse.FromString("Not found...", HTTPCode.NotFound);
-                    }
-                    else
-                    {
-                        Logger(LogLevel.Debug, $"Got response with {response.bytes.Length} bytes...");
-                    }
-
-                    response.headers["Content-Length"] = response.bytes != null ? response.bytes.Length.ToString() : "0";
-
-                    if (response.code == HTTPCode.OK && response.expiration.TotalSeconds > 0)
-                    {
-                        response.headers["Date"] = response.date.ToString("r");
-                        response.headers["Expires"] = (response.date + response.expiration).ToString("r");
-                    }
-                    else
-                    if (!response.headers.ContainsKey("Cache-Control"))
-                    {
-                        response.headers["Cache-Control"] = "no-cache";
-                    }
-                    
-                    if (setCookie != null)
-                    {
-                        response.headers["Set-Cookie"] = setCookie;
-                    }
-
-                    using (var stream = new NetworkStream(client))
-                    {
                         using (var writer = new BinaryWriter(stream))
                         {
-                            var answerString = (response.code == HTTPCode.Redirect || response.code == HTTPCode.OK) ? "Found" : "Not Found";
-                            var head = "HTTP/1.1 " + (int)response.code + " " + answerString;
-                            WriteString(writer, head);
-                            foreach (var header in response.headers)
                             {
-                                WriteString(writer, header.Key + ": " + header.Value);
+                                do
+                                {
+                                    var lines = new List<string>();
+                                    HTTPRequest request = null;
+
+                                    var line = new StringBuilder();
+                                    char prevChar;
+                                    char currentChar = '\0';
+                                    while (true)
+                                    {
+                                        prevChar = currentChar;
+                                        currentChar = (char)reader.ReadByte();
+
+                                        if (currentChar == '\n' && prevChar == '\r')
+                                        {
+                                            if (line.Length == 0)
+                                            {
+                                                request = new HTTPRequest();
+                                                break;
+                                            }
+
+                                            var temp = line.ToString();
+                                            Logger(LogLevel.Debug, temp);
+
+                                            if (temp.Contains("\0"))
+                                            {
+                                                throw new NullByteInjectionException();
+                                            }
+
+                                            lines.Add(temp);
+                                            line.Length = 0;
+                                        }
+                                        else
+                                        if (currentChar != '\r' && currentChar != '\n')
+                                        {
+                                            line.Append(currentChar);
+                                        }
+                                    }
+
+                                    // parse headers
+                                    if (request != null)
+                                    {
+                                        for (int i = 1; i < lines.Count; i++)
+                                        {
+                                            var temp = lines[i].Split(':');
+                                            if (temp.Length >= 2)
+                                            {
+                                                var key = temp[0];
+                                                var val = temp[1].TrimStart();
+
+                                                request.headers[key] = val;
+
+                                                if (key.Equals("Content-Length", StringComparison.InvariantCultureIgnoreCase))
+                                                {
+                                                    int contentLength = int.Parse(val);
+                                                    request.bytes = reader.ReadBytes(contentLength);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (request != null)
+                                    {
+                                        var s = lines[0].Split(' ');
+
+                                        if (s.Length == 3)
+                                        {
+                                            switch (s[0].ToUpperInvariant())
+                                            {
+                                                case "GET": request.method = HTTPRequest.Method.Get; break;
+                                                case "POST": request.method = HTTPRequest.Method.Post; break;
+                                                case "HEAD": request.method = HTTPRequest.Method.Head; break;
+                                                case "PUT": request.method = HTTPRequest.Method.Put; break;
+                                                case "DELETE": request.method = HTTPRequest.Method.Delete; break;
+
+                                                default: throw new Exception("Invalid HTTP method: " + s[0]);
+                                            }
+
+                                            request.version = s[2];
+
+                                            var path = s[1].Split('?');
+                                            request.path = path[0];
+                                            request.url = s[1];
+
+                                            Logger(LogLevel.Info, request.method.ToString() + " " + s[1]);
+
+                                            if (path.Length > 1)
+                                            {
+                                                var temp = path[1].Split('&');
+                                                foreach (var entry in temp)
+                                                {
+                                                    var str = entry.Split('=');
+                                                    var key = str[0].UrlDecode();
+                                                    var val = str.Length > 1 ? str[1].UrlDecode() : "";
+
+                                                    request.args[key] = val;
+                                                }
+                                            }
+
+                                            if (request.method == HTTPRequest.Method.Post)
+                                            {
+                                                if (!ParsePost(request, client))
+                                                {
+                                                    Logger(LogLevel.Error, "Failed parsing post data");
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Logger(LogLevel.Error, "Failed parsing request method");
+                                            return;
+                                        }
+
+                                        string setCookie;
+                                        request.session = GetSession(request, out setCookie);
+
+                                        if (requestCount == 0)
+                                        {
+                                            keepAlive = request.headers.ContainsKey("connection") && request.headers["connection"].Equals("keep-alive", StringComparison.OrdinalIgnoreCase);
+
+                                            if (setCookie != null && OnNewVisitor != null)
+                                            {
+                                                Logger(LogLevel.Debug, "Handling visitors...");
+                                                OnNewVisitor(request);
+                                            }
+                                        }
+
+                                        Logger(LogLevel.Debug, "Handling request...");
+
+                                        HTTPResponse response = HandleRequest(request);
+
+                                        if (response == null || response.bytes == null)
+                                        {
+                                            Logger(LogLevel.Debug, $"Got no response...");
+                                            response = HTTPResponse.FromString("Not found...", HTTPCode.NotFound);
+                                        }
+                                        else
+                                        {
+                                            Logger(LogLevel.Debug, $"Got response with {response.bytes.Length} bytes...");
+                                        }
+
+                                        response.headers["Content-Length"] = response.bytes != null ? response.bytes.Length.ToString() : "0";
+
+                                        if (response.code == HTTPCode.OK && keepAlive)
+                                        {
+                                            response.headers["Connection"] = "keep-alive";
+                                        }
+
+                                        if (response.code == HTTPCode.OK && response.expiration.TotalSeconds > 0)
+                                        {
+                                            response.headers["Date"] = response.date.ToString("r");
+                                            response.headers["Expires"] = (response.date + response.expiration).ToString("r");
+                                        }
+                                        else
+                                        if (!response.headers.ContainsKey("Cache-Control"))
+                                        {
+                                            response.headers["Cache-Control"] = "no-cache";
+                                        }
+
+                                        if (setCookie != null)
+                                        {
+                                            response.headers["Set-Cookie"] = setCookie;
+                                        }
+
+                                        var answerString = (response.code == HTTPCode.Redirect || response.code == HTTPCode.OK) ? "Found" : "Not Found";
+                                        var head = "HTTP/1.1 " + (int)response.code + " " + answerString;
+                                        WriteString(writer, head);
+                                        foreach (var header in response.headers)
+                                        {
+                                            WriteString(writer, header.Key + ": " + header.Value);
+                                        }
+
+                                        WriteNewLine(writer);
+
+                                        writer.Write(response.bytes);
+                                    }
+                                    else
+                                    {
+                                        Logger(LogLevel.Error, "Failed parsing request data");
+                                    }
+
+                                    requestCount++;
+                                } while (keepAlive);
                             }
-
-                            WriteNewLine(writer);
-
-                            writer.Write(response.bytes);
                         }
                     }
-
                 }
-                else
-                {
-                    Logger(LogLevel.Error, "Failed parsing request data");
-                }
-
-
             }
             catch (Exception e)
             {
