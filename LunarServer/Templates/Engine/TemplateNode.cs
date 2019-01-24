@@ -7,8 +7,11 @@ namespace LunarLabs.Templates
 {
     public abstract class TemplateNode
     {
+        public readonly Document Document;
+
         public TemplateNode(Document document)
         {
+            this.Document = document;
             document.AddNode(this);
         }
 
@@ -17,7 +20,7 @@ namespace LunarLabs.Templates
 
     public class GroupNode : TemplateNode
     {
-        public List<TemplateNode> nodes = new List<TemplateNode>();
+        public List<TemplateNode> Nodes = new List<TemplateNode>();
 
         public GroupNode(Document document) : base(document)
         {
@@ -26,7 +29,7 @@ namespace LunarLabs.Templates
 
         public override void Execute(RenderingContext context)
         {
-            foreach (var node in nodes)
+            foreach (var node in Nodes)
             {
                 node.Execute(context);
             }
@@ -287,4 +290,18 @@ namespace LunarLabs.Templates
         }
     }
 
+    public class TabNode : TemplateNode
+    {
+        private int count;
+
+        public TabNode(Document document, string key) : base(document)
+        {
+            count = int.Parse(key);
+        }
+
+        public override void Execute(RenderingContext context)
+        {
+            context.output.Append(new string('\t', count));
+        }
+    }    
 }

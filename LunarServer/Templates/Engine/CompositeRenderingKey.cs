@@ -68,18 +68,18 @@ namespace LunarLabs.Templates
             return 0;
         }
 
-        private static bool InternalEvaluate(KeyOperator op, object left, object right)
+        private static object InternalEvaluate(KeyOperator op, object left, object right)
         {
             switch (op)
             {
                 case KeyOperator.Different:
-                    return !InternalEvaluate(KeyOperator.Equal, left, right);
+                    return !(bool)InternalEvaluate(KeyOperator.Equal, left, right);
 
                 case KeyOperator.LessOrEqual:
-                    return !InternalEvaluate(KeyOperator.Greater, left, right);
+                    return !(bool)InternalEvaluate(KeyOperator.Greater, left, right);
 
                 case KeyOperator.GreaterOrEqual:
-                    return !InternalEvaluate(KeyOperator.Less, left, right);
+                    return !(bool)InternalEvaluate(KeyOperator.Less, left, right);
 
                 case KeyOperator.Contains:
                     {
@@ -117,6 +117,20 @@ namespace LunarLabs.Templates
                         var leftNumber = EvaluateNumber(left);
                         var rightNumber = EvaluateNumber(right);
                         return leftNumber > rightNumber;
+                    }
+
+                case KeyOperator.Plus:
+                    {
+                        var leftNumber = EvaluateNumber(left);
+                        var rightNumber = EvaluateNumber(right);
+                        return leftNumber + rightNumber;
+                    }
+
+                case KeyOperator.Multiply:
+                    {
+                        var leftNumber = EvaluateNumber(left);
+                        var rightNumber = EvaluateNumber(right);
+                        return leftNumber * rightNumber;
                     }
 
                 default:

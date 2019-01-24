@@ -23,6 +23,8 @@ namespace LunarLabs.Templates
         LessOrEqual,
         Assignment,
         Contains,
+        Plus,
+        Multiply,
     }
 
     public abstract class RenderingKey
@@ -38,6 +40,8 @@ namespace LunarLabs.Templates
             { ">=" , KeyOperator.GreaterOrEqual},
             { "<=" , KeyOperator.LessOrEqual},
             { ":=" , KeyOperator.Assignment},
+            { "+" , KeyOperator.Plus},
+            { "*" , KeyOperator.Multiply},
             { "contains" , KeyOperator.Contains},
         };
 
