@@ -94,7 +94,7 @@ namespace LunarLabs.WebServer.HTTP
             try
             {
                 listener.Bind(localEndPoint);
-                listener.Listen(100);
+                listener.Listen(1000);
 
             }
             catch (Exception e)
