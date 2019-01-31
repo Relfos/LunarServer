@@ -3,9 +3,8 @@ using LunarLabs.WebServer.HTTP;
 using System;
 using System.Collections.Generic;
 
-namespace LunarLabs.WebServer.Oauth
+namespace LunarLabs.WebServer.Plugins.Oauth
 {
-
     public class OauthPlugin: ServerPlugin
     {
         private Dictionary<OauthKind, OauthConnection> _auths = new Dictionary<OauthKind, OauthConnection>();

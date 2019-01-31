@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace LunarLabs.WebServer.Oauth
+namespace LunarLabs.WebServer.Plugins.Oauth
 {
     public class LinkedInAuth : OauthConnection
     {

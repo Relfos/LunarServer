@@ -8,13 +8,15 @@ namespace LunarLabs.WebServer.Core
     [AttributeUsage(AttributeTargets.Method)]
     public class EndPointAttribute: Attribute
     {
-        public readonly string path;
-        public readonly HTTPRequest.Method method;
+        public readonly string Path;
+        public readonly HTTPRequest.Method Method;
+        public readonly int Priority;
 
-        public EndPointAttribute(HTTPRequest.Method method, string path)
+        public EndPointAttribute(HTTPRequest.Method method, string path, int priority = 0)
         {
-            this.method = method;
-            this.path = path;
+            this.Method = method;
+            this.Path = path;
+            this.Priority = priority;
         }
     }
 
@@ -41,7 +43,6 @@ namespace LunarLabs.WebServer.Core
             server.AddPlugin(this);
         }
 
-
         internal bool Install()
         {
             var type = this.GetType();
@@ -50,11 +51,11 @@ namespace LunarLabs.WebServer.Core
             foreach (var method in methods)
             {
                 var attr = (EndPointAttribute) method.GetCustomAttributes(typeof(EndPointAttribute), false).FirstOrDefault();
-                var fullPath = this.Path + attr.path;
+                var fullPath = this.Path + attr.Path;
 
                 var handler = (Func<HTTPRequest, object>)Delegate.CreateDelegate(typeof(Func<HTTPRequest, object>), this, method);
 
-                Server.RegisterHandler(attr.method, fullPath, handler);
+                Server.RegisterHandler(attr.Method, fullPath, attr.Priority, handler);
             }
 
             return OnInstall();

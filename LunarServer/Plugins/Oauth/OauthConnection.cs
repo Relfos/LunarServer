@@ -1,10 +1,6 @@
-﻿using LunarLabs.Parser;
-using LunarLabs.WebServer.Core;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using LunarLabs.WebServer.Core;
 
-namespace LunarLabs.WebServer.Oauth
+namespace LunarLabs.WebServer.Plugins.Oauth
 {
     public enum OauthKind
     {

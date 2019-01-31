@@ -536,7 +536,18 @@ namespace LunarLabs.WebServer.HTTP
             if (route != null)
             {
                 Logger(LogLevel.Debug, "Calling route handler...");
-                var obj = route.handler(request);
+
+                object obj = null;
+
+                foreach (var entry in route.handlers)
+                {
+                    var handler = entry.Key;
+                    obj = handler(request);
+                    if (obj != null)
+                    {
+                        break;
+                    }
+                }
 
                 if (obj == null)
                 {
@@ -645,29 +656,29 @@ namespace LunarLabs.WebServer.HTTP
         #endregion
 
         #region HANDLERS
-        internal void RegisterHandler(HTTPRequest.Method method, string path, Func<HTTPRequest, object> handler)
+        public void RegisterHandler(HTTPRequest.Method method, string path, int priority, Func<HTTPRequest, object> handler)
         {
-            _router.Register(method, path, handler);
+            _router.Register(method, path, priority, handler);
         }
 
         public void Get(string path, Func<HTTPRequest, object> handler)
         {
-            _router.Register(HTTPRequest.Method.Get, path, handler);
+            _router.Register(HTTPRequest.Method.Get, path, 0, handler);
         }
 
         public void Post(string path, Func<HTTPRequest, object> handler)
         {
-            _router.Register(HTTPRequest.Method.Post, path, handler);
+            _router.Register(HTTPRequest.Method.Post, path, 0, handler);
         }
 
         public void Put(string path, Func<HTTPRequest, object> handler)
         {
-            _router.Register(HTTPRequest.Method.Put, path, handler);
+            _router.Register(HTTPRequest.Method.Put, path, 0, handler);
         }
 
         public void Delete(string path, Func<HTTPRequest, object> handler)
         {
-            _router.Register(HTTPRequest.Method.Delete, path, handler);
+            _router.Register(HTTPRequest.Method.Delete, path, 0, handler);
         }
 
         internal void AddPlugin(ServerPlugin plugin)

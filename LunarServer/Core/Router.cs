@@ -9,7 +9,7 @@ namespace LunarLabs.WebServer.Core
 {
     public class RouteEntry
     {
-        public Func<HTTPRequest, object> handler;
+        public SortedList<Func<HTTPRequest, object>, int> handlers;
         public Dictionary<int, string> names;
     }
 
@@ -27,12 +27,13 @@ namespace LunarLabs.WebServer.Core
             }
         }
 
-        public void Register(HTTPRequest.Method method, string path, Func<HTTPRequest, object> handler)
+        public void Register(HTTPRequest.Method method, string path, int priority, Func<HTTPRequest, object> handler)
         {
             path = StringUtils.FixUrl(path);
 
             Dictionary<int, string> names;
 
+            // TODO this probably only is necessary when creating a new RouteEntry
             if (path.Contains("{"))
             {
                 string[] s = path.Split('/');
@@ -67,11 +68,22 @@ namespace LunarLabs.WebServer.Core
                 names = null;
             }
 
-            var entry = new RouteEntry();
-            entry.names = names;
-            entry.handler = handler;
+            var dic = _routes[method];
 
-            _routes[method][path] = entry;
+            RouteEntry entry;
+
+            if (dic.ContainsKey(path))
+            {
+                entry= dic[path];
+            }
+            else
+            {
+                entry = new RouteEntry();
+                entry.names = names;
+                dic[path] = entry;
+            }
+
+            entry.handlers.Add(handler, priority);
         }
 
         public RouteEntry Find(HTTPRequest.Method method, string url, Dictionary<string, string> query)
@@ -95,7 +107,7 @@ namespace LunarLabs.WebServer.Core
 
             if (table.ContainsKey(url))
             {
-                return table[url];                
+                return table[url];
             }
 
             return null;
@@ -133,7 +145,7 @@ namespace LunarLabs.WebServer.Core
                 if (table.ContainsKey(path))
                 {
                     var route = table[path];
-
+                    
                     if (route.names != null)
                     {
                         foreach (var entry in route.names)

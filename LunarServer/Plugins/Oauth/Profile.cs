@@ -1,11 +1,8 @@
 ﻿using LunarLabs.Parser;
 using LunarLabs.WebServer.Core;
 using LunarLabs.WebServer.HTTP;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace LunarLabs.WebServer.Oauth
+namespace LunarLabs.WebServer.Plugins.Oauth
 {
     public class Profile
     {

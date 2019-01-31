@@ -3,10 +3,9 @@ using LunarLabs.Parser.JSON;
 using LunarLabs.WebServer.Core;
 using LunarLabs.WebServer.Utils;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
-namespace LunarLabs.WebServer.Oauth
+namespace LunarLabs.WebServer.Plugins.Oauth
 {
     public enum FacebookField
     {

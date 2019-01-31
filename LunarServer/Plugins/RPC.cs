@@ -5,7 +5,7 @@ using LunarLabs.Parser.JSON;
 using System;
 using System.Collections.Generic;
 
-namespace LunarLabs.WebServer.Protocols
+namespace LunarLabs.WebServer.Plugins
 {
     public class RPCException: Exception
     {
