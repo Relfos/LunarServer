@@ -142,7 +142,8 @@ namespace LunarLabs.Templates
         {
             var left = this.leftSide.Evaluate(context);
             var right = this.rightSide.Evaluate(context);
-            return InternalEvaluate(Operator, left, right);
+            var result = InternalEvaluate(Operator, left, right);
+            return result;
         }
     }
 }

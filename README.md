@@ -120,9 +120,9 @@ Then instantiate a template engine and add the necessary routes.
 
 	server.Get("/hello", (request) =>
 	{
-		var context = new Dictionary<string, string>();
+		var context = new Dictionary<string, object>();
 		context["username"] = "Admin";
-		return templateEngine.Render(context, new string[] { "main" });
+		return templateEngine.Render(context, "main");
 	});
 ```
 	

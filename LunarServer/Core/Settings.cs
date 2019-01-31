@@ -29,7 +29,7 @@ namespace LunarLabs.WebServer.Core
                 Path = exePath,
                 Host = "localhost",
                 MaxPostSizeInBytes = 1024 * 1024 * 8,
-                CacheResponseTime = 5,
+                CacheResponseTime = -1,
                 Environment = ServerEnvironment.Dev
             };
 
@@ -58,6 +58,11 @@ namespace LunarLabs.WebServer.Core
                         }
                     case "env": Enum.TryParse(val.FirstLetterToUpper(), out result.Environment); break;
                 }
+            }
+
+            if (result.CacheResponseTime < 0)
+            {
+                result.CacheResponseTime = result.Environment == ServerEnvironment.Dev ? 0 : 5;
             }
 
             result.Path = result.Path.Replace("\\", "/");

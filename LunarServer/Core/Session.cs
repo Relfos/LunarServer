@@ -21,6 +21,32 @@ namespace LunarLabs.WebServer.Core
 
         public bool Contains(string name)
         {
+            if (name.EndsWith("*"))
+            {
+                name = name.Substring(0, name.Length - 1);
+                foreach (var entry in _data)
+                {
+                    if (entry.Key.StartsWith(name))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            if (name.StartsWith("*"))
+            {
+                name = name.Substring(1);
+                foreach (var entry in _data)
+                {
+                    if (entry.Key.EndsWith(name))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             return _data.ContainsKey(name);
         }
 
