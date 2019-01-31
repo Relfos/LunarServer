@@ -2,7 +2,7 @@
 HTTP server with minimal dependencies 
 
 # Why Lunar Server?
-Most of web development written in C# is done with ASP.NET, which is too high-level for my tastes.
+Most of web development written in C# is done with ASP.NET, which is too high-level for my taste.
 Also, many of the Web/HTTP classes from .NET / ASP.NET don't play well with Mono / Linux.
 
 
@@ -115,7 +115,7 @@ First create a folder (eg: "views") with your template files.
 ```
 
 Then instantiate a template engine and add the necessary routes.
-```c#
+```c#	
 	var templateEngine = new TemplateEngine(server, "views");
 
 	server.Get("/hello", (request) =>
@@ -128,6 +128,6 @@ Then instantiate a template engine and add the necessary routes.
 	
 # Contact
 
-Let me know if you find bugs or if you have suggestions to improve the code.
+Let me know if you find bugs or if you have suggestions to improve the project.
 
 And maybe follow me [@onihunters](https://twitter.com/onihunters) :)
