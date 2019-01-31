@@ -22,11 +22,12 @@ namespace LunarLabs.WebServer.HTTP
     public sealed class HTTPServer : IDisposable
     {
         private Socket listener;
-        private AssetCache _cache;
+        private AssetCache _assetCache;
+        private RequestCache _requestCache = new RequestCache();
         private Router _router;
         private List<ServerPlugin> _plugins = new List<ServerPlugin>();
 
-        public FileCache Cache => _cache;
+        public FileCache Cache => _assetCache;
         public IEnumerable<ServerPlugin> Plugins { get { return _plugins; } }
         public LoggerCallback Logger { get; private set; }
 
@@ -66,13 +67,13 @@ namespace LunarLabs.WebServer.HTTP
 
                 Logger(LogLevel.Info, $"Root path: {fullPath}");
 
-                this._cache = new AssetCache(Logger, fullPath);
+                this._assetCache = new AssetCache(Logger, fullPath);
             }
             else
             {
                 Logger(LogLevel.Warning, $"No root path specified.");
 
-                this._cache = null;
+                this._assetCache = null;
             }
 
             // Create a TCP/IP socket
@@ -539,13 +540,21 @@ namespace LunarLabs.WebServer.HTTP
 
                 object obj = null;
 
-                foreach (var entry in route.Handlers)
+                if (request.method == HTTPRequest.Method.Get && Settings.CacheResponseTime > 0)
                 {
-                    var handler = entry.Key;
-                    obj = handler(request);
-                    if (obj != null)
+                    obj = _requestCache.GetCachedResponse(request.path, Settings.CacheResponseTime);
+                }
+
+                if (obj == null)
+                {
+                    foreach (var entry in route.Handlers)
                     {
-                        break;
+                        var handler = entry.Key;
+                        obj = handler(request);
+                        if (obj != null)
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -554,40 +563,51 @@ namespace LunarLabs.WebServer.HTTP
                     return null;
                 }
 
+                HTTPResponse result;
+
                 if (obj is HTTPResponse)
                 {
-                    return (HTTPResponse)obj;
+                    result = (HTTPResponse)obj;
                 }
-
+                else
                 if (obj is string)
                 {
-                    return HTTPResponse.FromString((string)obj, HTTPCode.OK, Settings.Compression);
+                    result = HTTPResponse.FromString((string)obj, HTTPCode.OK, Settings.Compression);
                 }
-
+                else
                 if (obj is byte[])
                 {
-                    return HTTPResponse.FromBytes((byte[])obj);
+                    result = HTTPResponse.FromBytes((byte[])obj);
                 }
-
+                else
                 if (obj is DataNode)
                 {
                     var root = (DataNode)obj;
                     var json = JSONWriter.WriteToString(root);
-                    return HTTPResponse.FromString(json, HTTPCode.OK, Settings.Compression, "application/json");
+                    result = HTTPResponse.FromString(json, HTTPCode.OK, Settings.Compression, "application/json");
+                }
+                else
+                {
+                    result = null;
                 }
 
-                return null;
+                if (result != null && request.method == HTTPRequest.Method.Get && Settings.CacheResponseTime > 0)
+                {
+                    _requestCache.PutCachedResponse(request.path, result);
+                }
+
+                return result;
             }
             else
             {
                 Logger(LogLevel.Debug, "Route handler not found...");
             }
 
-            if (_cache != null)
+            if (_assetCache != null)
             {
-                _cache.Update();
+                _assetCache.Update();
 
-                return _cache.GetFile(request);
+                return _assetCache.GetFile(request);
             }
 
             return null;

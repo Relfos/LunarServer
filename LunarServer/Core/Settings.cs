@@ -16,6 +16,7 @@ namespace LunarLabs.WebServer.Core
         public bool Compression;
         public ServerEnvironment Environment;
         public int MaxPostSizeInBytes;
+        public int CacheResponseTime;
 
         public static ServerSettings Parse(string[] args)
         {
@@ -28,6 +29,7 @@ namespace LunarLabs.WebServer.Core
                 Path = exePath,
                 Host = "localhost",
                 MaxPostSizeInBytes = 1024 * 1024 * 8,
+                CacheResponseTime = 5,
                 Environment = ServerEnvironment.Dev
             };
 
@@ -48,6 +50,7 @@ namespace LunarLabs.WebServer.Core
                     case "port": int.TryParse(val, out result.Port); break;
                     case "postsize": int.TryParse(val, out result.MaxPostSizeInBytes); break;
                     case "compression": bool.TryParse(val, out result.Compression); break;
+                    case "cachetime": int.TryParse(val, out result.CacheResponseTime); break;
                     case "path":
                         {
                             result.Path = System.IO.Path.GetFullPath(val);
