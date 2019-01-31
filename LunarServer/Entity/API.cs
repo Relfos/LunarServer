@@ -45,7 +45,7 @@ namespace LunarLabs.WebServer.Entity
 
             if (route != null)
             {
-                var handler = route.handlers.First().Key; // TODO fixme
+                var handler = route.Handlers.First().Key; // TODO fixme
 
                 try
                 {

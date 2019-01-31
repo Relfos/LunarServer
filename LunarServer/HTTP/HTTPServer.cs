@@ -539,7 +539,7 @@ namespace LunarLabs.WebServer.HTTP
 
                 object obj = null;
 
-                foreach (var entry in route.handlers)
+                foreach (var entry in route.Handlers)
                 {
                     var handler = entry.Key;
                     obj = handler(request);

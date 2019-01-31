@@ -9,8 +9,13 @@ namespace LunarLabs.WebServer.Core
 {
     public class RouteEntry
     {
-        public SortedList<Func<HTTPRequest, object>, int> handlers;
-        public Dictionary<int, string> names;
+        public readonly SortedList<Func<HTTPRequest, object>, int> Handlers = new SortedList<Func<HTTPRequest, object>, int>();
+        public readonly Dictionary<int, string> Names;
+
+        public RouteEntry(Dictionary<int, string> names)
+        {
+            this.Names = names;
+        }
     }
 
     public class Router
@@ -78,12 +83,11 @@ namespace LunarLabs.WebServer.Core
             }
             else
             {
-                entry = new RouteEntry();
-                entry.names = names;
+                entry = new RouteEntry(names);
                 dic[path] = entry;
             }
 
-            entry.handlers.Add(handler, priority);
+            entry.Handlers.Add(handler, priority);
         }
 
         public RouteEntry Find(HTTPRequest.Method method, string url, Dictionary<string, string> query)
@@ -146,9 +150,9 @@ namespace LunarLabs.WebServer.Core
                 {
                     var route = table[path];
                     
-                    if (route.names != null)
+                    if (route.Names != null)
                     {
-                        foreach (var entry in route.names)
+                        foreach (var entry in route.Names)
                         {
                             query[entry.Value] = s[entry.Key];
                         }

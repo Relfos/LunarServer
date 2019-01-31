@@ -40,22 +40,16 @@ using LunarLabs.WebServer.HTTP;
 Instantiate the necessary classes:
 
 ```c#
-	// initialize a logger
-	var log = new Logger();
-
 	// either parse the settings from the program args or initialize them manually
 	var settings = ServerSettings.Parse(args);
 
-	var server = new HTTPServer(log, settings);
-	
-	// instantiate a new site, the second argument is the file path where the public site contents will be found
-	var site = new Site(server, "public");
+	var server = new HTTPServer(settings, ConsoleLogger.Write);
 ```
 
 Add some routes to the site.
 
 ```c#
-	site.Get("/", (request) =>
+	server.Get("/", (request) =>
 	{
 		return HTTPResponse.FromString("Hello world!");
 	});
@@ -65,13 +59,24 @@ Add some routes to the site.
 Finally add code to start the server.
 ```c#
 	server.Run();
+
+	bool running = true;
+
+	Console.CancelKeyPress += delegate {
+		server.Stop();
+		running = false;
+	};
+
+	while (running) {
+		Thread.Sleep(500);
+	}
 ```
 
 You can now open "http://localhost" in your browser and see "Hello World! appear.
 
 Here's how to support POST requests (from HTML forms, etc)
 ```c#
-	site.Post("/myform", (request) =>
+	server.Post("/myform", (request) =>
 	{		
 		var username = request.args["username"];
 		var password = request.args["password"];
@@ -87,7 +92,7 @@ Here's how to support POST requests (from HTML forms, etc)
 
 Here's how to do dynamic routes (aka pretty URLs)
 ```c#
-	site.Get("/user/{id}", (request) =>
+	server.Get("/user/{id}", (request) =>
 	{		
 		var user_id = request.args["id"];
 		return HTTPResponse.FromString($"Hello user with ID = {user_id}!");
@@ -96,7 +101,7 @@ Here's how to do dynamic routes (aka pretty URLs)
 
 Here is how you redirect the user browser to another URL.
 ```c#
-	site.Get("/secret", (request) =>
+	server.Get("/secret", (request) =>
 	{				
 		return HTTPResponse.Redirect("/login");
 	});	
