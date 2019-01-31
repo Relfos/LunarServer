@@ -658,27 +658,32 @@ namespace LunarLabs.WebServer.HTTP
         #region HANDLERS
         public void RegisterHandler(HTTPRequest.Method method, string path, int priority, Func<HTTPRequest, object> handler)
         {
+            if (Running)
+            {
+                throw new Exception("Can't register new handlers when running");
+            }
+
             _router.Register(method, path, priority, handler);
         }
 
         public void Get(string path, Func<HTTPRequest, object> handler)
         {
-            _router.Register(HTTPRequest.Method.Get, path, 0, handler);
+            RegisterHandler(HTTPRequest.Method.Get, path, 0, handler);
         }
 
         public void Post(string path, Func<HTTPRequest, object> handler)
         {
-            _router.Register(HTTPRequest.Method.Post, path, 0, handler);
+            RegisterHandler(HTTPRequest.Method.Post, path, 0, handler);
         }
 
         public void Put(string path, Func<HTTPRequest, object> handler)
         {
-            _router.Register(HTTPRequest.Method.Put, path, 0, handler);
+            RegisterHandler(HTTPRequest.Method.Put, path, 0, handler);
         }
 
         public void Delete(string path, Func<HTTPRequest, object> handler)
         {
-            _router.Register(HTTPRequest.Method.Delete, path, 0, handler);
+            RegisterHandler(HTTPRequest.Method.Delete, path, 0, handler);
         }
 
         internal void AddPlugin(ServerPlugin plugin)

@@ -108,16 +108,22 @@ Here is how you redirect the user browser to another URL.
 ```
 
 There's also builtin support for Mustache templates.
-```c#
-	var compiler = new FormatCompiler();
-	var templateEngine = new TemplateEngine(compiler);
+First create a folder (eg: "views") with your template files.
 
-	site.Get("/hello", (request) =>
-	{				
+```html
+<h3>Hello, {{username}}!</h3>
+```
+
+Then instantiate a template engine and add the necessary routes.
+```c#
+	var templateEngine = new TemplateEngine(server, "views");
+
+	server.Get("/hello", (request) =>
+	{
 		var context = new Dictionary<string, string>();
-		context["user"] = "Hello";
-		return templateEngine.Render(site, context, new string[] { "templateFile" });
-	});	
+		context["username"] = "Admin";
+		return templateEngine.Render(context, new string[] { "main" });
+	});
 ```
 	
 # Contact
