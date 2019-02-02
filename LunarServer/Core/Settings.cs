@@ -18,11 +18,11 @@ namespace LunarLabs.WebServer.Core
         public int MaxPostSizeInBytes;
         public int CacheResponseTime;
 
-        public static ServerSettings Parse(string[] args)
+        public static ServerSettings DefaultSettings()
         {
             var exePath = System.IO.Path.GetDirectoryName(System.Environment.GetCommandLineArgs()[0]);
 
-            var result = new ServerSettings()
+            return new ServerSettings()
             {
                 Port = 80,
                 Compression = true,
@@ -32,6 +32,11 @@ namespace LunarLabs.WebServer.Core
                 CacheResponseTime = -1,
                 Environment = ServerEnvironment.Dev
             };
+        }
+
+        public static ServerSettings Parse(string[] args)
+        {
+            var result = DefaultSettings();
 
             foreach (var arg in args)
             {
