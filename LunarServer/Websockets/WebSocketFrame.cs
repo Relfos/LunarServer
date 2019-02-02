@@ -1,4 +1,6 @@
-﻿namespace LunarLabs.WebSockets
+﻿using System;
+
+namespace LunarLabs.WebSockets
 {
     internal class WebSocketFrame
     {
