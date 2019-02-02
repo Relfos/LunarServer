@@ -848,6 +848,11 @@ namespace LunarLabs.WebServer.HTTP
 
         private string MakeWebSocketKeyPair(string protocol, string path)
         {
+            if (!path.StartsWith("/"))
+            {
+                path = "/" + path;
+            }
+
             if (protocol == null)
             {
                 return path;
