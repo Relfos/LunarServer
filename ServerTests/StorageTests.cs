@@ -1,4 +1,5 @@
 using LunarLabs.WebServer.Core;
+using LunarLabs.WebServer.HTTP;
 using NUnit.Framework;
 
 namespace Tests
@@ -12,6 +13,13 @@ namespace Tests
 
     public class Tests
     {
+        [Test]
+        public void TestWebsocketKey()
+        {
+            var key = HTTPServer.GenerateWebSocketKey("dGhlIHNhbXBsZSBub25jZQ==");
+            Assert.IsTrue(key == "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=");
+        }
+
         [Test]
         public void TestSessionStructs()
         {

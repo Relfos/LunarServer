@@ -8,6 +8,10 @@ using LunarLabs.WebServer.Core;
 using LunarLabs.Parser;
 using LunarLabs.Parser.JSON;
 using System.Text;
+using System.Security.Cryptography;
+using System.Linq;
+using LunarLabs.WebSockets;
+using System.Threading;
 
 namespace LunarLabs.WebServer.HTTP
 {
@@ -26,6 +30,11 @@ namespace LunarLabs.WebServer.HTTP
         private RequestCache _requestCache = new RequestCache();
         private Router _router;
         private List<ServerPlugin> _plugins = new List<ServerPlugin>();
+
+        private Dictionary<string, Action<WebSocket>> _websocketsHandlers = new Dictionary<string, Action<WebSocket>>();
+        private List<WebSocket> _activeWebsockets = new List<WebSocket>();
+        private readonly Func<MemoryStream> _bufferFactory;
+        private readonly BufferPool _bufferPool;
 
         public FileCache Cache => _assetCache;
         public IEnumerable<ServerPlugin> Plugins { get { return _plugins; } }
@@ -46,6 +55,9 @@ namespace LunarLabs.WebServer.HTTP
             this.SessionStorage = sessionStorage != null ? sessionStorage : new MemorySessionStorage();
             this.Logger = log != null ? log : (_, __) => {};
             this.StartTime = DateTime.Now;
+
+            _bufferPool = new BufferPool();
+            _bufferFactory = _bufferPool.GetBuffer;
 
             this._router = new Router();
 
@@ -146,6 +158,44 @@ namespace LunarLabs.WebServer.HTTP
             writer.Write((byte)10);
         }
 
+        private bool _pingPong;
+
+        private void PingPong()
+        {
+            if (_pingPong)
+            {
+                return;
+            }
+
+            _pingPong = true;
+
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+
+                while (Running)
+                {
+                    lock (_activeWebsockets)
+                    {
+                        foreach (var socket in _activeWebsockets)
+                        {
+                            if (socket.State == WebSocketState.Open && socket.NeedsPing)
+                            {
+                                var diff = DateTime.UtcNow - socket.LastPingPong;
+                                if (diff.TotalMilliseconds >= socket.KeepAliveInterval)
+                                {
+                                    socket.SendPing();
+                                }
+                            }
+                        }
+                    }
+                    Thread.Sleep(100);
+                }
+            }).Start();
+
+        }
+
+
         private void HandleClient(Socket client)
         {
             Logger(LogLevel.Debug, "Connection accepted.");
@@ -220,6 +270,8 @@ namespace LunarLabs.WebServer.HTTP
                                         }
                                     }
 
+                                    bool isWebSocket = false;
+
                                     // parse headers
                                     if (request != null)
                                     {
@@ -237,6 +289,11 @@ namespace LunarLabs.WebServer.HTTP
                                                 {
                                                     int contentLength = int.Parse(val);
                                                     request.bytes = reader.ReadBytes(contentLength);
+                                                }
+                                                else
+                                                if (key.Equals("Upgrade", StringComparison.InvariantCultureIgnoreCase))
+                                                {
+                                                    isWebSocket = true;
                                                 }
                                             }
                                         }
@@ -266,6 +323,78 @@ namespace LunarLabs.WebServer.HTTP
                                             request.url = s[1];
 
                                             Logger(LogLevel.Info, request.method.ToString() + " " + s[1]);
+
+                                            if (isWebSocket)
+                                            {
+                                                Action<WebSocket> handler = null;
+                                                string targetProtocol = null;
+
+                                                var protocolHeader = "Sec-WebSocket-Protocol";
+
+                                                if (request.headers.ContainsKey(protocolHeader))
+                                                {
+                                                    var protocols = request.headers[protocolHeader].Split(',').Select(x => x.Trim());
+                                                    foreach (var protocol in protocols)
+                                                    {
+                                                        var key = MakeWebSocketKeyPair(protocol, request.path);
+                                                        if (_websocketsHandlers.ContainsKey(key))
+                                                        {
+                                                            targetProtocol = protocol;
+                                                            handler = _websocketsHandlers[key];
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    targetProtocol = null;
+                                                    var key = MakeWebSocketKeyPair(targetProtocol, request.path);
+                                                    if (_websocketsHandlers.ContainsKey(key))
+                                                    {
+                                                        handler = _websocketsHandlers[key];
+                                                    }
+                                                }
+
+                                                if (handler != null)
+                                                {
+                                                    var key = request.headers["Sec-WebSocket-Key"];
+                                                    key = GenerateWebSocketKey(key);
+
+                                                    var sb = new StringBuilder();
+                                                    sb.Append("HTTP/1.1 101 Switching Protocols\r\n");
+                                                    sb.Append("Upgrade: websocket\r\n");
+                                                    sb.Append("Connection: Upgrade\r\n");
+                                                    sb.Append($"Sec-WebSocket-Accept: {key}\r\n");
+                                                    if (targetProtocol != null)
+                                                    {
+                                                        sb.Append($"Sec-WebSocket-Protocol: {targetProtocol}\r\n");
+                                                    }
+                                                    sb.Append("\r\n");
+
+                                                    var bytes = Encoding.ASCII.GetBytes(sb.ToString());
+                                                    writer.Write(bytes);
+
+                                                    string secWebSocketExtensions = null;
+                                                    var keepAliveInterval = 5000;
+                                                    var includeExceptionInCloseResponse = true;
+                                                    var webSocket = new WebSocket(_bufferFactory, stream, keepAliveInterval, secWebSocketExtensions, includeExceptionInCloseResponse, false, targetProtocol, Logger);
+                                                    lock (_activeWebsockets)
+                                                    {
+                                                        _activeWebsockets.Add(webSocket);
+                                                    }
+                                                    handler(webSocket);
+                                                    lock (_activeWebsockets)
+                                                    {
+                                                        _activeWebsockets.Remove(webSocket);
+                                                    }
+                                                }
+                                                else
+                                                {
+
+                                                }
+
+                                                return;
+                                            }
 
                                             if (path.Length > 1)
                                             {
@@ -613,6 +742,17 @@ namespace LunarLabs.WebServer.HTTP
             return null;
         }
 
+        public static string GenerateWebSocketKey(string input)
+        {
+            var output = input + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+
+            using (var sha1 = new SHA1Managed())
+            {
+                var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(output));
+                return System.Convert.ToBase64String(hash);
+            }
+        }
+
         #region SESSIONS
         private const string SessionCookieName = "_lunar_session_";
 
@@ -704,6 +844,33 @@ namespace LunarLabs.WebServer.HTTP
         public void Delete(string path, Func<HTTPRequest, object> handler)
         {
             RegisterHandler(HTTPRequest.Method.Delete, path, 0, handler);
+        }
+
+        private string MakeWebSocketKeyPair(string protocol, string path)
+        {
+            if (protocol == null)
+            {
+                return path;
+            }
+
+            return $"{protocol}:{path}";
+        }
+
+        public void WebSocket(string path, Action<WebSocket> handler, params string[] protocols)
+        {
+            if (protocols == null || protocols.Length == 0)
+            {
+                var key = MakeWebSocketKeyPair(null, path);
+                _websocketsHandlers[key] = handler;
+            }
+            else
+            {
+                foreach (var protocol in protocols)
+                {
+                    var key = MakeWebSocketKeyPair(protocol, path);
+                    _websocketsHandlers[key] = handler;
+                }
+            }
         }
 
         internal void AddPlugin(ServerPlugin plugin)
