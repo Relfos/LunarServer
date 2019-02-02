@@ -27,6 +27,7 @@ Since this is a .NET standard package, to use with .NET framework projects pleas
 - Cookies / Sessions
 - File caching / ETAG / GZip compression
 - Forms / File uploads
+- Websockets
 
 # Usage
 
@@ -105,6 +106,25 @@ Here is how you redirect the user browser to another URL.
 	{				
 		return HTTPResponse.Redirect("/login");
 	});	
+```
+
+Here is how you handle websockets.
+```c#
+	server.WebSocket("/chat", (socket) =>
+	{
+		while (socket.IsOpen)
+		{
+			var msg = socket.Receive();
+
+			if (msg.CloseStatus == WebSocketCloseStatus.None)
+			{
+				var str = Encoding.UTF8.GetString(msg.Bytes);
+				Console.WriteLine(str);
+
+				socket.Send("Thanks man!");
+			}
+		}
+	});
 ```
 
 There's also builtin support for Mustache templates.
