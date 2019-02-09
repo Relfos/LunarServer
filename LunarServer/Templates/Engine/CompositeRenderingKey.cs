@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 
 namespace LunarLabs.Templates
 {
@@ -33,10 +34,12 @@ namespace LunarLabs.Templates
                 case KeyOperator.Equal:
                 case KeyOperator.Different:
                 case KeyOperator.Assignment:
+                case KeyOperator.Contains:
                     expectedType = RenderingType.Any;
                     break;
 
-                case KeyOperator.Contains:
+                case KeyOperator.Begins:
+                case KeyOperator.Ends:
                     expectedType = RenderingType.String;
                     break;
 
@@ -83,9 +86,39 @@ namespace LunarLabs.Templates
 
                 case KeyOperator.Contains:
                     {
+                        if (left is IEnumerable)
+                        {
+                            var list = (IEnumerable)left;
+                            var rightVal = right.ToString();
+                            foreach (var entry in list)
+                            {
+                                if (entry.ToString() == rightVal)
+                                {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+                        else
+                        {
+                            var leftVal = left.ToString();
+                            var rightVal = right.ToString();
+                            return leftVal.Contains(rightVal);
+                        }
+                    }
+
+                case KeyOperator.Begins:
+                    {
                         var leftVal = left.ToString();
                         var rightVal = right.ToString();
-                        return leftVal.Contains(rightVal);
+                        return leftVal.StartsWith(rightVal);
+                    }
+
+                case KeyOperator.Ends:
+                    {
+                        var leftVal = left.ToString();
+                        var rightVal = right.ToString();
+                        return leftVal.EndsWith(rightVal);
                     }
 
                 case KeyOperator.Equal:

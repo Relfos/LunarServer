@@ -7,9 +7,21 @@ using System.Linq;
 
 namespace LunarLabs.WebServer.Core
 {
+    public struct RouteEndPoint
+    {
+        public readonly Func<HTTPRequest, object> Handler;
+        public readonly int Priority;
+
+        public RouteEndPoint(Func<HTTPRequest, object> handler, int priority)
+        {
+            Handler = handler;
+            Priority = priority;
+        }
+    }
+
     public class RouteEntry
     {
-        public readonly SortedList<Func<HTTPRequest, object>, int> Handlers = new SortedList<Func<HTTPRequest, object>, int>();
+        public readonly List<RouteEndPoint> Handlers = new List<RouteEndPoint>();
         public readonly Dictionary<int, string> Names;
 
         public RouteEntry(Dictionary<int, string> names)
@@ -87,7 +99,8 @@ namespace LunarLabs.WebServer.Core
                 dic[path] = entry;
             }
 
-            entry.Handlers.Add(handler, priority);
+            entry.Handlers.Add(new RouteEndPoint(handler, priority));
+            entry.Handlers.Sort((x, y) => y.Priority.CompareTo(x.Priority));
         }
 
         public RouteEntry Find(HTTPRequest.Method method, string url, Dictionary<string, string> query)

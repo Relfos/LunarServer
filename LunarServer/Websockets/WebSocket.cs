@@ -120,6 +120,8 @@ namespace LunarLabs.WebSockets
         private string _closeStatusDescription;
         private LoggerCallback _logger;
 
+        private ArraySegment<byte> _receiveBuffer = new ArraySegment<byte>(new byte[1024 * 8]);
+
         public WebSocket(Func<MemoryStream> recycledStreamFactory, Stream stream, int keepAliveInterval, string secWebSocketExtensions, bool includeExceptionInCloseResponse, bool isClient, string subProtocol, LoggerCallback logger)
         {
             _recycledStreamFactory = recycledStreamFactory;
@@ -166,8 +168,6 @@ namespace LunarLabs.WebSockets
 
         public WebSocketReceiveResult Receive()
         {
-            var buffer = new ArraySegment<byte>(new byte[1024]);
-
             try
             {
                 // we may receive control frames so reading needs to happen in an infinite loop
@@ -177,7 +177,7 @@ namespace LunarLabs.WebSockets
                     WebSocketFrame frame = null;
                     try
                     {
-                        frame = WebSocketFrameReader.Read(_stream, buffer);
+                        frame = WebSocketFrameReader.Read(_stream, _receiveBuffer);
                         _logger(LogLevel.Debug, "websocket.ReceivedFrame: "+frame.OpCode+ ", "+frame.IsFinBitSet+ ", "+frame.Count);
                     }
                     catch (InternalBufferOverflowException ex)
@@ -209,15 +209,15 @@ namespace LunarLabs.WebSockets
                     switch (frame.OpCode)
                     {
                         case WebSocketOpCode.ConnectionClose:
-                            return RespondToCloseFrame(frame, buffer);
+                            return RespondToCloseFrame(frame, _receiveBuffer);
 
                         case WebSocketOpCode.Ping:
-                            ArraySegment<byte> pingPayload = new ArraySegment<byte>(buffer.Array, buffer.Offset, frame.Count);
+                            ArraySegment<byte> pingPayload = new ArraySegment<byte>(_receiveBuffer.Array, _receiveBuffer.Offset, frame.Count);
                             SendPong(pingPayload);
                             break;
 
                         case WebSocketOpCode.Pong:
-                            ArraySegment<byte> pongBuffer = new ArraySegment<byte>(buffer.Array, frame.Count, buffer.Offset);
+                            ArraySegment<byte> pongBuffer = new ArraySegment<byte>(_receiveBuffer.Array, frame.Count, _receiveBuffer.Offset);
                             if (pongBuffer.Array.SequenceEqual(_pingPayload))
                             {
 
@@ -232,7 +232,7 @@ namespace LunarLabs.WebSockets
                                 // continuation frames will follow, record the message type Text
                                 _continuationFrameMessageType = WebSocketMessageType.Text;
                             }
-                            return new WebSocketReceiveResult(frame.Count, WebSocketMessageType.Text, frame.IsFinBitSet, buffer);
+                            return new WebSocketReceiveResult(frame.Count, WebSocketMessageType.Text, frame.IsFinBitSet, _receiveBuffer);
 
                         case WebSocketOpCode.BinaryFrame:
                             if (!frame.IsFinBitSet)
@@ -240,10 +240,10 @@ namespace LunarLabs.WebSockets
                                 // continuation frames will follow, record the message type Binary
                                 _continuationFrameMessageType = WebSocketMessageType.Binary;
                             }
-                            return new WebSocketReceiveResult(frame.Count, WebSocketMessageType.Binary, frame.IsFinBitSet, buffer);
+                            return new WebSocketReceiveResult(frame.Count, WebSocketMessageType.Binary, frame.IsFinBitSet, _receiveBuffer);
 
                         case WebSocketOpCode.ContinuationFrame:
-                            return new WebSocketReceiveResult(frame.Count, _continuationFrameMessageType, frame.IsFinBitSet, buffer);
+                            return new WebSocketReceiveResult(frame.Count, _continuationFrameMessageType, frame.IsFinBitSet, _receiveBuffer);
 
                         default:
                             Exception ex = new NotSupportedException($"Unknown WebSocket opcode {frame.OpCode}");

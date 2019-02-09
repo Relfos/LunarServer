@@ -678,8 +678,7 @@ namespace LunarLabs.WebServer.HTTP
                 {
                     foreach (var entry in route.Handlers)
                     {
-                        var handler = entry.Key;
-                        obj = handler(request);
+                        obj = entry.Handler(request);
                         if (obj != null)
                         {
                             break;

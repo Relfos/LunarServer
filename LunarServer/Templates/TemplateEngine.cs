@@ -212,9 +212,26 @@ namespace LunarLabs.WebServer.Templates
             }
         }
 
+        public string RenderDocuments(object data, Queue<Document> documents)
+        {
+            var next = documents.Dequeue();
+
+            var context = new RenderingContext();
+            context.DataRoot = data;
+            context.DataStack = new List<object>();
+            context.DataStack.Add(data);
+            context.queue = documents;
+            context.output = new StringBuilder();
+            next.Execute(context);
+
+            var html = context.output.ToString();
+
+            return html;
+        }
+
         public string Render(object data, params string[] templateList)
         {
-            var startTime = Environment.TickCount;
+            //var startTime = Environment.TickCount;
 
             var queue = new Queue<Document>();
 
@@ -224,22 +241,12 @@ namespace LunarLabs.WebServer.Templates
                 queue.Enqueue(template);
             }
 
-            var next = queue.Dequeue();
+            var html = RenderDocuments(data, queue);
 
-            var context = new RenderingContext();
-            context.DataRoot = data;
-            context.DataStack = new List<object>();
-            context.DataStack.Add(data);
-            context.queue = queue;
-            context.output = new StringBuilder();
-            next.Execute(context);
-
-            var html = context.output.ToString();
-
-            var endTime = Environment.TickCount;
+            /*var endTime = Environment.TickCount;
             var renderDuration = endTime - startTime;
-
-            //Console.WriteLine($"RENDERED IN {renderDuration} ms");
+            Console.WriteLine($"RENDERED IN {renderDuration} ms");
+            */
 
             return html;
         }

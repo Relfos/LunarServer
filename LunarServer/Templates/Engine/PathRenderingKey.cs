@@ -70,6 +70,18 @@ namespace LunarLabs.Templates
                                         continue;
                                     }
                                 }
+                                else
+                                if (key.Equals("name", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    obj = node.Name;
+                                    continue;
+                                }
+                                else
+                                if (key.Equals("value", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    obj = node.Value;
+                                    continue;
+                                }
 
                                 if (stackPointer > 0)
                                 {

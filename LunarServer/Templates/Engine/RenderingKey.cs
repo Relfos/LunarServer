@@ -22,9 +22,11 @@ namespace LunarLabs.Templates
         GreaterOrEqual,
         LessOrEqual,
         Assignment,
-        Contains,
         Plus,
         Multiply,
+        Contains,
+        Begins,
+        Ends,
     }
 
     public abstract class RenderingKey
@@ -42,7 +44,9 @@ namespace LunarLabs.Templates
             { ":=" , KeyOperator.Assignment},
             { "+" , KeyOperator.Plus},
             { "*" , KeyOperator.Multiply},
-            { "contains" , KeyOperator.Contains},
+            { "?" , KeyOperator.Contains},
+            { "*?" , KeyOperator.Begins},
+            { "?*" , KeyOperator.Ends},
         };
 
         public static RenderingKey Parse(string key, RenderingType expectedType)
@@ -134,6 +138,12 @@ namespace LunarLabs.Templates
                 }
 
                 return new LiteralKey(number, RenderingType.Numeric);
+            }
+
+            if (key.StartsWith("this."))
+            {
+                key = key.Substring(5);
+                return RenderingKey.Parse(key, expectedType);
             }
 
             return new PathRenderingKey(key);

@@ -36,6 +36,7 @@ namespace LunarLabs.WebServer.HTTP
             headers["Date"] = date.ToString("r");
             headers["Server"] = "LunarServer";
             headers["Connection"] = "close";
+            headers["Access-Control-Allow-Origin"] = "*";
             //headers["Content-Type"] = "text/html";
             
             /*
