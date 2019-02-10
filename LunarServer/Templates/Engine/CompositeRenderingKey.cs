@@ -86,10 +86,25 @@ namespace LunarLabs.Templates
 
                 case KeyOperator.Contains:
                     {
+                        if (right == null)
+                        {
+                            return false;
+                        }
+
+                        var rightVal = right.ToString();
+                        if (string.IsNullOrEmpty(rightVal))
+                        {
+                            return false;
+                        }
+
+                        if (left == null)
+                        {
+                            return false;
+                        }
+
                         if (left is IEnumerable)
                         {
                             var list = (IEnumerable)left;
-                            var rightVal = right.ToString();
                             foreach (var entry in list)
                             {
                                 if (entry.ToString() == rightVal)
@@ -102,7 +117,6 @@ namespace LunarLabs.Templates
                         else
                         {
                             var leftVal = left.ToString();
-                            var rightVal = right.ToString();
                             return leftVal.Contains(rightVal);
                         }
                     }

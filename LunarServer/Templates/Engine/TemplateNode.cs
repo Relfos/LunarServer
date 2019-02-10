@@ -266,6 +266,41 @@ namespace LunarLabs.Templates
         }
     }
 
+    public class CountNode : TemplateNode
+    {
+        public RenderingKey key;
+
+        public CountNode(Document document, string collection) : base(document)
+        {
+            this.key = RenderingKey.Parse(collection, RenderingType.Collection);
+        }
+
+        public override void Execute(RenderingContext context)
+        {
+            var obj = context.EvaluateObject(key);
+
+            if (obj == null)
+            {
+                context.output.Append('0');
+                return;
+            }
+
+            var list = obj as IEnumerable;
+
+            if (list != null)
+            {
+                context.operation = RenderingOperation.None;
+
+                var total = list.Count();
+                context.output.Append(total.ToString());
+            }
+            else
+            {
+                context.output.Append('1');
+            }
+        }
+    }
+
     public class BreakNode : TemplateNode
     {
         public BreakNode(Document document, string key) : base(document)

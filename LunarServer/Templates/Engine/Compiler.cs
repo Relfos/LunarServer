@@ -411,6 +411,7 @@ namespace LunarLabs.Templates
         private void RegisterStandardTags()
         {
             RegisterTag("body", (doc, key) => new BodyNode(doc));
+            RegisterTag("count", (doc, key) => new CountNode(doc, key));
             RegisterTag("set", (doc, key) => new SetNode(doc, key));
             RegisterTag("break", (doc, key) => new BreakNode(doc, key));
             RegisterTag("new-line", (doc, key) => new NewLineNode(doc));
