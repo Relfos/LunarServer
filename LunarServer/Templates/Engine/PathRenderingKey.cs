@@ -64,7 +64,25 @@ namespace LunarLabs.Templates
                                         }
                                         else
                                         {
-                                            obj = val.Value;
+                                            switch (val.Kind)
+                                            {
+                                                case NodeKind.Boolean:
+                                                    obj = bool.Parse(val.Value);
+                                                    break;
+
+                                                case NodeKind.Numeric:
+                                                    obj = decimal.Parse(val.Value);
+                                                    break;
+
+                                                case NodeKind.Null:
+                                                    obj = null;
+                                                    break;
+
+                                                default:
+                                                    obj = val.Value;
+                                                    break;
+ 
+                                            }
                                         }
 
                                         continue;
