@@ -27,27 +27,42 @@ namespace LunarLabs.Templates
         Contains,
         Begins,
         Ends,
+        Or,
+        And
     }
 
     public abstract class RenderingKey
     {
         public abstract RenderingType RenderingType { get;}
 
+        // the order is important, larger strings first
         private static readonly Dictionary<string, KeyOperator> operatorSymbols = new Dictionary<string, KeyOperator>()
         {
+            { "&&" , KeyOperator.And},
+            { "||" , KeyOperator.Or},
             { "==" , KeyOperator.Equal},
             { "!=" , KeyOperator.Different},
-            { ">" , KeyOperator.Greater},
-            { "<", KeyOperator.Less },
             { ">=" , KeyOperator.GreaterOrEqual},
             { "<=" , KeyOperator.LessOrEqual},
             { ":=" , KeyOperator.Assignment},
+            { "*?" , KeyOperator.Begins},
+            { "?*" , KeyOperator.Ends},
+            { ">" , KeyOperator.Greater},
+            { "<", KeyOperator.Less },
             { "+" , KeyOperator.Plus},
             { "*" , KeyOperator.Multiply},
             { "?" , KeyOperator.Contains},
-            { "*?" , KeyOperator.Begins},
-            { "?*" , KeyOperator.Ends},
         };
+
+        private static int GetOperatorPriority(string op)
+        {
+            switch(op)
+            {
+                case "&&": return 3;
+                case "||": return 2;
+                default: return 0;
+            }
+        }
 
         public static RenderingKey Parse(string key, RenderingType expectedType)
         {
@@ -68,15 +83,15 @@ namespace LunarLabs.Templates
 
             foreach (var symbol in operatorSymbols.Keys)
             {
-                if (operatorMatch != null && symbol.Length < operatorMatch.Length)
-                {
-                    continue;
-                }
-
                 var index = key.IndexOf(symbol);
 
                 if (index >= 0)
                 {
+                    if (operatorMatch != null && GetOperatorPriority(symbol) <= GetOperatorPriority(operatorMatch))
+                    {
+                        continue;
+                    }
+ 
                     operatorIndex = index;
                     operatorMatch = symbol;
                 }
@@ -122,7 +137,7 @@ namespace LunarLabs.Templates
             {
                 if (expectedType != RenderingType.String && expectedType != RenderingType.Any)
                 {
-                    throw new Exception("expected string");
+                    throw new Exception("unexpected string");
                 }
 
                 var str = key.Substring(1, key.Length - 2);

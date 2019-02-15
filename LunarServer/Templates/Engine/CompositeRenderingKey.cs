@@ -35,6 +35,8 @@ namespace LunarLabs.Templates
                 case KeyOperator.Different:
                 case KeyOperator.Assignment:
                 case KeyOperator.Contains:
+                case KeyOperator.And:
+                case KeyOperator.Or:
                     expectedType = RenderingType.Any;
                     break;
 
@@ -71,6 +73,17 @@ namespace LunarLabs.Templates
             return 0;
         }
 
+        private static bool EvaluateBool(object obj)
+        {
+            if (obj == null)
+            {
+                return false;
+            }
+
+            var text = obj.ToString();
+            return text.Equals("true", StringComparison.InvariantCultureIgnoreCase);
+        }
+
         private static object InternalEvaluate(KeyOperator op, object left, object right)
         {
             switch (op)
@@ -83,6 +96,20 @@ namespace LunarLabs.Templates
 
                 case KeyOperator.GreaterOrEqual:
                     return !(bool)InternalEvaluate(KeyOperator.Less, left, right);
+
+                case KeyOperator.And:
+                    {
+                        var leftVal = EvaluateBool(left);
+                        var rightVal = EvaluateBool(right);
+                        return leftVal && rightVal;
+                    }
+
+                case KeyOperator.Or:
+                    {
+                        var leftVal = EvaluateBool(left);
+                        var rightVal = EvaluateBool(right);
+                        return leftVal || rightVal;
+                    }
 
                 case KeyOperator.Contains:
                     {
