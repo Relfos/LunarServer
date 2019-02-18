@@ -144,7 +144,7 @@ namespace LunarLabs.WebServer.Plugins
             if (result is DataNode)
             {
                 var content = JSONWriter.WriteToString((DataNode)result);
-                return "{\"jsonrpc\": \"2.0\", \"result\": " + content + ", \"id\": " + id + "}";
+                return HTTPResponse.FromString("{\"jsonrpc\": \"2.0\", \"result\": " + content + ", \"id\": " + id + "}", HTTPCode.OK, false, "application/json");
             }
             else
             {
@@ -153,9 +153,9 @@ namespace LunarLabs.WebServer.Plugins
 
         }
 
-        private string GenerateRPCError(string msg, int code = -32000, int id = 0)
+        private HTTPResponse GenerateRPCError(string msg, int code = -32000, int id = 0)
         {
-            return "{\"jsonrpc\": \"2.0\", \"error\": {\"code\": " + code + ", \"message\": \"" + msg + "\"}, \"id\": " + id + "}";
+            return HTTPResponse.FromString("{\"jsonrpc\": \"2.0\", \"error\": {\"code\": " + code + ", \"message\": \"" + msg + "\"}, \"id\": " + id + "}", HTTPCode.OK, false, "application/json");
         }
     }
 }
