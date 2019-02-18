@@ -472,7 +472,10 @@ namespace LunarLabs.WebServer.HTTP
 
                                         if (setCookie != null)
                                         {
-                                            response.headers["Set-Cookie"] = setCookie;
+                                            if (!request.session.IsEmpty)
+                                            {
+                                                response.headers["Set-Cookie"] = setCookie;
+                                            }
                                         }
 
                                         var answerString = (response.code == HTTPCode.Redirect || response.code == HTTPCode.OK) ? "Found" : "Not Found";

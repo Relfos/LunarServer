@@ -13,6 +13,8 @@ namespace LunarLabs.WebServer.Core
         public string ID;
         public DateTime lastActivity;
 
+        public bool IsEmpty => _data.Count == 0;
+
         public Session(string ID = null)
         {
             this.ID = ID != null ? ID : Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Guid.NewGuid().ToString() + DateTime.Now.Millisecond.ToString() + DateTime.Now.Ticks.ToString()));
@@ -170,7 +172,6 @@ namespace LunarLabs.WebServer.Core
         {
             _data.Clear();
         }
-
     }
 
 }
