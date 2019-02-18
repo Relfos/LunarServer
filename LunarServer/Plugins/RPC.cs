@@ -144,18 +144,17 @@ namespace LunarLabs.WebServer.Plugins
             if (result is DataNode)
             {
                 var content = JSONWriter.WriteToString((DataNode)result);
-                return HTTPResponse.FromString("{\"jsonrpc\": \"2.0\", \"result\": " + content + ", \"id\": " + id + "}", HTTPCode.OK, false, "application/json");
+                return HTTPResponse.FromString("{\"jsonrpc\": \"2.0\", \"result\": " + content + ", \"id\": " + id + "}", HTTPCode.OK, Server.Settings.Compression, "application/json");
             }
             else
             {
                 return GenerateRPCError("Not implemented", -32603);
             }
-
         }
 
         private HTTPResponse GenerateRPCError(string msg, int code = -32000, int id = 0)
         {
-            return HTTPResponse.FromString("{\"jsonrpc\": \"2.0\", \"error\": {\"code\": " + code + ", \"message\": \"" + msg + "\"}, \"id\": " + id + "}", HTTPCode.OK, false, "application/json");
+            return HTTPResponse.FromString("{\"jsonrpc\": \"2.0\", \"error\": {\"code\": " + code + ", \"message\": \"" + msg + "\"}, \"id\": " + id + "}", HTTPCode.OK, Server.Settings.Compression, "application/json");
         }
     }
 }
