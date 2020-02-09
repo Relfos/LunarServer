@@ -145,7 +145,21 @@ Then instantiate a template engine and add the necessary routes.
 		return templateEngine.Render(context, "main");
 	});
 ```
-	
+
+# FAQ
+
+##
+**Q:** How to disable access to file system / static content? 
+
+**A:** Currently the way to do this is to set the server settings Path to null.
+```c#
+	// either parse the settings from the program args or initialize them manually
+	var settings = ServerSettings.Parse(args);
+	settings.Path = null;
+
+	var server = new HTTPServer(settings, ConsoleLogger.Write);
+```
+
 # Contact
 
 Let me know if you find bugs or if you have suggestions to improve the project.

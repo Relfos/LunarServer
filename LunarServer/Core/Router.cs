@@ -19,7 +19,7 @@ namespace LunarLabs.WebServer.Core
         }
     }
 
-    public class RouteEntry
+    public sealed class RouteEntry
     {
         public readonly List<RouteEndPoint> Handlers = new List<RouteEndPoint>();
         public readonly Dictionary<int, string> Names;
@@ -29,8 +29,7 @@ namespace LunarLabs.WebServer.Core
             this.Names = names;
         }
     }
-
-    public class Router
+    public sealed class Router
     {
         private Dictionary<HTTPRequest.Method, Dictionary<string, RouteEntry>> _routes = new Dictionary<HTTPRequest.Method, Dictionary<string, RouteEntry>>();
 
