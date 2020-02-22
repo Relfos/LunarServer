@@ -141,15 +141,23 @@ namespace LunarLabs.WebServer.Plugins
                 return GenerateRPCError("Missing result", -32603);
             }
 
+            string content;
+
             if (result is DataNode)
             {
-                var content = JSONWriter.WriteToString((DataNode)result);
-                return HTTPResponse.FromString("{\"jsonrpc\": \"2.0\", \"result\": " + content + ", \"id\": " + id + "}", HTTPCode.OK, Server.Settings.Compression, "application/json");
+                content = JSONWriter.WriteToString((DataNode)result);
+            }
+            else
+            if (result is string)
+            {
+                content = (string)result;
             }
             else
             {
                 return GenerateRPCError("Not implemented", -32603);
             }
+
+            return HTTPResponse.FromString("{\"jsonrpc\": \"2.0\", \"result\": " + content + ", \"id\": " + id + "}", HTTPCode.OK, Server.Settings.Compression, "application/json");
         }
 
         private HTTPResponse GenerateRPCError(string msg, int code = -32000, int id = 0)
