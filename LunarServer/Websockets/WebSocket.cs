@@ -120,10 +120,11 @@ namespace LunarLabs.WebSockets
         private string _closeStatusDescription;
         private LoggerCallback _logger;
 
-        private ArraySegment<byte> _receiveBuffer = new ArraySegment<byte>(new byte[1024 * 8]);
+        private ArraySegment<byte> _receiveBuffer;
 
-        public WebSocket(Func<MemoryStream> recycledStreamFactory, Stream stream, int keepAliveInterval, string secWebSocketExtensions, bool includeExceptionInCloseResponse, bool isClient, string subProtocol, LoggerCallback logger)
+        public WebSocket(Func<MemoryStream> recycledStreamFactory, Stream stream, int keepAliveInterval, string secWebSocketExtensions, bool includeExceptionInCloseResponse, bool isClient, string subProtocol, int maxBufferSize, LoggerCallback logger)
         {
+            _receiveBuffer = new ArraySegment<byte>(new byte[maxBufferSize]);
             _recycledStreamFactory = recycledStreamFactory;
             _stream = stream;
             _logger = logger;

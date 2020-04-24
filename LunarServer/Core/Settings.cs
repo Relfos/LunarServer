@@ -16,6 +16,7 @@ namespace LunarLabs.WebServer.Core
         public bool Compression;
         public ServerEnvironment Environment;
         public int MaxPostSizeInBytes;
+        public int MaxWebsocketFrameInBytes;
         public int CacheResponseTime;
 
         public static ServerSettings DefaultSettings()
@@ -29,6 +30,7 @@ namespace LunarLabs.WebServer.Core
                 Path = exePath,
                 Host = "localhost",
                 MaxPostSizeInBytes = 1024 * 1024 * 8,
+                MaxWebsocketFrameInBytes = 1024 * 8,
                 CacheResponseTime = -1,
                 Environment = ServerEnvironment.Dev
             };

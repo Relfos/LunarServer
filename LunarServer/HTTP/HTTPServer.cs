@@ -377,7 +377,7 @@ namespace LunarLabs.WebServer.HTTP
                                                     string secWebSocketExtensions = null;
                                                     var keepAliveInterval = 5000;
                                                     var includeExceptionInCloseResponse = true;
-                                                    var webSocket = new WebSocket(_bufferFactory, stream, keepAliveInterval, secWebSocketExtensions, includeExceptionInCloseResponse, false, targetProtocol, Logger);
+                                                    var webSocket = new WebSocket(_bufferFactory, stream, keepAliveInterval, secWebSocketExtensions, includeExceptionInCloseResponse, false, targetProtocol, Settings.MaxWebsocketFrameInBytes, Logger);
                                                     lock (_activeWebsockets)
                                                     {
                                                         _activeWebsockets.Add(webSocket);
