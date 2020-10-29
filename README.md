@@ -146,6 +146,19 @@ Then instantiate a template engine and add the necessary routes.
 	});
 ```
 
+For custom 404 not found pages use the OnNotFound handler.
+
+```c#	
+	var templateEngine = new TemplateEngine(server, "views");
+
+	server.OnNotFound = (request) =>
+	{
+		var context = new Dictionary<string, object>();
+		context["error"] = "Something funny";
+		return templateEngine.Render(context, "404");
+	};
+```
+			
 # FAQ
 
 ##

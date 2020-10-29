@@ -45,6 +45,7 @@ namespace LunarLabs.WebServer.HTTP
         public DateTime StartTime { get; private set; }
 
         public Action<HTTPRequest> OnNewVisitor;
+        public Func<HTTPRequest, object> OnNotFound;
 
         public ServerSettings Settings { get; private set; }
 
@@ -66,6 +67,11 @@ namespace LunarLabs.WebServer.HTTP
             SessionStorage.Restore();
 
             var fullPath = settings.Path;
+
+            this.OnNotFound = (request) =>
+            {
+                return HTTPResponse.FromString("Not found...", HTTPCode.NotFound);
+            };
 
             Logger(LogLevel.Info, $"~LUNAR SERVER~ [{settings.Environment} mode] using port: {settings.Port}");
 
@@ -445,7 +451,8 @@ namespace LunarLabs.WebServer.HTTP
                                         if (response == null || response.bytes == null)
                                         {
                                             Logger(LogLevel.Debug, $"Got no response...");
-                                            response = HTTPResponse.FromString("Not found...", HTTPCode.NotFound);
+                                            var errorObj = OnNotFound(request);
+                                            response = ResponseFromObject(errorObj, HTTPCode.NotFound);
                                         }
                                         else
                                         {
@@ -694,33 +701,7 @@ namespace LunarLabs.WebServer.HTTP
                     return null;
                 }
 
-                HTTPResponse result;
-
-                if (obj is HTTPResponse)
-                {
-                    result = (HTTPResponse)obj;
-                }
-                else
-                if (obj is string)
-                {
-                    result = HTTPResponse.FromString((string)obj, HTTPCode.OK, Settings.Compression);
-                }
-                else
-                if (obj is byte[])
-                {
-                    result = HTTPResponse.FromBytes((byte[])obj);
-                }
-                else
-                if (obj is DataNode)
-                {
-                    var root = (DataNode)obj;
-                    var json = JSONWriter.WriteToString(root);
-                    result = HTTPResponse.FromString(json, HTTPCode.OK, Settings.Compression, "application/json");
-                }
-                else
-                {
-                    result = null;
-                }
+                HTTPResponse result = ResponseFromObject(obj, HTTPCode.OK);
 
                 if (result != null && request.method == HTTPRequest.Method.Get && Settings.CacheResponseTime > 0)
                 {
@@ -741,6 +722,35 @@ namespace LunarLabs.WebServer.HTTP
                 return _assetCache.GetFile(request);
             }
 
+            return null;
+        }
+
+        public HTTPResponse ResponseFromObject(object obj, HTTPCode code)
+        {            
+            if (obj is HTTPResponse)
+            {
+                return (HTTPResponse)obj;
+            }
+            
+            if (obj is string)
+            {
+                return HTTPResponse.FromString((string)obj, code, Settings.Compression);
+            }
+            
+            if (obj is byte[])
+            {
+                return HTTPResponse.FromBytes((byte[])obj);
+            }
+            
+            if (obj is DataNode)
+            {
+                var root = (DataNode)obj;
+                var json = JSONWriter.WriteToString(root);
+                return HTTPResponse.FromString(json, code, Settings.Compression, "application/json");
+            }
+
+            var type = obj.GetType();
+            Logger(LogLevel.Error, $"Can't serialize object of type '{type.Name}' into HTTP response");
             return null;
         }
 
