@@ -45,7 +45,8 @@ namespace LunarLabs.WebServer.HTTP
         public DateTime StartTime { get; private set; }
 
         public Action<HTTPRequest> OnNewVisitor;
-        public Func<HTTPRequest, object> OnNotFound;
+        public Func<HTTPRequest, HTTPResponse> OnNotFound;
+        public Func<Exception, HTTPResponse> OnException;
 
         public ServerSettings Settings { get; private set; }
 
@@ -71,6 +72,11 @@ namespace LunarLabs.WebServer.HTTP
             this.OnNotFound = (request) =>
             {
                 return HTTPResponse.FromString("Not found...", HTTPCode.NotFound);
+            };
+
+            this.OnException = (exception) =>
+            {
+                return HTTPResponse.FromString("Exception: " + exception.Message, HTTPCode.InternalServerError);
             };
 
             Logger(LogLevel.Info, $"~LUNAR SERVER~ [{settings.Environment} mode] using port: {settings.Port}");
@@ -446,17 +452,26 @@ namespace LunarLabs.WebServer.HTTP
 
                                         Logger(LogLevel.Debug, "Handling request...");
 
-                                        HTTPResponse response = HandleRequest(request);
+                                        HTTPResponse response;
+                                        try
+                                        {
 
-                                        if (response == null || response.bytes == null)
-                                        {
-                                            Logger(LogLevel.Debug, $"Got no response...");
-                                            var errorObj = OnNotFound(request);
-                                            response = ResponseFromObject(errorObj, HTTPCode.NotFound);
+                                            response = HandleRequest(request);
+
+                                            if (response == null || response.bytes == null)
+                                            {
+                                                Logger(LogLevel.Debug, $"Got no response...");
+                                                var errorObj = OnNotFound(request);
+                                                response = ResponseFromObject(errorObj, HTTPCode.NotFound);
+                                            }
+                                            else
+                                            {
+                                                Logger(LogLevel.Debug, $"Got response with {response.bytes.Length} bytes...");
+                                            }
                                         }
-                                        else
+                                        catch (Exception e)
                                         {
-                                            Logger(LogLevel.Debug, $"Got response with {response.bytes.Length} bytes...");
+                                            response = OnException(e);
                                         }
 
                                         response.headers["Content-Length"] = response.bytes != null ? response.bytes.Length.ToString() : "0";
