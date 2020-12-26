@@ -23,7 +23,7 @@ namespace LunarLabs.WebServer.HTTP
         }
     }
 
-    public sealed class HTTPServer : IDisposable
+    public class HTTPServer : IDisposable
     {
         private Socket listener;
         private AssetCache _assetCache;
