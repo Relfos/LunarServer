@@ -16,7 +16,9 @@ namespace LunarLabs.Templates
     public class PathRenderingKey : RenderingKey
     {
         private string key;
-        private string[] steps;
+        protected string[] steps { get; private set; }
+
+        protected int startingStep = 0;
 
         public override RenderingType RenderingType => RenderingType.Any;
 
@@ -45,7 +47,7 @@ namespace LunarLabs.Templates
 
                     try
                     {
-                        for (int i = 0; i < steps.Length; i++)
+                        for (int i = startingStep; i < steps.Length; i++)
                         {
                             Type type = obj.GetType();
                             var key = steps[i];
