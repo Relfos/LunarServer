@@ -35,9 +35,25 @@ namespace LunarLabs.Templates
 
         public override object Evaluate(RenderingContext context)
         {
-            object obj = null;
             int stackPointer = context.DataStack.Count - 1;
 
+            do
+            {
+                var result = Evaluate(context, stackPointer);
+                if (result != null)
+                {
+                    return result;
+                }
+
+                stackPointer--;
+            } while (stackPointer >= 0);
+
+            return null;
+        }
+
+        private object Evaluate(RenderingContext context, int stackPointer)
+        {
+            object obj = null;
             if (steps != null)
             {
                 // NOTE this while is required for support access to out of scope variables 
@@ -83,7 +99,7 @@ namespace LunarLabs.Templates
                                                 default:
                                                     obj = val.Value;
                                                     break;
- 
+
                                             }
                                         }
 
@@ -105,7 +121,7 @@ namespace LunarLabs.Templates
 
                                 if (stackPointer > 0)
                                 {
-                                    throw new TemplateException("node key not found: "+ this.key);
+                                    throw new TemplateException("node key not found: " + this.key);
                                 }
                                 else
                                 {
@@ -151,8 +167,8 @@ namespace LunarLabs.Templates
                                 type = obj.GetType();
                                 Type valueType = type.GetGenericArguments()[1];
                                 obj = valueType.GetDefault();
-                                
-                                if (obj == null && i < steps.Length -1)
+
+                                if (obj == null && i < steps.Length - 1)
                                 {
                                     //throw new TemplateException("key not found: " + this.key);
                                     return null;
