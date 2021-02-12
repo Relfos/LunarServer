@@ -14,6 +14,7 @@ namespace LunarLabs.WebServer.Core
         public DateTime lastActivity;
 
         public bool IsEmpty => _data.Count == 0;
+        public int Size => _data.Count;
 
         public Session(string ID = null)
         {

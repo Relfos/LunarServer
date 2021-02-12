@@ -114,7 +114,19 @@ namespace LunarLabs.WebServer.HTTP
                 plugin.Install();
             }
 
-            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, Settings.Port);
+            IPAddress bindIP;
+
+            if (string.IsNullOrEmpty(Settings.BindingHost))
+            {
+                bindIP = IPAddress.Any;
+            }
+            else
+            {
+                bindIP = IPAddress.Parse(Settings.BindingHost);
+                Logger(LogLevel.Warning, "Will only accept connections coming from " + Settings.BindingHost);
+            }
+
+            IPEndPoint localEndPoint = new IPEndPoint(bindIP, Settings.Port);
 
             try
             {
@@ -494,11 +506,30 @@ namespace LunarLabs.WebServer.HTTP
 
                                         if (setCookie != null)
                                         {
-                                            if (!request.session.IsEmpty)
+                                            //Logger(LogLevel.Debug, "Cookie inspection**************");
+                                            var emptyCookie = request.session.IsEmpty;
+                                            if (emptyCookie)
+                                            {
+                                                Logger(LogLevel.Debug, "Cookie is empty");
+                                            }
+                                            else
+                                            {
+                                                Logger(LogLevel.Debug, $"Cookie has {request.session.Size} items");
+                                                /*foreach (var entry in request.session.Data)
+                                                {
+                                                    Logger(LogLevel.Debug, entry.Key + " => " + entry.Value);
+                                                }*/
+                                            }
+
+                                            if (!emptyCookie)
                                             {
                                                 response.headers["Set-Cookie"] = setCookie;
                                             }
                                         }
+                                        /*else
+                                        {
+                                            Logger(LogLevel.Debug, "No cookie available :((((((((");
+                                        }*/
 
                                         var answerString = (response.code == HTTPCode.Redirect || response.code == HTTPCode.OK) ? "Found" : "Not Found";
                                         var head = "HTTP/1.1 " + (int)response.code + " " + answerString;
@@ -506,6 +537,7 @@ namespace LunarLabs.WebServer.HTTP
                                         foreach (var header in response.headers)
                                         {
                                             WriteString(writer, header.Key + ": " + header.Value);
+                                            //Logger(LogLevel.Debug, "Sending header: " + header.Key + " => " + header.Value);
                                         }
 
                                         WriteNewLine(writer);
@@ -819,12 +851,12 @@ namespace LunarLabs.WebServer.HTTP
                 cookieValue = session.ID;
 
                 setCookie = SessionCookieName + "=" + cookieValue;
-                Logger(LogLevel.Debug, $"Session: {cookieValue}");
+                Logger(LogLevel.Debug, $"Created cookie: {cookieValue}");
             }
             else
             if (SessionStorage.HasSession(cookieValue))
             {
-                Logger(LogLevel.Debug, $"Session: {cookieValue}");
+                Logger(LogLevel.Debug, $"Loaded session: {cookieValue}");
                 session = SessionStorage.GetSession(cookieValue);
                 session.lastActivity = DateTime.Now;
                 return session;
@@ -833,7 +865,7 @@ namespace LunarLabs.WebServer.HTTP
             {
                 session = SessionStorage.CreateSession(cookieValue);
                 setCookie = SessionCookieName + "=" + cookieValue;
-                Logger(LogLevel.Debug, $"Session: {cookieValue}");
+                Logger(LogLevel.Debug, $"Created session: {cookieValue}");
                 return session;
             }
 

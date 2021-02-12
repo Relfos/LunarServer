@@ -152,6 +152,8 @@ namespace LunarLabs.WebServer.Templates
             Compiler.RegisterTag("cache", (doc, key) => new CacheNode(doc, "")); // TODO fixme
             Compiler.RegisterTag("url-encode", (doc, key) => new UrlEncodeNode(doc, key));
 
+            Compiler.RegisterTag("localize", (doc, key) => new LocalizationNode(doc, key, this));
+
             Compiler.RegisterTag("javascript", (doc, key) => new AssetNode(doc, key, "js", this));
             Compiler.RegisterTag("css", (doc, key) => new AssetNode(doc, key, "css", this));
             Compiler.RegisterTag("store", (doc, key) => new StoreNode(doc, key, this));

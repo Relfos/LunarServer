@@ -18,6 +18,7 @@ namespace LunarLabs.WebServer.Core
         public int MaxPostSizeInBytes;
         public int MaxWebsocketFrameInBytes;
         public int CacheResponseTime;
+        public string BindingHost;
 
         public static ServerSettings DefaultSettings()
         {
@@ -28,6 +29,7 @@ namespace LunarLabs.WebServer.Core
                 Port = 80,
                 Compression = true,
                 Path = exePath,
+                BindingHost = "",
                 Host = "localhost",
                 MaxPostSizeInBytes = 1024 * 1024 * 8,
                 MaxWebsocketFrameInBytes = 1024 * 8,
@@ -36,18 +38,18 @@ namespace LunarLabs.WebServer.Core
             };
         }
 
-        public static ServerSettings Parse(string[] args)
+        public static ServerSettings Parse(string[] args, string prefix = "--")
         {
             var result = DefaultSettings();
 
             foreach (var arg in args)
             {
-                if (!arg.StartsWith("--"))
+                if (!arg.StartsWith(prefix))
                 {
                     continue;
                 }
 
-                var temp = arg.Substring(2).Split(new char[] { '=' }, 2);
+                var temp = arg.Substring(prefix.Length).Split(new char[] { '=' }, 2);
                 var key = temp[0].ToLower();
                 var val = temp.Length > 1 ? temp[1] : "";
 
@@ -58,12 +60,14 @@ namespace LunarLabs.WebServer.Core
                     case "postsize": int.TryParse(val, out result.MaxPostSizeInBytes); break;
                     case "compression": bool.TryParse(val, out result.Compression); break;
                     case "cachetime": int.TryParse(val, out result.CacheResponseTime); break;
+                    case "wsframes": int.TryParse(val, out result.MaxWebsocketFrameInBytes); break;
                     case "path":
                         {
                             result.Path = System.IO.Path.GetFullPath(val);
                             break;
                         }
-                    case "env": Enum.TryParse(val.FirstLetterToUpper(), out result.Environment); break;
+                    case "env": Enum.TryParse(val, true, out result.Environment); break;
+                    case "binding": result.BindingHost = val; break;
                 }
             }
 

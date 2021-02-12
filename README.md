@@ -158,6 +158,23 @@ For custom 404 not found pages use the OnNotFound handler.
 		return templateEngine.Render(context, "404");
 	};
 ```
+
+# Settings
+
+Those settings can be either configured in-code or passed as arguments to the server.
+			
+| Setting  | Values | Description |
+| ------------- | ------------- | ------------- |
+| --host  | An IP or hostname  | Specify the host where the server will be running, without this, localhost is assumed.  |
+| --port  | A valid port number  | Specify the port where the server will be listening  |
+| --postsize  | Number | Specify the maximum allowed number of bytes that is accepted via a POST request, pass 0 to disable POST  |
+| --wsframes  | Number | Specify the maximum allowed of bytes for a websocket frame |
+| --compression  | true/false  | Enable or disable HTML and JS compression |
+| --cachetime  | Seconds  | Specify the duration of server caching  |
+| --path  | A valid file path  | Specify the path from where the server will be serving files  |
+| --binding  | IP address | Specify the IP address that the server will accept connections from, if not specified it will accept every ip address |
+| --env  | dev or prod  | Specify the enviroment where the server will run |
+
 			
 # FAQ
 

@@ -65,6 +65,11 @@ namespace LunarLabs.Templates
                     {
                         for (int i = startingStep; i < steps.Length; i++)
                         {
+                            if (obj == null)
+                            {
+                                return null;
+                            }
+
                             Type type = obj.GetType();
                             var key = steps[i];
 
