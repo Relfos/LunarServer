@@ -305,7 +305,7 @@ namespace LunarLabs.WebServer.HTTP
                                             if (temp.Length >= 2)
                                             {
                                                 var key = temp[0];
-                                                var val = temp[1].TrimStart();
+                                                var val = lines[i].Substring(key.Length + 1).TrimStart();
 
                                                 request.headers[key] = val;
 
