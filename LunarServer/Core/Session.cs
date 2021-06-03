@@ -57,7 +57,15 @@ namespace LunarLabs.WebServer.Core
         {
             if (_data.ContainsKey(name))
             {
-                return (T)_data[name];
+                try
+                {
+                    var temp = (T)_data[name];
+                    return temp;
+                }
+                catch (Exception e)
+                {
+                    return defaultValue;
+                }
             }
 
             return defaultValue;
