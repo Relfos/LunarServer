@@ -19,13 +19,36 @@ namespace LunarLabs.Templates
             this.format = " " + format;
         }
 
+        private static DateTime ToDateTime(uint timestamp)
+        {
+            // Unix timestamp is seconds past epoch
+            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddSeconds(timestamp).ToLocalTime();
+            return dtDateTime;
+        }
+
         public override void Execute(RenderingContext context)
         {
             var temp = context.EvaluateObject(key);
 
             if (temp != null)
             {
-                DateTime value = (DateTime)temp;
+                DateTime value;
+                
+                if (temp is DateTime)
+                {
+                    value = (DateTime)temp;
+                }
+                else 
+                if (temp is uint)
+                {
+                    value = ToDateTime((uint)temp);
+                }
+                else
+                {
+                    throw new Exception("Invalid date for key: " + key);
+                }
+
                 var result = monthNames[value.Month] + value.ToString(format, CultureInfo.InvariantCulture);
                 context.output.Append(result);
             }
