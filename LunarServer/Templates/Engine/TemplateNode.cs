@@ -233,7 +233,7 @@ namespace LunarLabs.Templates
             if (objType == typeof(int) || objType == typeof(uint) || objType == typeof(long) || objType == typeof(ulong) || objType == typeof(short) || objType == typeof(ushort))
             {
                 var n = Convert.ToInt32(obj);
-                obj = Enumerable.Range(0, n + 1).ToArray();
+                obj = Enumerable.Range(1, n).ToArray();
             }
 
             var list = obj as IEnumerable;
