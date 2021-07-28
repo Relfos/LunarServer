@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 
 namespace LunarLabs.Templates
@@ -226,6 +227,13 @@ namespace LunarLabs.Templates
             if (obj == null)
             {
                 return;
+            }
+
+            var objType = obj.GetType();
+            if (objType == typeof(int) || objType == typeof(uint) || objType == typeof(long) || objType == typeof(ulong) || objType == typeof(short) || objType == typeof(ushort))
+            {
+                var n = Convert.ToInt32(obj);
+                obj = Enumerable.Range(0, n + 1).ToArray();
             }
 
             var list = obj as IEnumerable;
