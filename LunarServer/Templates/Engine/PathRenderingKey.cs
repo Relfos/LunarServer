@@ -5,7 +5,7 @@ using System.Collections;
 
 namespace LunarLabs.Templates
 {
-    internal class TemplateException: Exception
+    public class TemplateException: Exception
     {
         public TemplateException(string msg): base(msg)
         {

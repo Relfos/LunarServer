@@ -159,6 +159,21 @@ For custom 404 not found pages use the OnNotFound handler.
 	};
 ```
 
+# Template Examples
+
+Passing arguments to nested templates (via globals).
+
+```c#	
+	{{#set FARM:=Farm}}
+	{{#include farm}}	
+```
+Then inside the other template:
+
+```c#	
+	{{#if @FARM.Pair == 'LOL'}}
+	Hello World
+	{{/if}}```
+
 # Settings
 
 Those settings can be either configured in-code or passed as arguments to the server.

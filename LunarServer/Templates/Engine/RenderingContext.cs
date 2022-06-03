@@ -21,7 +21,7 @@ namespace LunarLabs.Templates
 
         private Dictionary<string, object> variables;
 
-        internal void Set(string key, object val)
+        public void Set(string key, object val)
         {
             if (variables == null)
             {
@@ -31,7 +31,7 @@ namespace LunarLabs.Templates
             variables[key] = val;
         }
 
-        internal object Get(string key)
+        public object Get(string key)
         {
             if (variables == null)
             {

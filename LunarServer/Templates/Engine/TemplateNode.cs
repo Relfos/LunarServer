@@ -163,6 +163,38 @@ namespace LunarLabs.Templates
         }
     }
 
+    public class IncrNode : TemplateNode
+    {
+        public string key;
+
+        public IncrNode(Document document, string key) : base(document)
+        {
+            this.key = key;
+        }
+
+        public override void Execute(RenderingContext context)
+        {
+            var obj = context.Get(this.key);
+            if (obj == null)
+            {
+                throw new TemplateException("Not a valid variable to increment: " + this.key);
+            }
+
+            var str = obj.ToString();
+
+            int val;
+            if (int.TryParse(str, out val))
+            {
+                val++;
+                context.Set(this.key, val);
+            }
+            else
+            {
+                throw new TemplateException("Not a valid number to increment: " + str);
+            }
+        }
+    }
+
     public class IfNode : TemplateNode
     {
         public RenderingKey condition;
