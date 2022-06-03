@@ -38,7 +38,7 @@ namespace LunarLabs.WebServer.Core
             };
         }
 
-        public static ServerSettings Parse(string[] args, string prefix = "--")
+        public static ServerSettings Parse(string[] args, string prefix = "--", Action<string, string> customArgCallback = null)
         {
             var result = DefaultSettings();
 
@@ -68,6 +68,10 @@ namespace LunarLabs.WebServer.Core
                         }
                     case "env": Enum.TryParse(val, true, out result.Environment); break;
                     case "binding": result.BindingHost = val; break;
+
+                    default:
+                        customArgCallback?.Invoke(key, val);
+                        break;
                 }
             }
 
