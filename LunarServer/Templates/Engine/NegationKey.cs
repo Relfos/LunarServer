@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Linq;
 
 namespace LunarLabs.Templates
 {
@@ -20,6 +22,12 @@ namespace LunarLabs.Templates
             if (obj is bool)
             {
                 return !((bool)obj);
+            }
+
+            if (obj is IEnumerable)
+            {
+                var collection = (IEnumerable)obj;
+                return !collection.Any();
             }
 
             throw new Exception("Expected bool key");
