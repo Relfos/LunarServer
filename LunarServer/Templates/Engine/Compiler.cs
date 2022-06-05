@@ -360,7 +360,7 @@ namespace LunarLabs.Templates
 
                                 if (TagMismatch(key, expected))
                                 {
-                                    throw new Exception("Expecting end of " + result.tag + " but got " + key);
+                                    throw new TemplateException("Expecting end of " + result.tag + " but got " + key);
                                 }
 
                                 isFinished = true;
