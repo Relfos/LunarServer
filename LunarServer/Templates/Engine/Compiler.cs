@@ -415,6 +415,7 @@ namespace LunarLabs.Templates
             RegisterTag("set", (doc, key) => new SetNode(doc, key));
             RegisterTag("incr", (doc, key) => new IncrNode(doc, key));
             RegisterTag("break", (doc, key) => new BreakNode(doc, key));
+            RegisterTag("skip", (doc, key) => new SkipNode(doc, key));
             RegisterTag("new-line", (doc, key) => new NewLineNode(doc));
             RegisterTag("tab", (doc, key) => new TabNode(doc, key));
         }

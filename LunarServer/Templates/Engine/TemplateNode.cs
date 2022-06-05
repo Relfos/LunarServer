@@ -274,6 +274,8 @@ namespace LunarLabs.Templates
             {
                 context.operation = RenderingOperation.None;
 
+                bool skipNext = false;
+
                 int index = 0;
                 int last = list.Count() - 1;
                 foreach (var item in list)
@@ -282,13 +284,28 @@ namespace LunarLabs.Templates
                     context.Set("first", index == 0);
                     context.Set("last", index == last);
                     context.DataStack.Add(item);
-                    inner.Execute(context);
+
+                    if (skipNext)
+                    {
+                        skipNext = false;
+                    }
+                    else
+                    {
+                        inner.Execute(context);
+                    }
+
                     context.DataStack.RemoveAt(context.DataStack.Count - 1);
 
                     if (context.operation == RenderingOperation.Break)
                     {
                         context.operation = RenderingOperation.None;
                         break;
+                    }
+
+                    if (context.operation == RenderingOperation.Continue)
+                    {
+                        skipNext = true;
+                        context.operation = RenderingOperation.None;
                     }
 
                     index++;
@@ -350,6 +367,19 @@ namespace LunarLabs.Templates
         public override void Execute(RenderingContext context)
         {
             context.operation = RenderingOperation.Break;
+        }
+    }
+
+
+    public class SkipNode : TemplateNode
+    {
+        public SkipNode(Document document, string key) : base(document)
+        {
+        }
+
+        public override void Execute(RenderingContext context)
+        {
+            context.operation = RenderingOperation.Continue;
         }
     }
 
