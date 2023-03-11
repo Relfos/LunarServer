@@ -824,7 +824,7 @@ namespace LunarLabs.WebServer.HTTP
             var requestCookies = request.headers.ContainsKey("Cookie") ? request.headers["Cookie"] : null;
             if (requestCookies != null)
             {
-                string[] cookies = requestCookies.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] cookies = requestCookies.Split(';' /*, ',' }, StringSplitOptions.RemoveEmptyEntries*/);
 
                 for (int i = cookies.Length - 1; i >= 0; i--)
                 {
@@ -832,7 +832,7 @@ namespace LunarLabs.WebServer.HTTP
 
                     string[] s = cookie.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
                     string name = s[0].Trim();
-                    string val = s[1];
+                    string val = s.Length > 1 ? s[1] : "";
 
                     if (name.Equals(SessionCookieName))
                     {
