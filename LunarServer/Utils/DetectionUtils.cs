@@ -1,4 +1,5 @@
 ﻿using LunarLabs.WebServer.HTTP;
+using LunarLabs.WebServer.Templates;
 using System.Net;
 
 namespace LunarLabs.WebServer.Utils
@@ -28,7 +29,7 @@ namespace LunarLabs.WebServer.Utils
             "X-Original-User-Agent",
         };
 
-        public static OSType DetectOS(HTTPRequest request)
+        public static OSType DetectOS(this HTTPRequest request)
         {
             foreach (var ua in uaHttpHeaders)
             {
@@ -73,7 +74,7 @@ namespace LunarLabs.WebServer.Utils
             "Forwarded"
         };
 
-        public static string DetectCountry(HTTPRequest request)
+        public static string DetectCountry(this HTTPRequest request)
         {
             foreach (var ipHeader in ipHttpHeaders)
             {
@@ -100,5 +101,35 @@ namespace LunarLabs.WebServer.Utils
 
             return "";
         }
+
+        const string LanguageHeader = "Accept-Language";
+
+        public static string DetectLanguage(this HTTPRequest request)
+        {
+            if (request.headers.ContainsKey(LanguageHeader))
+            {
+                var languages = request.headers[LanguageHeader].Split(new char[] { ',', ';' });
+                foreach (var lang in languages)
+                {
+                    string code;
+                    if (lang.Contains("-"))
+                    {
+                        code = lang.Split('-')[0];
+                    }
+                    else
+                    {
+                        code = lang;
+                    }
+
+                    if (LocalizationManager.HasLanguage(code))
+                    {
+                        return code;
+                    }
+                }
+            }
+
+            return "en";
+        }
+
     }
 }
