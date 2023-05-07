@@ -22,13 +22,30 @@ namespace LunarLabs.WebServer.Templates
     {
         private Dictionary<string, string> _entries = new Dictionary<string, string>();
 
-        public readonly string Name;
+        public string Name { get; private set; }
+        public readonly string Location;
 
         public Localization(string fileName)
         {
             this.Name = Path.GetFileNameWithoutExtension(fileName);
+            this.Location = fileName;
+            
+            var newName = Reload();
+            if (!string.IsNullOrEmpty(newName))
+            {
+                this.Name = newName;
+            }
 
-            var lines = File.ReadAllLines(fileName);
+            lastWrite = File.GetLastWriteTimeUtc(Location);
+        }
+
+        private string Reload() 
+        {
+            string result = null;
+
+            _entries.Clear();
+
+            var lines = File.ReadAllLines(Location);
             var ch = new char[] { ',' };
             foreach (var line in lines)
             {
@@ -43,21 +60,54 @@ namespace LunarLabs.WebServer.Templates
 
                 if (key == "language_name")
                 {
-                    this.Name = val;
+                    result = val;
                 }
 
                 _entries[key] = val;
             }
+
+            lastCheck = DateTime.UtcNow;
+            return result;
         }
 
         public string Localize(string key)
         {
+            CheckReload();
+
             if (_entries.ContainsKey(key))
             {
                 return _entries[key];
             }
 
             return $"??{key}??";
+        }
+
+        private DateTime lastCheck;
+        private DateTime lastWrite;
+
+        private void CheckReload()
+        {
+            var now = DateTime.UtcNow;
+
+            var diff = now - lastCheck;
+
+            if (diff.TotalSeconds < 1)
+            {
+                return;
+            }
+
+            var fileAge = File.GetLastWriteTimeUtc(Location);
+
+            if (fileAge >  lastWrite)
+            {
+                Console.WriteLine("Reloading " + Location);
+
+                Reload();
+
+                lastWrite = fileAge;
+            }
+
+            lastCheck = now;
         }
     }
 

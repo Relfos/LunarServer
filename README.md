@@ -100,6 +100,16 @@ Here's how to do dynamic routes (aka pretty URLs)
 	});	
 ```
 
+You can also do more complex routes using wildcards (although this way you will have to process manually the request)
+```c#
+	server.Get("/user/*", (request) =>
+	{		
+		var user_id = request.path.Replace("/user/", "");
+		return HTTPResponse.FromString($"Hello user with ID = {user_id}!");
+	});	
+```
+
+
 Here is how you redirect the user browser to another URL.
 ```c#
 	server.Get("/secret", (request) =>

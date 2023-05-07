@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -265,5 +266,45 @@ namespace LunarLabs.WebServer.Core
             return Regex.Replace(input, "<.*?>", String.Empty);
         }
 
+        public static bool MatchWildCard(this string input, string wildcardExpression)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return false;
+            }
+
+            if (wildcardExpression == "*")
+            {
+                return true;
+            }
+
+            string expr = "^" + Regex.Escape(wildcardExpression).Replace("\\*", ".*") + "$";
+            var result = Regex.IsMatch(input, expr);
+            return result;
+        }
+
+        public static IEnumerable<string> ExpandWildcards(string wildcard, IEnumerable<string> files)
+        {
+            if (wildcard == "*")
+            {
+                return files;
+            }
+            else
+            if (wildcard.EndsWith("*"))
+            {
+                wildcard = wildcard.Replace("*", "");
+                return files.Select(x => Path.GetFileNameWithoutExtension(x)).Where(x => x.StartsWith(wildcard));
+            }
+            else
+            if (wildcard.StartsWith("*"))
+            {
+                wildcard = wildcard.Replace("*", "");
+                return files.Select(x => Path.GetFileNameWithoutExtension(x)).Where(x => x.EndsWith(wildcard));
+            }
+            else
+            {
+                return new string[] { wildcard };
+            }
+        }
     }
 }

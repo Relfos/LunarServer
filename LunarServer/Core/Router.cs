@@ -21,18 +21,20 @@ namespace LunarLabs.WebServer.Core
 
     public sealed class RouteEntry
     {
+        public readonly string Route;
         public readonly List<RouteEndPoint> Handlers = new List<RouteEndPoint>();
         public readonly Dictionary<int, string> Names;
 
-        public RouteEntry(Dictionary<int, string> names)
+        public RouteEntry(string route, Dictionary<int, string> names)
         {
+            this.Route = route;
             this.Names = names;
         }
     }
     public sealed class Router
     {
         private Dictionary<HTTPRequest.Method, Dictionary<string, RouteEntry>> _routes = new Dictionary<HTTPRequest.Method, Dictionary<string, RouteEntry>>();
-
+        private Dictionary<HTTPRequest.Method, List<RouteEntry>> _wildRoutes = new Dictionary<HTTPRequest.Method, List<RouteEntry>>();
         public Router()
         {
             var methods = Enum.GetValues(typeof(HTTPRequest.Method)).Cast<HTTPRequest.Method>().ToArray();
@@ -40,6 +42,7 @@ namespace LunarLabs.WebServer.Core
             foreach (var method in methods)
             {
                 _routes[method] = new Dictionary<string, RouteEntry>();
+                _wildRoutes[method] = new List<RouteEntry>();
             }
         }
 
@@ -84,18 +87,33 @@ namespace LunarLabs.WebServer.Core
                 names = null;
             }
 
-            var dic = _routes[method];
-
             RouteEntry entry;
 
-            if (dic.ContainsKey(path))
+            if (path.Contains("*"))
             {
-                entry= dic[path];
+                entry = new RouteEntry(path, names);
+                var list = _wildRoutes[method];
+
+                if (list.Any(x => x.Route.Equals(path, StringComparison.OrdinalIgnoreCase)))
+                {
+                    throw new ArgumentException($"Duplicated {method} path: " + path);
+                }
+
+                list.Add(entry);
             }
             else
             {
-                entry = new RouteEntry(names);
-                dic[path] = entry;
+                var dic = _routes[method];
+
+                if (dic.ContainsKey(path))
+                {
+                    entry = dic[path];
+                }
+                else
+                {
+                    entry = new RouteEntry(path, names);
+                    dic[path] = entry;
+                }
             }
 
             entry.Handlers.Add(new RouteEndPoint(handler, priority));
@@ -113,6 +131,18 @@ namespace LunarLabs.WebServer.Core
 
             if (!table.ContainsKey(url))
             {
+                // first try wildcards (if any available)
+                var list = _wildRoutes[method];
+
+                foreach (var entry in list)
+                {
+                    if (StringUtils.MatchWildCard(url, entry.Route))
+                    {
+                        return entry;
+                    }
+                }
+
+                // if still nothing found, try routes with args
                 url = FindRouteWithArgs(method, url, query);
 
                 if (url == null)
