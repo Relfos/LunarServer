@@ -11,6 +11,7 @@ namespace LunarLabs.WebServer.HTTP
     public enum HTTPCode
     {
         OK = 200,
+        NoContent = 204,
         Redirect = 302, //https://en.wikipedia.org/wiki/HTTP_302
         NotModified = 304,
         BadRequest = 400,
@@ -84,9 +85,26 @@ Vary: Accept-Encoding, Cookie, User-Agent
             return result;
         }
 
+        public static HTTPResponse Options(string allowedMethods = null)
+        {
+            var result = new HTTPResponse();
+            result.code = HTTPCode.NoContent;
+            result.bytes = new byte[0];
+
+            if (string.IsNullOrEmpty(allowedMethods))
+            {
+                allowedMethods = "OPTIONS, GET, POST";
+            }
+
+            result.headers["Allow"] = allowedMethods;
+            result.headers["Access-Control-Allow-Methods"] = allowedMethods;
+            result.headers["Access-Control-Allow-Headers"] = "*";
+            return result;
+        }
+
         public static HTTPResponse FromString(string content, HTTPCode code = HTTPCode.OK, bool compress = false, string contentType= "text/html")
         {
-            var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+            var bytes = Encoding.UTF8.GetBytes(content);
             if (compress)
             {
                 bytes = bytes.GZIPCompress();
@@ -95,6 +113,7 @@ Vary: Accept-Encoding, Cookie, User-Agent
             var result = new HTTPResponse();
             result.code = code;
             result.bytes = bytes;
+
             result.headers["Content-Type"] = contentType;
 
             if (compress)

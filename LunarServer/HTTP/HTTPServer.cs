@@ -336,6 +336,7 @@ namespace LunarLabs.WebServer.HTTP
                                                 case "HEAD": request.method = HTTPRequest.Method.Head; break;
                                                 case "PUT": request.method = HTTPRequest.Method.Put; break;
                                                 case "DELETE": request.method = HTTPRequest.Method.Delete; break;
+                                                case "OPTIONS": request.method = HTTPRequest.Method.Options; break;
 
                                                 default: throw new Exception("Invalid HTTP method: " + s[0]);
                                             }
@@ -756,6 +757,11 @@ namespace LunarLabs.WebServer.HTTP
                 }
 
                 return result;
+            }
+            else
+            if (request.method == HTTPRequest.Method.Options)
+            {
+                return HTTPResponse.Options();
             }
             else
             {

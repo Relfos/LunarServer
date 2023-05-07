@@ -29,7 +29,8 @@ namespace LunarLabs.WebServer.HTTP
             Post,
             Head,
             Put,
-            Delete
+            Delete,
+            Options,
         }
 
         public Method method;
