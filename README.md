@@ -182,7 +182,15 @@ Then inside the other template:
 ```c#	
 	{{#if @FARM.Pair == 'LOL'}}
 	Hello World
-	{{/if}}```
+	{{/if}}
+```
+
+# Recommended directory structure
+Create a main directory  for your site (eg: a folder called www), then inside create two sub-directories public and views.
+Public directory is where you are going to add javascript, css, images, etc and views directory is where you put the htlm templates.
+
+You can run then your server with something like:
+--path=C:\code\my_server\www
 
 # Settings
 
@@ -203,7 +211,6 @@ Those settings can be either configured in-code or passed as arguments to the se
 			
 # FAQ
 
-##
 **Q:** How to disable access to file system / static content? 
 
 **A:** Currently the way to do this is to set the server settings Path to null.

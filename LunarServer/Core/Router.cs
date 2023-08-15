@@ -23,12 +23,10 @@ namespace LunarLabs.WebServer.Core
     {
         public readonly string Route;
         public readonly List<RouteEndPoint> Handlers = new List<RouteEndPoint>();
-        public readonly Dictionary<int, string> Names;
 
-        public RouteEntry(string route, Dictionary<int, string> names)
+        public RouteEntry(string route)
         {
             this.Route = route;
-            this.Names = names;
         }
     }
     public sealed class Router
@@ -46,15 +44,7 @@ namespace LunarLabs.WebServer.Core
             }
         }
 
-        public void Register(HTTPRequest.Method method, string path, int priority, Func<HTTPRequest, object> handler)
-        {
-            path = StringUtils.FixUrl(path);
-
-            Dictionary<int, string> names;
-
-            // TODO this probably only is necessary when creating a new RouteEntry
-            if (path.Contains("{"))
-            {
+        /*
                 string[] s = path.Split('/');
                 var regex = new Regex(@"{([A-z]\w+)}");
 
@@ -80,18 +70,18 @@ namespace LunarLabs.WebServer.Core
                     }
                 }
 
-                path = sb.ToString();
-            }
-            else
-            {
-                names = null;
-            }
+                path = "/" + sb.ToString();
+        */
+
+        public void Register(HTTPRequest.Method method, string path, int priority, Func<HTTPRequest, object> handler)
+        {
+            //path = StringUtils.FixUrl(path);
 
             RouteEntry entry;
 
             if (path.Contains("*"))
             {
-                entry = new RouteEntry(path, names);
+                entry = new RouteEntry(path);
                 var list = _wildRoutes[method];
 
                 if (list.Any(x => x.Route.Equals(path, StringComparison.OrdinalIgnoreCase)))
@@ -111,7 +101,7 @@ namespace LunarLabs.WebServer.Core
                 }
                 else
                 {
-                    entry = new RouteEntry(path, names);
+                    entry = new RouteEntry(path);
                     dic[path] = entry;
                 }
             }
@@ -159,54 +149,68 @@ namespace LunarLabs.WebServer.Core
             return null;
         }
 
+        private readonly static char[] splitter = new char[] { '/' };
+
         private string FindRouteWithArgs(HTTPRequest.Method method, string url, Dictionary<string, string> query)
         {
             //bool hasSlash = urlPath.Contains("/");
-            var splitter = new char[] { '/' };
 
-            string[] s = url.Split(splitter, StringSplitOptions.RemoveEmptyEntries);
+            string[] urlComponents = url.Split(splitter, StringSplitOptions.RemoveEmptyEntries);
             var sb = new StringBuilder();
 
             var table = _routes[method];
 
-            var bitLen = 1 << s.Length;
-
-            for (int i = 0; i < bitLen; i++)
+            foreach (var routePath in table)
             {
-                sb.Length = 0;
+                var entryPath = routePath.Key.Split(splitter, StringSplitOptions.RemoveEmptyEntries);
 
-                for (int j = 0; j < s.Length; j++)
+                if (entryPath.Length != urlComponents.Length)
                 {
-                    if (j > 0)
-                    {
-                        sb.Append('/');
-                    }
-
-                    bool isSet = (i & (1 << j)) != 0;
-                    sb.Append(isSet ? s[j] : "*");
+                    continue;
                 }
 
-                var path = sb.ToString();
+                var found = true;
 
-                if (table.ContainsKey(path))
+                for (int i = 0; i < entryPath.Length; i++)
                 {
-                    var route = table[path];
-                    
-                    if (route.Names != null)
+                    var other = entryPath[i];
+
+                    if (other.StartsWith("{"))
                     {
-                        foreach (var entry in route.Names)
+                        continue;
+                    }
+
+                    var component = urlComponents[i];
+                    if (!component.Equals(other))
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+
+                if (found)
+                {
+                    var route = routePath.Value;
+
+                    for (int i = 0; i < entryPath.Length; i++)
+                    {
+                        var other = entryPath[i];
+
+                        if (other.StartsWith("{"))
                         {
-                            query[entry.Value] = s[entry.Key];
+                            var name = other.Substring(1, other.Length - 2);
+
+                            var component = urlComponents[i];
+                            query[name] = component;
                         }
                     }
 
-                    return path;
+                    return routePath.Key;
                 }
             }
-
+         
             return null;
         }
-
 
     }
 
