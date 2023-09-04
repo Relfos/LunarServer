@@ -524,6 +524,11 @@ namespace LunarLabs.WebServer.HTTP
 
                                             if (!emptyCookie)
                                             {
+                                                if (Settings.Environment == ServerEnvironment.Prod && !setCookie.Contains("SameSite"))
+                                                {
+                                                    setCookie = $"{setCookie}; SameSite=None; Secure";
+                                                }
+
                                                 response.headers["Set-Cookie"] = setCookie;
                                             }
                                         }
