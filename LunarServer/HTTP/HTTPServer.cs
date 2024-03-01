@@ -36,6 +36,7 @@ namespace LunarLabs.WebServer.HTTP
         private readonly Func<MemoryStream> _bufferFactory;
         private readonly BufferPool _bufferPool;
 
+        private readonly ManualResetEvent _finishedEvent = new ManualResetEvent(false);
         public FileCache Cache => _assetCache;
         public IEnumerable<ServerPlugin> Plugins { get { return _plugins; } }
         public LoggerCallback Logger { get; private set; }
@@ -143,8 +144,9 @@ namespace LunarLabs.WebServer.HTTP
             // log.Info("Server is listening on " + listener.LocalEndpoint);
 
             Running = true;
+            StartListening();
 
-            while (Running)
+            /*while (Running)
             {
 
                 Logger(LogLevel.Debug, "Waiting for a connection...");
@@ -161,12 +163,58 @@ namespace LunarLabs.WebServer.HTTP
                 {
                     Logger(LogLevel.Error, e.ToString());
                 }
+            }*/
+        }
+
+        public void StartListening()
+        {
+            // Assuming 'listener' is a Socket initialized and bound to a local endpoint
+            var acceptEventArgs = new SocketAsyncEventArgs();
+            acceptEventArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
+
+            if (!listener.AcceptAsync(acceptEventArgs))
+            {
+                // If AcceptAsync returns false, it means the accept operation completed synchronously.
+                // In this case, we need to manually invoke the callback method.
+                OnAcceptCompleted(this, acceptEventArgs);
+            }
+        }
+
+        private void OnAcceptCompleted(object sender, SocketAsyncEventArgs e)
+        {
+            if (e.SocketError == SocketError.Success)
+            {
+                // A new connection has been accepted
+                Socket client = e.AcceptSocket;
+                // Log and handle the client connection asynchronously
+                Logger(LogLevel.Debug, "Got a connection...");
+                Task.Run(() => HandleClient(client));
+
+                // Prepare for the next connection
+                e.AcceptSocket = null; // Reset the AcceptSocket to accept new connections
+                if (!listener.AcceptAsync(e)) // Reuse the SocketAsyncEventArgs object
+                {
+                    // If AcceptAsync returns false, the operation completed synchronously.
+                    OnAcceptCompleted(this, e);
+                }
+            }
+            else
+            {
+                // Handle the error
+                Logger(LogLevel.Error, $"Error accepting connection: {e.SocketError}");
             }
         }
 
         public void Stop()
         {
             Running = false;
+            _finishedEvent.Set(); // Signal that the server has stopped
+        }
+
+        public void WaitForFinish()
+        {
+            // This call will block until 'finished' is set
+            _finishedEvent.WaitOne();
         }
 
         private void WriteString(BinaryWriter writer, string s)
