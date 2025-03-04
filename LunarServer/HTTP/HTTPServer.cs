@@ -292,6 +292,20 @@ namespace LunarLabs.WebServer.HTTP
                 // Set the Time To Live (TTL) to 42 router hops.
                 client.Ttl = 42;
 
+                string remoteIP;
+                EndPoint remoteEndPoint = client.RemoteEndPoint;
+
+                if (remoteEndPoint is IPEndPoint ipEndPoint)
+                {
+                    // Extract the IP address from the IPEndPoint
+                    remoteIP = ipEndPoint.Address.ToString();
+                }
+                else
+                {
+                    remoteIP = "0.0.0.0";
+                    Console.WriteLine("Could not determine the client's IP address.");
+                }
+
                 bool keepAlive = false;
 
                 int requestCount = 0;
@@ -394,6 +408,7 @@ namespace LunarLabs.WebServer.HTTP
                                             var path = s[1].Split('?');
                                             request.path = path[0];
                                             request.url = s[1];
+                                            request.IP = remoteIP;
 
                                             Logger(LogLevel.Info, request.method.ToString() + " " + s[1]);
 
@@ -450,7 +465,8 @@ namespace LunarLabs.WebServer.HTTP
                                                     string secWebSocketExtensions = null;
                                                     var keepAliveInterval = 5000;
                                                     var includeExceptionInCloseResponse = true;
-                                                    var webSocket = new WebSocket(_bufferFactory, stream, keepAliveInterval, secWebSocketExtensions, includeExceptionInCloseResponse, false, targetProtocol, Settings.MaxWebsocketFrameInBytes, Logger);
+                                                    
+                                                    var webSocket = new WebSocket(_bufferFactory, request.path, stream, keepAliveInterval, secWebSocketExtensions, includeExceptionInCloseResponse, false, targetProtocol, Settings.MaxWebsocketFrameInBytes, Logger);
                                                     lock (_activeWebsockets)
                                                     {
                                                         _activeWebsockets.Add(webSocket);

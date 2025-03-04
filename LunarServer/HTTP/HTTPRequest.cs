@@ -34,10 +34,8 @@ namespace LunarLabs.WebServer.HTTP
         }
 
         public Method method;
-        public string url;
-        public string path;
         public string version;
-
+ 
         public byte[] bytes;
 
         public string postBody;
@@ -45,9 +43,13 @@ namespace LunarLabs.WebServer.HTTP
         public Session session;
 
         public Dictionary<string, string> headers = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-        public Dictionary<string, string> args = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
         public List<FileUpload> uploads = new List<FileUpload>();
+
+        public string url;
+        public string path;
+        public string IP;
+        public Dictionary<string, string> args = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
         public bool HasVariable(string name)
         {

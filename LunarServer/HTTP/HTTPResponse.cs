@@ -124,8 +124,13 @@ Vary: Accept-Encoding, Cookie, User-Agent
             return result;
         }
 
-        public static HTTPResponse FromBytes(byte[] bytes, string contentType = "application/octet-stream")
+        public static HTTPResponse FromBytes(byte[] bytes, string contentType = null)
         {
+            if (string.IsNullOrEmpty(contentType))
+            {
+                contentType = "application/octet-stream";
+            }
+
             var result = new HTTPResponse();
             result.code = HTTPCode.OK;
             result.bytes = bytes;

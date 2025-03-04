@@ -111,6 +111,11 @@ namespace LunarLabs.Templates
                     temp = ((double)obj).ToString(".################", System.Globalization.CultureInfo.InvariantCulture);
                 }
                 else
+                if (obj is bool)
+                {
+                    temp = ((bool)obj)? "true" : "false";
+                }
+                else
                 {
                     temp = obj.ToString();
                 }

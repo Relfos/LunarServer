@@ -6,3 +6,5 @@ ServerTests/bin/
 ServerTests/obj/
 SynkMVC/bin/
 SynkMVC/obj/
+
+LunarServer/LunarServer.csproj.user

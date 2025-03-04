@@ -28,7 +28,8 @@ namespace LunarLabs.Templates
         Begins,
         Ends,
         Or,
-        And
+        And,
+        Function
     }
 
     public abstract class RenderingKey
@@ -52,6 +53,7 @@ namespace LunarLabs.Templates
             { "+" , KeyOperator.Plus},
             { "*" , KeyOperator.Multiply},
             { "?" , KeyOperator.Contains},
+            { "::" , KeyOperator.Function},
         };
 
         private static int GetOperatorPriority(string op)

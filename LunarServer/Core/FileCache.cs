@@ -153,14 +153,17 @@ namespace LunarLabs.WebServer.Core
                 }
             }
 
-            var result = HTTPResponse.FromBytes(entry.bytes);
+            var ext = Path.GetExtension(path);
+            var contentType = GetContentTypeByExtension(ext);
+
+            var result = HTTPResponse.FromBytes(entry.bytes, contentType);
 
             if (entry.isCompressed)
             {
                 result.headers["Content-Encoding"] = "gzip";
             }
 
-            result.headers["Content-Type"] = entry.contentType;
+            result.headers["Content-Type"] = contentType;
 
             result.headers["Content-Description"] = "File Transfer";
 
@@ -183,6 +186,41 @@ namespace LunarLabs.WebServer.Core
             result.headers["ETag"] = entry.hash;
 
             return result;
+        }
+
+        public static string GetContentTypeByExtension(string ext)
+        {
+            switch (ext)
+            {
+                case ".avi": return "video/x-msvideo";
+                case ".css": return "text/css";
+                case ".csv": return "text/csv";
+                case ".eot": return "application/vnd.ms-fontobject";
+                case ".gz": return "application/gzip";
+                case ".gif": return "image/gif";
+                case ".html": case ".htm": return "text/html";
+                case ".jpeg": case ".jpg": return "image/jpeg";
+                case ".js": return "text/javascript";
+                case ".json": return "application/json";
+                case ".mid": case ".midi": return "audio/midi";
+                case ".mp3": return "audio/mpeg";
+                case ".mp4": return "video/mp4";
+                case ".mpeg": return "video/mpeg";
+                case ".oga": case "opus": return "audio/ogg";
+                case ".ogv": return "video/ogg";
+                case ".png": return "image/png";
+                case ".pdf": return "application/pdf";
+                case ".txt": return "text/txt";
+                case ".wav": return "audio/wav";
+                case ".webp": return "image/webp";
+                case ".woff": return "font/woff";
+                case ".woff2": return "font/woff2";
+                case ".wasm": return "application/wasm";
+                case ".xml": return "application/xml";
+                case ".zip": return "application/zip";
+                case ".svg": return "image/svg+xml";
+                default: return null;
+            }
         }
     }
 

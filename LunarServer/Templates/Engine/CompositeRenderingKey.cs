@@ -37,6 +37,7 @@ namespace LunarLabs.Templates
                 case KeyOperator.Contains:
                 case KeyOperator.And:
                 case KeyOperator.Or:
+                case KeyOperator.Function:
                     expectedType = RenderingType.Any;
                     break;
 
@@ -207,14 +208,45 @@ namespace LunarLabs.Templates
                         return leftNumber * rightNumber;
                     }
 
+                case KeyOperator.Function:
+                    {
+                        if (right == null)
+                        {
+                            return false;
+                        }
+
+                        return EvaluateFunction(left.ToString(), right.ToString());
+                    }
+
                 default:
                     throw new NotImplementedException();
             }
         }
 
+        private static object EvaluateFunction(string function, string arg)
+        {
+            switch (function)
+            {
+                case "odd":
+                    {
+                        var n = (int)EvaluateNumber(arg);
+                        return (n % 2) != 0;
+                    }
+
+                case "even":
+                    {
+                        var n = (int)EvaluateNumber(arg);
+                        return (n % 2) == 0;
+                    }
+
+                default:
+                    throw new NotImplementedException("Unknown function: " + function);
+            }
+        }
+
         public override object Evaluate(RenderingContext context)
         {
-            var left = this.leftSide.Evaluate(context);
+            var left = Operator == KeyOperator.Function ? this.leftSide.ToString() : this.leftSide.Evaluate(context);
             var right = this.rightSide.Evaluate(context);
             var result = InternalEvaluate(Operator, left, right);
             return result;

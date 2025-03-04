@@ -182,6 +182,7 @@ namespace LunarLabs.Templates
                                 continue;
                             }
 
+                            //return false;
                             throw new TemplateException("key not found: " + this.key);
                         }
 

@@ -55,6 +55,36 @@ namespace LunarLabs.WebServer.Templates
         }
     }
 
+    public class IncludeDynamicNode : TemplateNode
+    {
+        public readonly TemplateEngine engine;
+        private RenderingKey key;
+
+        public IncludeDynamicNode(Document document, string key, TemplateEngine engine) : base(document)
+        {
+            this.key = RenderingKey.Parse(key, RenderingType.String);
+            this.engine = engine;
+        }
+
+        public override void Execute(RenderingContext context)
+        {
+            var obj = context.EvaluateObject(this.key);
+            if (obj != null)
+            {
+                var name = obj.ToString();
+
+                var node = engine.FindTemplate(name);
+
+                if (node == null)
+                {
+                    throw new Exception("Could not find include :" + key);
+                }
+
+                node.Execute(context);
+            }
+        }
+    }
+
     public class UrlEncodeNode : TemplateNode
     {
         public RenderingKey key;
@@ -149,6 +179,7 @@ namespace LunarLabs.WebServer.Templates
             Compiler.RegisterDateTags();
 
             Compiler.RegisterTag("include", (doc, key) => new IncludeNode(doc, key, this));
+            Compiler.RegisterTag("include_dynamic", (doc, key) => new IncludeDynamicNode(doc, key, this));
             Compiler.RegisterTag("cache", (doc, key) => new CacheNode(doc, "")); // TODO fixme
             Compiler.RegisterTag("url-encode", (doc, key) => new UrlEncodeNode(doc, key));
 

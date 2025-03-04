@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace LunarLabs.WebServer.Templates
@@ -10,7 +11,6 @@ namespace LunarLabs.WebServer.Templates
     {
         public readonly string code;
         public readonly string name;
-
         public Language(string code, string name)
         {
             this.code = code;
@@ -21,6 +21,7 @@ namespace LunarLabs.WebServer.Templates
     public class Localization
     {
         private Dictionary<string, string> _entries = new Dictionary<string, string>();
+        public IEnumerable<string> Keys => _entries.Keys;
 
         public string Name { get; private set; }
         public readonly string Location;
@@ -68,6 +69,11 @@ namespace LunarLabs.WebServer.Templates
 
             lastCheck = DateTime.UtcNow;
             return result;
+        }
+
+        public void SetKey(string key, string text)
+        {
+            _entries[key] = text;
         }
 
         public string Localize(string key)
@@ -149,14 +155,24 @@ namespace LunarLabs.WebServer.Templates
             return null;
         }
 
-        public static string Localize(string language, string key)
+        public static string Localize(string language, string key, bool returnDefaultKey = true)
         {
             if (_localizations.ContainsKey(language))
             {
                 return _localizations[language].Localize(key);
             }
 
-            return $"??{key}!?";
+            return returnDefaultKey ? $"??{key}!?" : null;
+        }
+
+        public static Localization GetLocalization(string code)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                code = _localizations.Keys.FirstOrDefault();
+            }
+
+            return _localizations != null && _localizations.ContainsKey(code) ? _localizations[code] : null;
         }
     }
 
@@ -178,17 +194,48 @@ namespace LunarLabs.WebServer.Templates
 
         public override void Execute(RenderingContext context)
         {
+            string text = null;
+
+            var key = this.key;
+
+            if (key.StartsWith("("))
+            {
+                var idx = key.IndexOf(')');
+                var varName = key.Substring(1, idx - 1);
+
+                var varKey = RenderingKey.Parse(varName, RenderingType.Any);
+                var evaluation = context.EvaluateObject(varKey).ToString();
+
+                key = evaluation + key.Substring(idx + 1);
+            }
+            else
+            if (key.EndsWith(")"))
+            {
+                var idx = key.IndexOf('(');
+                var varName = key.Substring(idx + 1, key.Length - (idx + 2));
+
+                var varKey = RenderingKey.Parse(varName, RenderingType.Any);
+                var evaluation = context.EvaluateObject(varKey).ToString();
+
+                key = key.Substring(0, idx) + evaluation;
+            }
+
             var language = context.EvaluateObject(languageKey) as Language;
             if (language == null)
             {
                 language = LocalizationManager.GetLanguage("en");
-                if (language == null)
-                {
-                    return;
-                }
             }
 
-            var text = LocalizationManager.Localize(language.code, this.key);
+            if (language != null)
+            {
+                text = LocalizationManager.Localize(language.code, key);
+            }
+
+            if (text == null)
+            {
+                text = $"??{key}??";
+            }
+
             context.output.Append(text);
         }
     }

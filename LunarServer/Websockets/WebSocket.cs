@@ -1,4 +1,5 @@
 ﻿using LunarLabs.WebServer.Core;
+using LunarLabs.WebServer.HTTP;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -122,8 +123,11 @@ namespace LunarLabs.WebSockets
 
         private ArraySegment<byte> _receiveBuffer;
 
-        public WebSocket(Func<MemoryStream> recycledStreamFactory, Stream stream, int keepAliveInterval, string secWebSocketExtensions, bool includeExceptionInCloseResponse, bool isClient, string subProtocol, int maxBufferSize, LoggerCallback logger)
+        public readonly string path;
+
+        public WebSocket(Func<MemoryStream> recycledStreamFactory, string path,  Stream stream, int keepAliveInterval, string secWebSocketExtensions, bool includeExceptionInCloseResponse, bool isClient, string subProtocol, int maxBufferSize, LoggerCallback logger)
         {
+            this.path = path;
             _receiveBuffer = new ArraySegment<byte>(new byte[maxBufferSize]);
             _recycledStreamFactory = recycledStreamFactory;
             _stream = stream;
