@@ -40,6 +40,12 @@ namespace LunarLabs.WebServer.Templates
             lastWrite = File.GetLastWriteTimeUtc(Location);
         }
 
+
+        public void SetKey(string key, string val)
+        {
+            _entries[key] = val;
+        }
+
         private string Reload() 
         {
             string result = null;
