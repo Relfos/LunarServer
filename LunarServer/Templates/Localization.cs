@@ -77,11 +77,6 @@ namespace LunarLabs.WebServer.Templates
             return result;
         }
 
-        public void SetKey(string key, string text)
-        {
-            _entries[key] = text;
-        }
-
         public string Localize(string key)
         {
             CheckReload();
