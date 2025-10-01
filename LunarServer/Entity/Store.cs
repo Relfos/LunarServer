@@ -43,6 +43,7 @@ namespace LunarLabs.WebServer.Entity
 
         internal void RequestBackgroundThread()
         {
+			throw new Exception("Store thread needs changes, currently it does CPU spinnning!");
             if (saveThread == null)
             {
                 saveThread = new Thread(() =>

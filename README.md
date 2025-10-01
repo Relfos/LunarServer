@@ -68,9 +68,7 @@ Finally add code to start the server.
 		running = false;
 	};
 
-	while (running) {
-		Thread.Sleep(500);
-	}
+	server.WaitForFinish();
 ```
 
 You can now open "http://localhost" in your browser and see "Hello World! appear.

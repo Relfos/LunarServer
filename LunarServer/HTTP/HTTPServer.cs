@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using LunarLabs.WebServer.Core;
 using LunarLabs.Parser;
@@ -11,7 +12,6 @@ using System.Text;
 using System.Security.Cryptography;
 using System.Linq;
 using LunarLabs.WebSockets;
-using System.Threading;
 
 namespace LunarLabs.WebServer.HTTP
 {
@@ -241,6 +241,8 @@ namespace LunarLabs.WebServer.HTTP
 
             _pingPong = true;
 
+			throw new Exception("Websockets thread needs changes, currently it does CPU spinnning!");
+
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
@@ -264,7 +266,6 @@ namespace LunarLabs.WebServer.HTTP
                     Thread.Sleep(100);
                 }
             }).Start();
-
         }
 
 

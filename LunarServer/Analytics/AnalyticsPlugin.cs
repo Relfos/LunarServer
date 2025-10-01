@@ -89,6 +89,7 @@ namespace LunarLabs.WebServer.Analytics
 
         private void RequestBackgroundThread()
         {
+			throw new Exception("Analytics thread needs changes, currently it does CPU spinnning!");
             logger(LogLevel.Info, "Running analytics thread");
             AnalyticsPlugin.saveThread = new Thread((ThreadStart)delegate
             {
