@@ -240,4 +240,43 @@ namespace LunarLabs.WebServer.Templates
             context.output.Append(text);
         }
     }
+
+    public class CountryFlagNode : TemplateNode
+    {
+        private RenderingKey key;
+
+        public CountryFlagNode(Document document, string key) : base(document)
+        {
+            this.key = RenderingKey.Parse(key, RenderingType.String);
+        }
+
+        public static string CountryCodeToFlagEmoji(string countryCode)
+        {
+            if (string.IsNullOrEmpty(countryCode) || countryCode.Length != 2)
+                return string.Empty;
+
+            countryCode = countryCode.ToUpperInvariant();
+            int offset = 0x1F1E6 - 'A';
+
+            char firstChar = countryCode[0];
+            char secondChar = countryCode[1];
+
+            string flag = char.ConvertFromUtf32(firstChar + offset) +
+                          char.ConvertFromUtf32(secondChar + offset);
+
+            return flag;
+        }
+
+        public override void Execute(RenderingContext context)
+        {
+            var temp = context.EvaluateObject(key);
+
+            if (temp != null)
+            {
+                var countryCode = temp.ToString();
+                var countryFlag = CountryCodeToFlagEmoji(countryCode);
+                context.output.Append(countryFlag);
+            }
+        }
+    }
 }

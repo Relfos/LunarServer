@@ -184,6 +184,7 @@ namespace LunarLabs.WebServer.Templates
             Compiler.RegisterTag("url-encode", (doc, key) => new UrlEncodeNode(doc, key));
 
             Compiler.RegisterTag("localize", (doc, key) => new LocalizationNode(doc, key, this));
+            Compiler.RegisterTag("country-flag", (doc, key) => new CountryFlagNode(doc, key));
 
             Compiler.RegisterTag("javascript", (doc, key) => new AssetNode(doc, key, "js", this));
             Compiler.RegisterTag("css", (doc, key) => new AssetNode(doc, key, "css", this));
