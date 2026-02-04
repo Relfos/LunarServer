@@ -29,6 +29,7 @@ namespace LunarLabs.WebServer.Core
                 case ".css": contentType = "text/css"; shouldCompress = true; break;
                 case ".html": contentType = "text/html"; shouldCompress = true; shouldDownload = false; break;
                 case ".csv": contentType = "text/csv"; shouldCompress = true; break;
+                case ".vtt": contentType = "text/vtt"; shouldCompress = true; break;
                 case ".txt": contentType = "text/plain"; shouldCompress = true; break;
 
                 case ".js": contentType = "application/javascript"; shouldCompress = true; break;

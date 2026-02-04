@@ -195,6 +195,7 @@ namespace LunarLabs.WebServer.Core
                 case ".avi": return "video/x-msvideo";
                 case ".css": return "text/css";
                 case ".csv": return "text/csv";
+                case ".vtt": return "text/vtt";
                 case ".eot": return "application/vnd.ms-fontobject";
                 case ".gz": return "application/gzip";
                 case ".gif": return "image/gif";
