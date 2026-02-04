@@ -148,7 +148,7 @@ namespace LunarLabs.WebServer.Templates
 
         public static Language GetLanguage(string code)
         {
-            if (_languages.ContainsKey(code))
+            if (!string.IsNullOrEmpty(code) && _languages.ContainsKey(code))
             {
                 return _languages[code];
             }
@@ -185,7 +185,8 @@ namespace LunarLabs.WebServer.Templates
 
         private TemplateEngine engine;
 
-        private static RenderingKey languageKey = RenderingKey.Parse("current_language", RenderingType.Any);
+        public static readonly string LANGUAGE_VARIABLE_NAME = "current_language";
+        private static RenderingKey languageKey = RenderingKey.Parse(LANGUAGE_VARIABLE_NAME, RenderingType.Any);
 
         public LocalizationNode(Document document, string key, TemplateEngine engine) : base(document)
         {
@@ -221,7 +222,22 @@ namespace LunarLabs.WebServer.Templates
                 key = key.Substring(0, idx) + evaluation;
             }
 
-            var language = context.EvaluateObject(languageKey) as Language;
+            var languageObj = context.EvaluateObject(languageKey);
+            Language language = null;
+
+            if (languageObj != null)
+            {
+                if (languageObj is string)
+                {
+                    var languageCode = languageObj as string;
+                    language = LocalizationManager.GetLanguage(languageCode);
+                }
+                else
+                {
+                    language = languageObj as Language;
+                }
+            }
+
             if (language == null)
             {
                 language = LocalizationManager.GetLanguage("en");
