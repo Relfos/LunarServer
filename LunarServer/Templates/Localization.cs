@@ -20,7 +20,7 @@ namespace LunarLabs.WebServer.Templates
 
     public class Localization
     {
-        private Dictionary<string, string> _entries = new Dictionary<string, string>();
+        private Dictionary<string, string> _entries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public IEnumerable<string> Keys => _entries.Keys;
 
         public string Name { get; private set; }
@@ -75,6 +75,11 @@ namespace LunarLabs.WebServer.Templates
 
             lastCheck = DateTime.UtcNow;
             return result;
+        }
+
+        public bool HasKey(string key)
+        {
+            return _entries.ContainsKey(key);
         }
 
         public string Localize(string key)
@@ -175,6 +180,7 @@ namespace LunarLabs.WebServer.Templates
 
             return _localizations != null && _localizations.ContainsKey(code) ? _localizations[code] : null;
         }
+
     }
 
     public class LocalizationNode : TemplateNode
@@ -217,7 +223,18 @@ namespace LunarLabs.WebServer.Templates
                 var varName = key.Substring(idx + 1, key.Length - (idx + 2));
 
                 var varKey = RenderingKey.Parse(varName, RenderingType.Any);
-                var evaluation = context.EvaluateObject(varKey).ToString();
+                var obj = context.EvaluateObject(varKey);
+
+                string evaluation;
+                
+                if (obj != null)
+                {
+                    evaluation = obj.ToString();
+                }
+                else
+                {
+                    evaluation = "???";
+                }
 
                 key = key.Substring(0, idx) + evaluation;
             }
