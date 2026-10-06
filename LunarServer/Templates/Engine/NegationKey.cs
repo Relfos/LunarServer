@@ -30,6 +30,8 @@ namespace LunarLabs.Templates
                 return !collection.Any();
             }
 
+            return true; // if no object found or null, we default to true, (eg: if (!isActive) )
+
             throw new Exception("Expected bool key");
         }
 
