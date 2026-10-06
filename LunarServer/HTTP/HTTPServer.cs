@@ -749,7 +749,6 @@ namespace LunarLabs.WebServer.HTTP
                     var value = kvpsParts.Length >= 2 ? System.Net.WebUtility.UrlDecode(kvpsParts[1]) : "";
 
                     // Simply set the key to the parsed value
-                    value = value.UrlDecode();
                     if (value.Contains("\0"))
                     {
                         throw new NullByteInjectionException();
