@@ -11,6 +11,7 @@ namespace LunarLabs.WebServer.HTTP
     {
         OK = 200,
         NoContent = 204,
+        Moved_Permanently = 301,    
         Redirect = 302, //https://en.wikipedia.org/wiki/HTTP_302
         NotModified = 304,
         BadRequest = 400,
@@ -56,10 +57,10 @@ Vary: Accept-Encoding, Cookie, User-Agent
              */
         }
 
-        public static HTTPResponse Redirect(string url)
+        public static HTTPResponse Redirect(string url, bool permanent = false)
         {
             var result = new HTTPResponse();
-            result.code = HTTPCode.Redirect;
+            result.code = permanent ? HTTPCode.Moved_Permanently: HTTPCode.Redirect;
             result.bytes = new byte[0];
             result.headers["Location"] = url;
             return result;
