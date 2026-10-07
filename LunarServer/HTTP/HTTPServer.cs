@@ -794,9 +794,18 @@ namespace LunarLabs.WebServer.HTTP
             {
                 Logger(LogLevel.Debug, "Calling route handler...");
 
+                // Cache only literal GET routes without request arguments.
+                // Session-dependent literal pages must be handled by the website's cache policy.
+                bool canCache = request.method == HTTPRequest.Method.Get
+                    && Settings.CacheResponseTime > 0
+                    && (request.args == null || request.args.Count == 0)
+                    && (request.url == null || !request.url.Contains("?"))
+                    && !route.Route.Contains("{")
+                    && !route.Route.Contains("*");
+
                 object obj = null;
 
-                if (request.method == HTTPRequest.Method.Get && Settings.CacheResponseTime > 0)
+                if (canCache)
                 {
                     obj = _requestCache.GetCachedResponse(request.path, Settings.CacheResponseTime);
                 }
@@ -820,7 +829,7 @@ namespace LunarLabs.WebServer.HTTP
 
                 HTTPResponse result = ResponseFromObject(obj, HTTPCode.OK);
 
-                if (result != null && request.method == HTTPRequest.Method.Get && Settings.CacheResponseTime > 0)
+                if (result != null && canCache)
                 {
                     _requestCache.PutCachedResponse(request.path, result);
                 }
